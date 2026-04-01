@@ -235,6 +235,19 @@ export const careerService = {
 
               if (scheduleName.toLowerCase() === 'fleksibel') {
                 scheduleType = 'Fleksibel';
+              } else if (scheduleName.toLowerCase() === 'shift dinamis') {
+                // Shift Dinamis is valid ONLY if the location has at least one schedule with type === 2 (Shift Kerja)
+                const hasShiftSchedules = locationId && allSchedules.some(s => 
+                  s.type === 2 && 
+                  s.location_ids && 
+                  s.location_ids.includes(locationId)
+                );
+                
+                if (hasShiftSchedules) {
+                  scheduleType = 'Shift Dinamis';
+                } else {
+                  scheduleError = `Lokasi '${locationName}' tidak mendukung sistem Shift Dinamis (Tidak ada Master Jadwal Shift Kerja).`;
+                }
               } else if (scheduleName) {
                 const sch = allSchedules.find(s => s.name.trim().toLowerCase() === scheduleName.trim().toLowerCase());
                 if (sch) {
@@ -245,9 +258,6 @@ export const careerService = {
                     scheduleId = sch.id;
                     scheduleType = sch.name;
                   }
-                } else if (scheduleName.toLowerCase() === 'shift dinamis') {
-                  // Fallback if Shift Dinamis is not in DB but used as a generic type
-                  scheduleType = 'Shift Dinamis';
                 } else {
                   scheduleError = `Jadwal '${scheduleName}' tidak ditemukan dalam master data.`;
                 }
