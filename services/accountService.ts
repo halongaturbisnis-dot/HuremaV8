@@ -40,6 +40,11 @@ const sanitizePayload = (payload: any) => {
 };
 
 export const accountService = {
+  getActiveFilter() {
+    const today = new Date().toISOString().split('T')[0];
+    return `end_date.is.null,end_date.gt.${today}`;
+  },
+
   async getAll(
     page?: number, 
     limit?: number, 
@@ -79,10 +84,10 @@ export const accountService = {
       }
     }
 
-    const today = new Date().toISOString().split('T')[0];
     if (statusFilter === 'aktif') {
-      query = query.or(`end_date.is.null,end_date.gt.${today}`);
+      query = query.or(this.getActiveFilter());
     } else if (statusFilter === 'non-aktif') {
+      const today = new Date().toISOString().split('T')[0];
       query = query.not('end_date', 'is', null).lte('end_date', today);
     }
 

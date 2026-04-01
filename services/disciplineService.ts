@@ -274,10 +274,11 @@ export const disciplineService = {
 
   // --- Import / Export ---
   async downloadWarningTemplate() {
+    const activeFilter = accountService.getActiveFilter();
     const { data: accounts, error } = await supabase
       .from('accounts')
       .select('id, internal_nik, full_name')
-      .is('end_date', null)
+      .or(activeFilter)
       .not('access_code', 'ilike', '%SPADMIN%');
 
     if (error) throw error;
@@ -449,10 +450,11 @@ export const disciplineService = {
 
   // --- Termination Import Logic ---
   async downloadTerminationTemplate() {
+    const activeFilter = accountService.getActiveFilter();
     const { data: accounts, error } = await supabase
       .from('accounts')
       .select('id, internal_nik, full_name')
-      .is('end_date', null)
+      .or(activeFilter)
       .not('access_code', 'ilike', '%SPADMIN%');
 
     if (error) throw error;
