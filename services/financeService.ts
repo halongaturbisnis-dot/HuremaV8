@@ -154,6 +154,8 @@ export const financeService = {
         scheme:finance_salary_schemes(*)
       `)
       .eq('account_id', accountId)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
     
     if (error) throw error;

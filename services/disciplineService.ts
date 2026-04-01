@@ -220,6 +220,8 @@ export const disciplineService = {
       .from('account_termination_logs')
       .select('*')
       .eq('account_id', accountId)
+      .order('termination_date', { ascending: false })
+      .limit(1)
       .maybeSingle();
     if (error) throw error;
     
