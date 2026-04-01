@@ -66,8 +66,8 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ id, onClose, onEdit, onDe
   const [showLogForm, setShowLogForm] = useState<{ type: 'career' | 'health', data?: any, isEdit?: boolean } | null>(null);
   const [showCertForm, setShowCertForm] = useState<{ show: boolean, data?: any }>({ show: false });
   const [showContractForm, setShowContractForm] = useState<{ show: boolean, data?: any }>({ show: false });
-  const [showWarningForm, setShowWarningForm] = useState(false);
-  const [showTerminationForm, setShowTerminationForm] = useState(false);
+  const [showWarningForm, setShowWarningForm] = useState<{ show: boolean; data?: any }>({ show: false });
+  const [showTerminationForm, setShowTerminationForm] = useState<{ show: boolean; data?: any }>({ show: false });
   const [selectedContractDetail, setSelectedContractDetail] = useState<AccountContract | null>(null);
   const [selectedCareerDetail, setSelectedCareerDetail] = useState<CareerLog | null>(null);
   const [selectedHealthDetail, setSelectedHealthDetail] = useState<HealthLog | null>(null);
@@ -810,7 +810,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ id, onClose, onEdit, onDe
         <DetailSection 
           icon={ShieldAlert} 
           title="Riwayat Peringatan" 
-          onAdd={() => setShowWarningForm(true)} 
+          onAdd={() => setShowWarningForm({ show: true })} 
           isScrollable
         >
           <div className="space-y-3">
@@ -848,7 +848,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ id, onClose, onEdit, onDe
         <DetailSection 
           icon={LogOut} 
           title="Status Exit" 
-          onAdd={!termination && !isInactive ? () => setShowTerminationForm(true) : undefined}
+          onAdd={!termination && !isInactive ? () => setShowTerminationForm({ show: true }) : undefined}
           isScrollable
         >
           {termination || isInactive ? (
@@ -994,12 +994,12 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ id, onClose, onEdit, onDe
         />
       )}
 
-      {showWarningForm && (
-        <WarningForm accountId={id} onClose={() => setShowWarningForm(false)} onSuccess={() => { setShowWarningForm(false); fetchData(); }} />
+      {showWarningForm.show && (
+        <WarningForm accountId={id} initialData={showWarningForm.data} onClose={() => setShowWarningForm({ show: false })} onSuccess={() => { setShowWarningForm({ show: false }); fetchData(); }} />
       )}
       
-      {showTerminationForm && (
-        <TerminationForm accountId={id} onClose={() => setShowTerminationForm(false)} onSuccess={() => { setShowTerminationForm(false); fetchData(); }} />
+      {showTerminationForm.show && (
+        <TerminationForm accountId={id} initialData={showTerminationForm.data} onClose={() => setShowTerminationForm({ show: false })} onSuccess={() => { setShowTerminationForm({ show: false }); fetchData(); }} />
       )}
 
       {selectedContractDetail && (
@@ -1051,8 +1051,9 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ id, onClose, onEdit, onDe
           log={selectedWarningDetail} 
           onClose={() => setSelectedWarningDetail(null)} 
           onEdit={!isReadOnly ? () => {
+            const data = selectedWarningDetail;
             setSelectedWarningDetail(null);
-            setShowWarningForm(true); // WarningForm doesn't seem to take initialData for edit in this context, but let's assume it's handled or just opens the form
+            setShowWarningForm({ show: true, data });
           } : undefined}
         />
       )}
@@ -1062,8 +1063,9 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ id, onClose, onEdit, onDe
           log={selectedTerminationDetail} 
           onClose={() => setSelectedTerminationDetail(null)} 
           onEdit={!isReadOnly ? () => {
+            const data = selectedTerminationDetail;
             setSelectedTerminationDetail(null);
-            setShowTerminationForm(true);
+            setShowTerminationForm({ show: true, data });
           } : undefined}
         />
       )}

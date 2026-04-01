@@ -49,11 +49,23 @@ const TerminationForm: React.FC<TerminationFormProps> = ({ accountId, initialDat
     if (result.isConfirmed) {
       try {
         setIsSaving(true);
+
+        // Clean payload to ensure only valid fields are sent to database
+        const payload = {
+          account_id: formData.account_id,
+          termination_type: formData.termination_type,
+          termination_date: formData.termination_date,
+          reason: formData.reason,
+          severance_amount: formData.severance_amount,
+          penalty_amount: formData.penalty_amount,
+          file_id: formData.file_id || null
+        };
+
         if (initialData) {
-          await disciplineService.updateTermination(initialData.id, formData as any);
+          await disciplineService.updateTermination(initialData.id, payload as any);
           Swal.fire({ title: 'Berhasil!', text: 'Data pengakhiran telah diperbarui.', icon: 'success', timer: 1500, showConfirmButton: false });
         } else {
-          await disciplineService.createTermination(formData);
+          await disciplineService.createTermination(payload as any);
           Swal.fire({ title: 'Berhasil!', text: 'Proses exit telah diselesaikan.', icon: 'success', timer: 1500, showConfirmButton: false });
         }
         onSuccess();

@@ -35,11 +35,21 @@ const WarningForm: React.FC<WarningFormProps> = ({ accountId, initialData, onClo
     e.preventDefault();
     try {
       setIsSaving(true);
+      
+      // Clean payload to ensure only valid fields are sent to database
+      const payload = {
+        account_id: formData.account_id,
+        warning_type: formData.warning_type,
+        reason: formData.reason,
+        issue_date: formData.issue_date,
+        file_id: formData.file_id || null
+      };
+
       if (initialData) {
-        await disciplineService.updateWarning(initialData.id, formData as any);
+        await disciplineService.updateWarning(initialData.id, payload as any);
         Swal.fire({ title: 'Berhasil!', text: 'Surat Peringatan telah diperbarui.', icon: 'success', timer: 1500, showConfirmButton: false });
       } else {
-        await disciplineService.createWarning(formData);
+        await disciplineService.createWarning(payload as any);
         Swal.fire({ title: 'Berhasil!', text: 'Surat Peringatan telah dicatat.', icon: 'success', timer: 1500, showConfirmButton: false });
       }
       onSuccess();
