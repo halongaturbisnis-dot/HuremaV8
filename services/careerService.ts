@@ -245,6 +245,9 @@ export const careerService = {
                     scheduleId = sch.id;
                     scheduleType = sch.name;
                   }
+                } else if (scheduleName.toLowerCase() === 'shift dinamis') {
+                  // Fallback if Shift Dinamis is not in DB but used as a generic type
+                  scheduleType = 'Shift Dinamis';
                 } else {
                   scheduleError = `Jadwal '${scheduleName}' tidak ditemukan dalam master data.`;
                 }

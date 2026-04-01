@@ -43,11 +43,12 @@ const HealthImportModal: React.FC<HealthImportModalProps> = ({ onClose, onSucces
         if (row.file_mcu_id) return row; // Skip if already matched
 
         const normalizedNik = (row.internal_nik || '').toLowerCase();
-        const normalizedDate = (row.change_date || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        const normalizedName = (row.full_name || '').toLowerCase();
 
         const matches = updatedFileList.filter(f => {
           const normalizedFileName = f.name.toLowerCase();
-          return normalizedFileName.includes(normalizedNik) && normalizedFileName.includes(normalizedDate);
+          return (normalizedNik && normalizedFileName.includes(normalizedNik)) || 
+                 (normalizedName && normalizedFileName.includes(normalizedName));
         });
 
         return {
@@ -80,11 +81,12 @@ const HealthImportModal: React.FC<HealthImportModalProps> = ({ onClose, onSucces
     // Re-run matching for all rows
     setPreviewData(prev => prev.map(row => {
       const normalizedNik = (row.internal_nik || '').toLowerCase();
-      const normalizedDate = (row.change_date || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      const normalizedName = (row.full_name || '').toLowerCase();
 
       const matches = updatedFileList.filter(f => {
         const normalizedFileName = f.name.toLowerCase();
-        return normalizedFileName.includes(normalizedNik) && normalizedFileName.includes(normalizedDate);
+        return (normalizedNik && normalizedFileName.includes(normalizedNik)) || 
+               (normalizedName && normalizedFileName.includes(normalizedName));
       });
 
       return {
@@ -229,11 +231,14 @@ const HealthImportModal: React.FC<HealthImportModalProps> = ({ onClose, onSucces
                             </td>
                             <td className="px-4 py-2">{row.change_date}</td>
                             <td className="px-4 py-2">
-                              {row.errorMsg ? (
-                                <span className="text-red-500 font-medium italic">{row.errorMsg}</span>
-                              ) : (
-                                <span className="text-emerald-600 font-medium italic">Data Valid</span>
-                              )}
+                              <div className="flex flex-col gap-1">
+                                {row.notes && <span className="text-gray-600 font-medium">{row.notes}</span>}
+                                {row.errorMsg ? (
+                                  <span className="text-red-500 font-bold italic">{row.errorMsg}</span>
+                                ) : (
+                                  <span className="text-emerald-600 font-bold italic">Data Valid</span>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}

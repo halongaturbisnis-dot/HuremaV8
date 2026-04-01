@@ -192,12 +192,15 @@ export const healthService = {
               // Smart matching logic for files
               let matchedFileId = null;
               let matchedFilename = null;
-              if (internalNik && changeDate) {
-                const normalizedNik = internalNik.toLowerCase();
-                const normalizedDate = changeDate.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+              if (internalNik || fullName) {
+                const normalizedNik = (internalNik || '').toLowerCase();
+                const normalizedName = (fullName || '').toLowerCase();
                 Object.entries(bulkFiles).forEach(([fileName, fileId]) => {
                   const normalizedFileName = fileName.toLowerCase();
-                  if (normalizedFileName.includes(normalizedNik) && normalizedFileName.includes(normalizedDate)) {
+                  if (
+                    (normalizedNik && normalizedFileName.includes(normalizedNik)) || 
+                    (normalizedName && normalizedFileName.includes(normalizedName))
+                  ) {
                     matchedFileId = fileId;
                     matchedFilename = fileName;
                   }
@@ -247,7 +250,6 @@ export const healthService = {
                 internal_nik: internalNik,
                 mcu_status: row['Status Medis (*)'],
                 health_risk: row['Risiko Kesehatan (*)'],
-                diagnosis: row['Diagnosa (*)'],
                 change_date: changeDate,
                 notes: row['Catatan / Keterangan'] || null,
                 file_mcu_id: matchedFileId,

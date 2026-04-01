@@ -393,7 +393,7 @@ const LogForm: React.FC<LogFormProps> = ({ type, accountId, initialData, isEdit 
                       <p className="text-[10px] font-bold text-gray-600 uppercase">
                         {uploading ? 'Sedang Mengunggah...' : formData.file_mcu_id ? 'File Medis Terunggah' : 'Upload File Medis'}
                       </p>
-                      <p className="text-[8px] text-gray-400 truncate">{formData.file_mcu_id || 'ID akan tersimpan di G-Drive'}</p>
+            
                     </div>
                     {formData.file_mcu_id && (
                       <a 

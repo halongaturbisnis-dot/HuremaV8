@@ -159,7 +159,7 @@ const TerminationForm: React.FC<TerminationFormProps> = ({ accountId, initialDat
               <label className="flex items-center gap-3 cursor-pointer">
                 <Upload size={16} className={formData.file_id ? 'text-red-600' : 'text-gray-300'} />
                 <div className="flex-1">
-                  <p className="text-[10px] font-bold text-gray-600 uppercase">{uploading ? 'Mengunggah...' : formData.file_id ? 'DOKUMEN TERUNGGAH' : 'PILIH FILE PDF'}</p>
+                  <p className="text-[10px] font-bold text-gray-600 uppercase">{uploading ? 'Mengunggah...' : formData.file_id ? 'FILE TERUNGGAH' : 'PILIH FILE'}</p>
                 </div>
                 <input type="file" className="hidden" accept="application/pdf" onChange={handleFileUpload} disabled={uploading} />
               </label>

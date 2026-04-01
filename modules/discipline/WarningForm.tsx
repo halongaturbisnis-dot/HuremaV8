@@ -119,7 +119,7 @@ const WarningForm: React.FC<WarningFormProps> = ({ accountId, initialData, onClo
               <label className="flex items-center gap-3 cursor-pointer">
                 <Upload size={16} className={formData.file_id ? 'text-orange-600' : 'text-gray-300'} />
                 <div className="flex-1">
-                  <p className="text-[10px] font-bold text-gray-600 uppercase">{uploading ? 'Mengunggah...' : formData.file_id ? 'SURAT TERUNGGAH' : 'PILIH FILE PDF/SCAN'}</p>
+                  <p className="text-[10px] font-bold text-gray-600 uppercase">{uploading ? 'Mengunggah...' : formData.file_id ? 'FILE TERUNGGAH' : 'PILIH FILE'}</p>
                 </div>
                 <input type="file" className="hidden" accept="image/*,application/pdf" onChange={handleFileUpload} disabled={uploading} />
               </label>
