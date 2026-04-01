@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  MapPin, LayoutDashboard, Settings, Users, 
-  CalendarClock, Files, ChevronDown, ChevronRight, 
+  MapPin, LayoutDashboard, Settings, Users, MonitorCog, UserKey, Radar, Coffee, ChartPie, Toolbox, Handshake, Speech, MessagesSquare, 
+  CalendarClock, Files, ChevronDown, ChevronRight, DollarSign, Banknote, Coins, BanknoteArrowDown, HandCoins, Diff,
   Menu as MenuIcon, ChevronLeft, Database, Fingerprint, LogOut, Timer, ClipboardCheck, Plane, Calendar, ClipboardList, Heart, Target, BarChart3, CheckSquare, AlertTriangle, Video, Megaphone, Receipt, Trophy, Wallet, ShieldCheck, Activity
 } from 'lucide-react';
 import { authService } from '../../services/authService';
@@ -179,7 +179,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
               className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 text-gray-600 hover:bg-gray-100`}
               title={isCollapsed ? 'Master' : ''}
             >
-              <Database size={20} className="shrink-0 text-gray-400" />
+              <MonitorCog size={20} className="shrink-0 text-gray-400" />
               {!isCollapsed && (
                 <div className="flex items-center justify-between flex-1 overflow-hidden">
                   <span className="font-medium text-sm truncate">Master</span>
@@ -231,7 +231,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
                 {isAdmin && (
                   <NavItem 
                     id="admin_settings" 
-                    icon={ShieldCheck} 
+                    icon={UserKey} 
                     label="Pengaturan Admin" 
                     indent 
                     activeTab={activeTab}
@@ -248,7 +248,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
         {(isAdmin || user?.is_hr_admin) && (
           <NavItem 
             id="daily_monitoring" 
-            icon={Activity} 
+            icon={Radar} 
             label="Pemantauan Harian" 
             activeTab={activeTab}
             setActiveTab={setActiveTab}
@@ -277,7 +277,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
             <div className={`mt-1 overflow-hidden transition-all duration-300 ${isCollapsed ? '' : 'max-h-96'}`}>
               <NavItem 
                 id="leave" 
-                icon={Plane} 
+                icon={Coffee} 
                 label="Libur Mandiri" 
                 indent 
                 showNew={isAdmin && pendingSubmissions['Libur Mandiri'] > 0} 
@@ -297,7 +297,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
               />
               <NavItem 
                 id="permission" 
-                icon={ClipboardList} 
+                icon={Calendar} 
                 label="Izin" 
                 indent 
                 showNew={isAdmin && pendingSubmissions['Izin'] > 0} 
@@ -307,7 +307,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
               />
               <NavItem 
                 id="annual_leave" 
-                icon={Calendar} 
+                icon={Plane} 
                 label="Cuti Tahunan" 
                 indent 
                 showNew={isAdmin && pendingSubmissions['Cuti Tahunan'] > 0} 
@@ -350,9 +350,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
               type="button"
               onClick={() => setIsPerformanceOpen(!isPerformanceOpen)}
               className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 text-gray-600 hover:bg-gray-100`}
-              title={isCollapsed ? 'Performance' : ''}
+              title={isCollapsed ? 'Performa' : ''}
             >
-              <BarChart3 size={20} className="shrink-0 text-gray-400" />
+              <Toolbox size={20} className="shrink-0 text-gray-400" />
               {!isCollapsed && (
                 <div className="flex items-center justify-between flex-1 overflow-hidden">
                   <span className="font-medium text-sm truncate">Performance</span>
@@ -383,7 +383,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
                 />
                 <NavItem 
                   id="sales_report" 
-                  icon={MapPin} 
+                  icon={Handshake} 
                   label="Sales Report" 
                   indent 
                   activeTab={activeTab}
@@ -402,10 +402,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
               type="button"
               onClick={() => setIsFinanceOpen(!isFinanceOpen)}
               className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 text-gray-600 hover:bg-gray-100`}
-              title={isCollapsed ? 'Finance' : ''}
+              title={isCollapsed ? 'Finansial' : ''}
             >
               <div className="relative shrink-0">
-                <Receipt size={20} className="text-gray-400" />
+                <DollarSign size={20} className="text-gray-400" />
                 {unreadReimbursements > 0 && isCollapsed && (
                   <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
                 )}
@@ -427,7 +427,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
               <div className={`mt-1 overflow-hidden transition-all duration-300 ${isCollapsed ? '' : 'max-h-96'}`}>
                 <NavItem 
                   id="salary_scheme" 
-                  icon={Receipt} 
+                  icon={Banknote} 
                   label="Skema Gaji" 
                   indent 
                   activeTab={activeTab}
@@ -438,7 +438,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
                   <>
                     <NavItem 
                       id="salary_adjustment" 
-                      icon={Receipt} 
+                      icon={Diff} 
                       label="Kustom Gaji" 
                       indent 
                       activeTab={activeTab}
@@ -458,7 +458,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
                 )}
                 <NavItem 
                   id="reimbursement" 
-                  icon={Receipt} 
+                  icon={Coins} 
                   label="Reimburse" 
                   indent 
                   badge={(isAdmin || user?.is_finance_admin) ? unreadReimbursements : undefined} 
@@ -468,7 +468,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
                 />
                 <NavItem 
                   id="early_salary" 
-                  icon={Receipt} 
+                  icon={BanknoteArrowDown} 
                   label="Ambil Gaji Awal" 
                   indent 
                   activeTab={activeTab}
@@ -478,7 +478,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
                 {(isAdmin || user?.is_finance_admin) && (
                   <NavItem 
                     id="compensation" 
-                    icon={Receipt} 
+                    icon={HandCoins} 
                     label="Kompensasi" 
                     indent 
                     badge={unreadCompensations} 
@@ -495,7 +495,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
         <div className="mt-4">
           <NavItem 
             id="rapat" 
-            icon={Video} 
+            icon={Speech} 
             label="Rapat" 
             activeTab={activeTab}
             setActiveTab={setActiveTab}
@@ -512,14 +512,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
           <NavItem 
             id="employee_of_the_period" 
             icon={Trophy} 
-            label="Employee of The Period" 
+            label="Best Employee" 
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             isCollapsed={isCollapsed}
           />
           <NavItem 
             id="feedback" 
-            icon={ClipboardList} 
+            icon={MessagesSquare} 
             label="Feedback Pegawai" 
             activeTab={activeTab}
             setActiveTab={setActiveTab}
@@ -568,8 +568,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
                   <>
                     <NavItem 
                       id="employee_report" 
-                      icon={BarChart3} 
-                      label="Laporan Karyawan" 
+                      icon={ChartPie} 
+                      label="Infografis Karyawan" 
                       indent 
                       activeTab={activeTab}
                       setActiveTab={setActiveTab}
@@ -590,7 +590,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
                   <NavItem 
                     id="finance_report" 
                     icon={Wallet} 
-                    label="Laporan Finance" 
+                    label="Laporan Finansial" 
                     indent 
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}

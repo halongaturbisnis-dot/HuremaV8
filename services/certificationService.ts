@@ -225,9 +225,8 @@ export const certificationService = {
 
           const results = jsonData
             .filter((row: any) => {
-              const accountId = String(row['Account ID (Hidden)'] || '').trim();
-              const certName = String(row['Nama Sertifikasi (*)'] || '').trim();
-              return accountId !== '' && accountId !== 'ID_AKUN' && accountId !== 'Jangan diubah' && certName !== '';
+              // Only filter out rows that are completely empty
+              return Object.values(row).some(val => val !== null && val !== undefined && String(val).trim() !== '');
             })
             .map((row: any) => {
               const formatExcelDate = (val: any) => {
@@ -255,8 +254,13 @@ export const certificationService = {
                 return str;
               };
 
+              const accountId = String(row['Account ID (Hidden)'] || '').trim();
+              const fullName = String(row['Nama Karyawan'] || '').trim();
+              const internalNik = String(row['NIK Internal'] || '').trim();
+
               const requiredFields = [
-                'Account ID (Hidden)', 'Jenis Sertifikasi (*)', 'Nama Sertifikasi (*)', 
+                'Account ID (Hidden)', 'NIK Internal', 'Nama Karyawan', 
+                'Jenis Sertifikasi (*)', 'Nama Sertifikasi (*)', 
                 'Tanggal Sertifikasi (YYYY-MM-DD) (*)'
               ];
 
@@ -269,14 +273,16 @@ export const certificationService = {
               if (missingFields.length > 0) {
                 const cleanNames = missingFields.map(f => f.replace(' (*)', '').replace(' (YYYY-MM-DD)', ''));
                 errorMsg = `Kolom wajib belum lengkap: [${cleanNames.join(', ')}]`;
+              } else if (accountId === 'ID_AKUN' || accountId === 'Jangan diubah') {
+                errorMsg = 'Account ID tidak valid (masih menggunakan placeholder template)';
               }
 
               const isValid = !errorMsg;
 
               return {
-                account_id: row['Account ID (Hidden)'],
-                full_name: row['Nama Karyawan'],
-                internal_nik: row['NIK Internal'],
+                account_id: accountId,
+                full_name: fullName,
+                internal_nik: internalNik,
                 cert_type: row['Jenis Sertifikasi (*)'],
                 cert_name: row['Nama Sertifikasi (*)'],
                 cert_date: formatExcelDate(row['Tanggal Sertifikasi (YYYY-MM-DD) (*)']),

@@ -301,9 +301,8 @@ export const contractService = {
 
           const results = jsonData
             .filter((row: any) => {
-              const accountId = String(row['Account ID (Hidden)'] || '').trim();
-              const contractNumber = String(row['Nomor Kontrak (*)'] || '').trim();
-              return accountId !== '' && accountId !== 'ID_AKUN' && accountId !== 'Jangan diubah' && contractNumber !== '';
+              // Only filter out rows that are completely empty
+              return Object.values(row).some(val => val !== null && val !== undefined && String(val).trim() !== '');
             })
             .map((row: any) => {
               const formatExcelDate = (val: any) => {
@@ -332,6 +331,9 @@ export const contractService = {
               };
 
               const contractNumber = String(row['Nomor Kontrak (*)'] || '').trim();
+              const accountId = String(row['Account ID (Hidden)'] || '').trim();
+              const fullName = String(row['Nama Karyawan'] || '').trim();
+              const internalNik = String(row['NIK Internal'] || '').trim();
 
               // Smart matching logic
               let matchedFileId = null;
@@ -344,7 +346,8 @@ export const contractService = {
               }
 
               const requiredFields = [
-                'Account ID (Hidden)', 'Nomor Kontrak (*)', 'Jenis Kontrak (*)', 
+                'Account ID (Hidden)', 'NIK Internal', 'Nama Karyawan', 
+                'Nomor Kontrak (*)', 'Jenis Kontrak (*)', 
                 'Tgl Mulai (YYYY-MM-DD) (*)'
               ];
 
@@ -357,11 +360,27 @@ export const contractService = {
               if (missingFields.length > 0) {
                 const cleanNames = missingFields.map(f => f.replace(' (*)', '').replace(' (YYYY-MM-DD)', ''));
                 errorMsg = `Kolom wajib belum lengkap: [${cleanNames.join(', ')}]`;
+              } else if (accountId === 'ID_AKUN' || accountId === 'Jangan diubah') {
+                errorMsg = 'Account ID tidak valid (masih menggunakan placeholder template)';
               }
 
-              let contractType = String(row['Jenis Kontrak (*)'] || '').trim();
-              if (contractType === 'PKWT (Kontrak)') contractType = 'PKWT';
-              else if (contractType === 'PKWTT (Tetap)') contractType = 'PKWTT';
+              let rawContractType = String(row['Jenis Kontrak (*)'] || '').trim();
+              let contractType = rawContractType;
+              
+              const validTypes = ['PKWT', 'PKWTT', 'Magang', 'Harian'];
+              const typeMapping: Record<string, string> = {
+                'PKWT (Kontrak)': 'PKWT',
+                'PKWTT (Tetap)': 'PKWTT'
+              };
+
+              if (typeMapping[contractType]) {
+                contractType = typeMapping[contractType];
+              }
+
+              if (!validTypes.includes(contractType)) {
+                const msg = `Jenis Kontrak '${rawContractType}' tidak valid.`;
+                errorMsg = errorMsg ? `${errorMsg}. ${msg}` : msg;
+              }
 
               let startDate = formatExcelDate(row['Tgl Mulai (YYYY-MM-DD) (*)']);
               let endDate = formatExcelDate(row['Tgl Akhir (YYYY-MM-DD) (*)']);
@@ -369,16 +388,16 @@ export const contractService = {
               // Mitigation: PKWTT neutralization and non-PKWTT validation
               if (contractType === 'PKWTT') {
                 endDate = null;
-              } else if (!endDate) {
-                errorMsg = errorMsg ? `${errorMsg}, Tanggal Akhir wajib diisi` : 'Tanggal Akhir wajib diisi';
+              } else if (!endDate && contractType !== 'PKWTT' && validTypes.includes(contractType)) {
+                errorMsg = errorMsg ? `${errorMsg}. Tanggal Akhir wajib diisi` : 'Tanggal Akhir wajib diisi';
               }
 
               const isValid = !errorMsg;
 
               return {
-                account_id: row['Account ID (Hidden)'],
-                full_name: row['Nama Karyawan'],
-                internal_nik: row['NIK Internal'],
+                account_id: accountId,
+                full_name: fullName,
+                internal_nik: internalNik,
                 contract_number: contractNumber,
                 contract_type: contractType,
                 start_date: startDate,

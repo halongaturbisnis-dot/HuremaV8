@@ -171,12 +171,10 @@ export const careerService = {
 
           const results = jsonData
             .filter((row: any) => {
-              const accountId = String(row['Account ID (Hidden)'] || '').trim();
-              const skNumber = String(row['Nomor SK (*)'] || '').trim();
-              return accountId !== '' && accountId !== 'ID_AKUN' && accountId !== 'Jangan diubah' && skNumber !== '';
+              return Object.values(row).some(val => val !== null && val !== undefined && String(val).trim() !== '');
             })
             .map((row: any) => {
-              const getVal = (key: string) => row[key] || '';
+              const getVal = (key: string) => String(row[key] || '').trim();
               
               const forceString = (val: any) => {
                 if (val === undefined || val === null) return '';
@@ -210,6 +208,10 @@ export const careerService = {
               };
 
               const skNumber = forceString(row['Nomor SK (*)']);
+              const accountId = forceString(row['Account ID (Hidden)']);
+              const fullName = forceString(row['Nama Karyawan']);
+              const internalNik = forceString(row['NIK Internal']);
+
               let matchedFileId = null;
               if (skNumber) {
                 const normalizedNo = skNumber.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
@@ -228,21 +230,28 @@ export const careerService = {
               const scheduleName = getVal('Nama Jadwal (*)');
               let scheduleId = null;
               let scheduleType = '';
+              let scheduleError = '';
 
               if (scheduleName.toLowerCase() === 'fleksibel') {
                 scheduleType = 'Fleksibel';
               } else if (scheduleName.toLowerCase() === 'shift dinamis') {
                 scheduleType = 'Shift Dinamis';
-              } else {
+              } else if (scheduleName) {
                 const sch = allSchedules.find(s => s.name.trim().toLowerCase() === scheduleName.trim().toLowerCase());
                 if (sch) {
-                  scheduleId = sch.id;
-                  scheduleType = sch.name;
+                  // Check if schedule belongs to the location
+                  if (locationId && sch.location_ids && sch.location_ids.length > 0 && !sch.location_ids.includes(locationId)) {
+                    scheduleError = `Jadwal '${scheduleName}' tidak valid untuk lokasi '${locationName}'.`;
+                  } else {
+                    scheduleId = sch.id;
+                    scheduleType = sch.name;
+                  }
                 }
               }
 
               const requiredFields = [
-                'Account ID (Hidden)', 'Nomor SK (*)', 'Jabatan Baru (*)', 
+                'Account ID (Hidden)', 'NIK Internal', 'Nama Karyawan', 
+                'Nomor SK (*)', 'Jabatan Baru (*)', 
                 'Departemen Baru (*)', 'Nama Lokasi (*)', 'Nama Jadwal (*)', 
                 'Tanggal Perubahan (YYYY-MM-DD) (*)'
               ];
@@ -256,8 +265,12 @@ export const careerService = {
               if (missingFields.length > 0) {
                 const cleanNames = missingFields.map(f => f.replace(' (*)', '').replace(' (YYYY-MM-DD)', ''));
                 errorMsg = `Kolom wajib belum lengkap: [${cleanNames.join(', ')}]`;
+              } else if (accountId === 'ID_AKUN' || accountId === 'Jangan diubah') {
+                errorMsg = 'Account ID tidak valid (masih menggunakan placeholder template)';
               } else if (!locationId) {
                 errorMsg = `Lokasi '${locationName}' tidak ditemukan.`;
+              } else if (scheduleError) {
+                errorMsg = scheduleError;
               } else if (!scheduleType) {
                 errorMsg = `Jadwal '${scheduleName}' tidak ditemukan.`;
               }
@@ -265,8 +278,9 @@ export const careerService = {
               const isValid = !errorMsg;
 
               return {
-                account_id: row['Account ID (Hidden)'],
-                full_name: row['Nama Karyawan'],
+                account_id: accountId,
+                full_name: fullName,
+                internal_nik: internalNik,
                 sk_number: skNumber,
                 position: row['Jabatan Baru (*)'],
                 grade: row['Departemen Baru (*)'],

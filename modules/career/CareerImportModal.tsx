@@ -238,6 +238,7 @@ const CareerImportModal: React.FC<CareerImportModalProps> = ({ onClose, onSucces
                           <th className="px-4 py-2">Jabatan Baru</th>
                           <th className="px-4 py-2">Departemen</th>
                           <th className="px-4 py-2">Lokasi</th>
+                          <th className="px-4 py-2">Jadwal</th>
                           <th className="px-4 py-2">Tgl Efektif</th>
                           <th className="px-4 py-2">Keterangan</th>
                         </tr>
@@ -260,6 +261,7 @@ const CareerImportModal: React.FC<CareerImportModalProps> = ({ onClose, onSucces
                             <td className="px-4 py-2">{row.position}</td>
                             <td className="px-4 py-2">{row.grade}</td>
                             <td className="px-4 py-2">{row.location_name}</td>
+                            <td className="px-4 py-2">{row.schedule_type}</td>
                             <td className="px-4 py-2">{row.change_date}</td>
                             <td className="px-4 py-2">
                               <div className="flex flex-col gap-1">

@@ -136,7 +136,7 @@ const DisciplineImportModal: React.FC<DisciplineImportModalProps> = ({ onClose, 
           await disciplineService.commitTerminationImport(previewData);
         }
 
-        Swal.fire('Berhasil!', `Seluruh data ${type === 'warning' ? 'SP' : 'Exit'} telah diperbarui.`, 'success');
+        Swal.fire('Berhasil!', `Seluruh data ${type === 'warning' ? 'Peringatan' : 'Exit'} telah diperbarui.`, 'success');
         onSuccess();
       } catch (error) {
         console.error('Import error:', error);
@@ -158,9 +158,9 @@ const DisciplineImportModal: React.FC<DisciplineImportModalProps> = ({ onClose, 
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <div>
             <h3 className={`text-base font-bold ${type === 'warning' ? 'text-[#006E62]' : 'text-red-600'}`}>
-              Impor Massal {type === 'warning' ? 'Riwayat SP' : 'Karyawan Keluar (Exit)'}
+              Impor Massal {type === 'warning' ? 'Data Peringatan' : 'Data Keluar (Exit)'}
             </h3>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Tahap {step}: {step === 1 ? 'Unggah File & Pratinjau' : 'Unggah Dokumen'}</p>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Tahap {step}: {step === 1 ? 'Unggah Data' : 'Unggah Lampiran'}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={20} /></button>
         </div>
@@ -173,10 +173,7 @@ const DisciplineImportModal: React.FC<DisciplineImportModalProps> = ({ onClose, 
                   <FileUp size={32} />
                 </div>
                 <div className="text-center max-w-md">
-                  <h4 className="text-lg font-bold text-gray-800">1. Data Excel</h4>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Gunakan template untuk mencatat data {type === 'warning' ? 'Surat Peringatan' : 'Exit/Resign'} secara massal.
-                  </p>
+                  <h4 className="text-lg font-bold text-gray-800">Unggah Data</h4>
                 </div>
                 <div className="flex items-center gap-3 mt-6 w-full max-w-md">
                   <button onClick={getTemplateDownloadAction} className="flex-1 flex items-center justify-center gap-2 border border-gray-200 px-4 py-3 rounded-md hover:bg-gray-50 text-sm font-bold text-gray-600 uppercase tracking-tighter">
@@ -184,7 +181,7 @@ const DisciplineImportModal: React.FC<DisciplineImportModalProps> = ({ onClose, 
                   </button>
                   <label className={`flex-1 flex items-center justify-center gap-2 text-white px-4 py-3 rounded-md transition-colors shadow-md text-sm font-bold uppercase tracking-tighter cursor-pointer ${type === 'warning' ? 'bg-[#006E62] hover:bg-[#005a50]' : 'bg-red-600 hover:bg-red-700'}`}>
                     {isProcessing ? <Loader2 size={18} className="animate-spin" /> : <FileUp size={18} />}
-                    {isProcessing ? 'Memproses...' : previewData.length > 0 ? 'Ganti Excel' : 'Unggah Excel'}
+                    {isProcessing ? 'Memproses...' : previewData.length > 0 ? 'Ganti File' : 'Unggah File'}
                     <input type="file" className="hidden" accept=".xlsx" onChange={handleFileChange} disabled={isProcessing} />
                   </label>
                 </div>
@@ -251,7 +248,7 @@ const DisciplineImportModal: React.FC<DisciplineImportModalProps> = ({ onClose, 
                 <div className="text-center max-w-md">
                   <h4 className="text-lg font-bold text-gray-800">2. Dokumen (Opsional)</h4>
                   <p className="text-xs text-gray-500 mt-2">
-                    Unggah file PDF/Gambar. Namai file sesuai <b>Nama Karyawan</b> di Excel agar sistem dapat melakukan mapping otomatis.
+                    Unggah file dan beri Nama file sesuai <b>Nama Karyawan</b> agar sistem dapat melakukan mapping otomatis.
                   </p>
                 </div>
                 <div className="mt-6 w-full max-w-md">

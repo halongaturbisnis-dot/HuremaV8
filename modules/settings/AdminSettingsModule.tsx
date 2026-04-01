@@ -240,7 +240,7 @@ const AdminSettingsModule: React.FC = () => {
               <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
                 <Wallet size={20} />
               </div>
-              <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">Admin Finance</h3>
+              <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">Admin Finansial</h3>
             </div>
             <p className="text-[10px] text-gray-500 leading-relaxed">Akses untuk mengelola Payroll, Reimburse, dan Skema Gaji.</p>
             <div className="mt-4 flex items-center justify-between">
