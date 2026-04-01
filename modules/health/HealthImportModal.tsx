@@ -205,6 +205,7 @@ const HealthImportModal: React.FC<HealthImportModalProps> = ({ onClose, onSucces
                           <th className="px-4 py-2">Status Medis</th>
                           <th className="px-4 py-2">Risiko</th>
                           <th className="px-4 py-2">Tgl Pemeriksaan</th>
+                          <th className="px-4 py-2">Keterangan</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
@@ -227,6 +228,13 @@ const HealthImportModal: React.FC<HealthImportModalProps> = ({ onClose, onSucces
                                </span>
                             </td>
                             <td className="px-4 py-2">{row.change_date}</td>
+                            <td className="px-4 py-2">
+                              {row.errorMsg ? (
+                                <span className="text-red-500 font-medium italic">{row.errorMsg}</span>
+                              ) : (
+                                <span className="text-emerald-600 font-medium italic">Data Valid</span>
+                              )}
+                            </td>
                           </tr>
                         ))}
                       </tbody>

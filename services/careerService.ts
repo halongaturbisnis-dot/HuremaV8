@@ -238,16 +238,15 @@ export const careerService = {
               } else if (scheduleName) {
                 const sch = allSchedules.find(s => s.name.trim().toLowerCase() === scheduleName.trim().toLowerCase());
                 if (sch) {
-                  // Check if schedule belongs to the location (including Shift Dinamis if it's in DB)
+                  // Check if schedule belongs to the location
                   if (locationId && sch.location_ids && sch.location_ids.length > 0 && !sch.location_ids.includes(locationId)) {
                     scheduleError = `Jadwal '${scheduleName}' tidak valid untuk lokasi '${locationName}'.`;
                   } else {
                     scheduleId = sch.id;
                     scheduleType = sch.name;
                   }
-                } else if (scheduleName.toLowerCase() === 'shift dinamis') {
-                  // Fallback if Shift Dinamis is not in DB but used as a generic type
-                  scheduleType = 'Shift Dinamis';
+                } else {
+                  scheduleError = `Jadwal '${scheduleName}' tidak ditemukan dalam master data.`;
                 }
               }
 

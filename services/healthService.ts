@@ -206,7 +206,7 @@ export const healthService = {
 
               const requiredFields = [
                 'Account ID (Hidden)', 'NIK Internal', 'Nama Karyawan', 
-                'Status Medis (*)', 'Risiko Kesehatan (*)', 'Diagnosa (*)',
+                'Status Medis (*)', 'Risiko Kesehatan (*)',
                 'Tanggal Pemeriksaan (YYYY-MM-DD) (*)'
               ];
 
@@ -221,6 +221,22 @@ export const healthService = {
                 errorMsg = `Kolom wajib belum lengkap: [${cleanNames.join(', ')}]`;
               } else if (accountId === 'ID_AKUN' || accountId === 'Jangan diubah') {
                 errorMsg = 'Account ID tidak valid (masih menggunakan placeholder template)';
+              } else {
+                // Value validation for Status Medis
+                const statusMedis = String(row['Status Medis (*)'] || '').trim();
+                const validStatus = ["Sehat", "Fit dengan Catatan", "Unfit", "Menunggu Hasil"];
+                if (!validStatus.includes(statusMedis)) {
+                  errorMsg = `Status Medis '${statusMedis}' tidak valid. Pilih dari dropdown.`;
+                }
+
+                // Value validation for Risiko Kesehatan
+                if (!errorMsg) {
+                  const risikoKesehatan = String(row['Risiko Kesehatan (*)'] || '').trim();
+                  const validRisk = ["Tidak ada risiko kerja", "Risiko Rendah", "Risiko Sedang", "Risiko Tinggi", "Risiko Sangat Tinggi"];
+                  if (!validRisk.includes(risikoKesehatan)) {
+                    errorMsg = `Risiko Kesehatan '${risikoKesehatan}' tidak valid. Pilih dari dropdown.`;
+                  }
+                }
               }
 
               const isValid = !errorMsg;
