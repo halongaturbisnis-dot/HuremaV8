@@ -142,7 +142,7 @@ export const healthService = {
     saveAs(dataBlob, `HUREMA_Health_Template_${new Date().toISOString().split('T')[0]}.xlsx`);
   },
 
-  async processImport(file: File) {
+  async processImport(file: File, bulkFiles: Record<string, string> = {}) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -153,10 +153,10 @@ export const healthService = {
           const jsonData = XLSX.utils.sheet_to_json(firstSheet);
 
           const results = jsonData
+            .slice(2) // Skip instruction rows
             .filter((row: any) => {
-              const accountId = String(row['Account ID (Hidden)'] || '').trim();
-              const status = String(row['Status Medis (*)'] || '').trim();
-              return accountId !== '' && accountId !== 'ID_AKUN' && accountId !== 'Jangan diubah' && status !== '';
+              // Only filter out rows that are completely empty
+              return Object.values(row).some(val => val !== null && val !== undefined && String(val).trim() !== '');
             })
             .map((row: any) => {
               const formatExcelDate = (val: any) => {
@@ -184,8 +184,29 @@ export const healthService = {
                 return str;
               };
 
+              const accountId = String(row['Account ID (Hidden)'] || '').trim();
+              const internalNik = String(row['NIK Internal'] || '').trim();
+              const fullName = String(row['Nama Karyawan'] || '').trim();
+              const changeDate = formatExcelDate(row['Tanggal Pemeriksaan (YYYY-MM-DD) (*)']);
+
+              // Smart matching logic for files
+              let matchedFileId = null;
+              let matchedFilename = null;
+              if (internalNik && changeDate) {
+                const normalizedNik = internalNik.toLowerCase();
+                const normalizedDate = changeDate.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                Object.entries(bulkFiles).forEach(([fileName, fileId]) => {
+                  const normalizedFileName = fileName.toLowerCase();
+                  if (normalizedFileName.includes(normalizedNik) && normalizedFileName.includes(normalizedDate)) {
+                    matchedFileId = fileId;
+                    matchedFilename = fileName;
+                  }
+                });
+              }
+
               const requiredFields = [
-                'Account ID (Hidden)', 'Status Medis (*)', 'Risiko Kesehatan (*)', 
+                'Account ID (Hidden)', 'NIK Internal', 'Nama Karyawan', 
+                'Status Medis (*)', 'Risiko Kesehatan (*)', 'Diagnosa (*)',
                 'Tanggal Pemeriksaan (YYYY-MM-DD) (*)'
               ];
 
@@ -198,19 +219,23 @@ export const healthService = {
               if (missingFields.length > 0) {
                 const cleanNames = missingFields.map(f => f.replace(' (*)', '').replace(' (YYYY-MM-DD)', ''));
                 errorMsg = `Kolom wajib belum lengkap: [${cleanNames.join(', ')}]`;
+              } else if (accountId === 'ID_AKUN' || accountId === 'Jangan diubah') {
+                errorMsg = 'Account ID tidak valid (masih menggunakan placeholder template)';
               }
 
               const isValid = !errorMsg;
 
               return {
-                account_id: row['Account ID (Hidden)'],
-                full_name: row['Nama Karyawan'],
-                internal_nik: row['NIK Internal'],
+                account_id: accountId,
+                full_name: fullName,
+                internal_nik: internalNik,
                 mcu_status: row['Status Medis (*)'],
                 health_risk: row['Risiko Kesehatan (*)'],
-                change_date: formatExcelDate(row['Tanggal Pemeriksaan (YYYY-MM-DD) (*)']),
+                diagnosis: row['Diagnosa (*)'],
+                change_date: changeDate,
                 notes: row['Catatan / Keterangan'] || null,
-                file_mcu_id: null, // Will be matched in modal
+                file_mcu_id: matchedFileId,
+                matched_filename: matchedFilename,
                 isValid,
                 errorMsg
               };
@@ -229,6 +254,7 @@ export const healthService = {
         account_id: item.account_id,
         mcu_status: item.mcu_status,
         health_risk: item.health_risk,
+        diagnosis: item.diagnosis,
         notes: item.notes,
         change_date: item.change_date,
         file_mcu_id: item.file_mcu_id || null

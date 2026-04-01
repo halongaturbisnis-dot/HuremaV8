@@ -36,7 +36,7 @@ const HealthDetailModal: React.FC<HealthDetailModalProps> = ({ log, onClose, onE
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
           <div>
             <h3 className="text-base font-bold text-[#006E62]">Detail Riwayat Kesehatan</h3>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Informasi Medis & Hasil MCU</p>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Informasi Kesehatan</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-1">
             <X size={20} />
@@ -107,7 +107,7 @@ const HealthDetailModal: React.FC<HealthDetailModalProps> = ({ log, onClose, onE
                 ) : (
                   <div className="flex flex-col items-center gap-3 text-gray-400">
                     <FileText size={48} strokeWidth={1} />
-                    <p className="text-[10px] font-bold uppercase tracking-widest">Dokumen PDF / Non-Gambar</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest">Tidak ada Preview Dokumen</p>
                     <a 
                       href={viewerUrl!} 
                       target="_blank" 

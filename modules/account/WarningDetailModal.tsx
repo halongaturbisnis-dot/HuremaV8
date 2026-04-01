@@ -43,8 +43,8 @@ const WarningDetailModal: React.FC<WarningDetailModalProps> = ({ log, onClose, o
       <div className="bg-white rounded-md shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in duration-200">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
           <div>
-            <h3 className="text-base font-bold text-[#006E62]">Detail Kedisiplinan</h3>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Informasi Pelanggaran & Sanksi</p>
+            <h3 className="text-base font-bold text-[#006E62]">Detail Peringatan</h3>
+
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-1">
             <X size={20} />
@@ -57,14 +57,14 @@ const WarningDetailModal: React.FC<WarningDetailModalProps> = ({ log, onClose, o
               <div className={`p-4 rounded border shadow-sm ${getWarningColor(log.warning_type)}`}>
                 <div className="flex items-center gap-2 mb-1">
                   <AlertTriangle size={14} />
-                  <p className="text-[9px] font-bold uppercase tracking-widest opacity-70">Jenis Sanksi</p>
+                  <p className="text-[9px] font-bold uppercase tracking-widest opacity-70">Jenis Peringatan</p>
                 </div>
                 <p className="text-sm font-bold">{log.warning_type}</p>
               </div>
               <div className="bg-white p-4 rounded border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-2 mb-1">
                   <Calendar size={14} className="text-[#006E62]" />
-                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Tanggal Kejadian</p>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Tanggal Penerbitan</p>
                 </div>
                 <p className="text-sm font-bold text-gray-700">{formatDate(log.issue_date)}</p>
               </div>
@@ -73,7 +73,7 @@ const WarningDetailModal: React.FC<WarningDetailModalProps> = ({ log, onClose, o
             <div className="bg-white p-4 rounded border border-gray-100 shadow-sm flex flex-col">
               <div className="flex items-center gap-2 mb-2">
                 <Info size={14} className="text-[#006E62]" />
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Alasan / Kronologi</p>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Alasan / Pelanggaran</p>
               </div>
               <p className="text-xs text-gray-600 leading-relaxed italic flex-1">
                 {log.reason || 'Tidak ada keterangan tambahan.'}
@@ -85,7 +85,7 @@ const WarningDetailModal: React.FC<WarningDetailModalProps> = ({ log, onClose, o
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Paperclip size={16} className="text-[#006E62]" />
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Lampiran Berita Acara</h4>
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Lampiran</h4>
               </div>
               {viewerUrl && (
                 <a 
@@ -111,7 +111,7 @@ const WarningDetailModal: React.FC<WarningDetailModalProps> = ({ log, onClose, o
                 ) : (
                   <div className="flex flex-col items-center gap-3 text-gray-400">
                     <FileText size={48} strokeWidth={1} />
-                    <p className="text-[10px] font-bold uppercase tracking-widest">Dokumen PDF / Non-Gambar</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest">Tidak ada preview Dokumen</p>
                     <a 
                       href={viewerUrl!} 
                       target="_blank" 

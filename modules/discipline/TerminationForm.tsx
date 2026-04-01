@@ -85,7 +85,6 @@ const TerminationForm: React.FC<TerminationFormProps> = ({ accountId, initialDat
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <div>
             <h3 className="text-base font-bold text-red-600">Proses Pemberhentian (Exit)</h3>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Non-Aktifkan Karyawan</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={20} /></button>
         </div>
@@ -98,7 +97,7 @@ const TerminationForm: React.FC<TerminationFormProps> = ({ accountId, initialDat
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Tipe Pemberhentian</label>
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Jenis Pemberhentian</label>
               <select 
                 value={formData.termination_type}
                 onChange={(e) => setFormData({...formData, termination_type: e.target.value as any})}
@@ -109,7 +108,7 @@ const TerminationForm: React.FC<TerminationFormProps> = ({ accountId, initialDat
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Tanggal Exit</label>
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Tanggal Pemberhetian</label>
               <input 
                 type="date"
                 required
@@ -155,7 +154,7 @@ const TerminationForm: React.FC<TerminationFormProps> = ({ accountId, initialDat
           )}
 
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dokumen Exit / Paklaring (G-Drive)</label>
+            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dokumen Exit / Paklaring</label>
             <div className={`p-3 bg-gray-50 border border-dashed rounded-md ${formData.file_id ? 'border-red-500 bg-red-50/20' : 'border-gray-200'}`}>
               <label className="flex items-center gap-3 cursor-pointer">
                 <Upload size={16} className={formData.file_id ? 'text-red-600' : 'text-gray-300'} />

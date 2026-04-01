@@ -383,7 +383,7 @@ const LogForm: React.FC<LogFormProps> = ({ type, accountId, initialData, isEdit 
                 </div>
               </div>
               <div className="space-y-1">
-                <label htmlFor="file_mcu_id" className="text-[9px] font-bold text-gray-500 uppercase">Upload Hasil MCU (PDF/Gambar)</label>
+                <label htmlFor="file_mcu_id" className="text-[9px] font-bold text-gray-500 uppercase">Upload Hasil Medis</label>
                 <div className={`flex items-center gap-3 p-2 bg-gray-50 border border-dashed rounded cursor-pointer hover:bg-white transition-colors ${formData.file_mcu_id ? 'border-red-500' : 'border-gray-200'}`}>
                   <label htmlFor="file_mcu_id" className="flex items-center gap-2 cursor-pointer w-full">
                     <div className="p-2 bg-white rounded border border-gray-100 shrink-0">
@@ -391,7 +391,7 @@ const LogForm: React.FC<LogFormProps> = ({ type, accountId, initialData, isEdit 
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[10px] font-bold text-gray-600 uppercase">
-                        {uploading ? 'Sedang Mengunggah...' : formData.file_mcu_id ? 'Hasil MCU Terunggah' : 'Upload Hasil MCU'}
+                        {uploading ? 'Sedang Mengunggah...' : formData.file_mcu_id ? 'File Medis Terunggah' : 'Upload File Medis'}
                       </p>
                       <p className="text-[8px] text-gray-400 truncate">{formData.file_mcu_id || 'ID akan tersimpan di G-Drive'}</p>
                     </div>

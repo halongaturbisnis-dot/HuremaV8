@@ -287,7 +287,7 @@ export const disciplineService = {
     saveAs(new Blob([buffer]), `HUREMA_Warning_Template_${new Date().toISOString().split('T')[0]}.xlsx`);
   },
 
-  async processWarningImport(file: File) {
+  async processWarningImport(file: File, bulkFiles: Record<string, string> = {}) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -295,21 +295,67 @@ export const disciplineService = {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
           const workbook = XLSX.read(data, { type: 'array' });
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { range: 0 });
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet);
           
           const results = jsonData.slice(2).map((row: any) => {
             const parseDate = (val: any) => {
               if (typeof val === 'number') return new Date((val - 25569) * 86400 * 1000).toISOString().split('T')[0];
               return val;
             };
+            
+            const accountId = String(row['Account ID (Hidden)'] || '').trim();
+            const internalNik = String(row['NIK Internal'] || '').trim();
+            const fullName = String(row['Nama Karyawan'] || '').trim();
             const issueDate = parseDate(row['Tanggal (YYYY-MM-DD) (*)']);
+            const warningType = row['Jenis Peringatan (*)'];
+            const reason = row['Alasan (*)'];
+
+            // Smart matching logic for files
+            let matchedFileId = null;
+            let matchedFilename = null;
+            if (internalNik && issueDate) {
+              const normalizedNik = internalNik.toLowerCase();
+              const normalizedDate = issueDate.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+              Object.entries(bulkFiles).forEach(([fileName, fileId]) => {
+                const normalizedFileName = fileName.toLowerCase();
+                if (normalizedFileName.includes(normalizedNik) && normalizedFileName.includes(normalizedDate)) {
+                  matchedFileId = fileId;
+                  matchedFilename = fileName;
+                }
+              });
+            }
+
+            const requiredFields = [
+              'Account ID (Hidden)', 'NIK Internal', 'Nama Karyawan', 
+              'Jenis Peringatan (*)', 'Alasan (*)', 'Tanggal (YYYY-MM-DD) (*)'
+            ];
+
+            let errorMsg = '';
+            const missingFields = requiredFields.filter(field => {
+              const val = row[field];
+              return val === undefined || val === null || String(val).trim() === '';
+            });
+
+            if (missingFields.length > 0) {
+              const cleanNames = missingFields.map(f => f.replace(' (*)', '').replace(' (YYYY-MM-DD)', ''));
+              errorMsg = `Kolom wajib belum lengkap: [${cleanNames.join(', ')}]`;
+            } else if (accountId === 'ID_AKUN' || accountId === 'Jangan diubah' || accountId === 'uuid-example') {
+              errorMsg = 'Account ID tidak valid (masih menggunakan placeholder template)';
+            }
+
+            const isValid = !errorMsg;
+
             return {
-              account_id: row['Account ID (Hidden)'],
-              full_name: row['Nama Karyawan'],
-              warning_type: row['Jenis Peringatan (*)'],
-              reason: row['Alasan (*)'],
+              account_id: accountId,
+              full_name: fullName,
+              internal_nik: internalNik,
+              warning_type: warningType,
+              reason: reason,
               issue_date: issueDate,
-              isValid: !!(row['Account ID (Hidden)'] && row['Jenis Peringatan (*)'] && issueDate)
+              file_id: matchedFileId,
+              matched_filename: matchedFilename,
+              isValid,
+              errorMsg
             };
           });
           resolve(results);
@@ -415,7 +461,7 @@ export const disciplineService = {
     saveAs(new Blob([buffer]), `HUREMA_Termination_Template_${new Date().toISOString().split('T')[0]}.xlsx`);
   },
 
-  async processTerminationImport(file: File) {
+  async processTerminationImport(file: File, bulkFiles: Record<string, string> = {}) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -430,8 +476,13 @@ export const disciplineService = {
               if (typeof val === 'number') return new Date((val - 25569) * 86400 * 1000).toISOString().split('T')[0];
               return val;
             };
+
+            const accountId = String(row['Account ID (Hidden)'] || '').trim();
+            const internalNik = String(row['NIK Internal'] || '').trim();
+            const fullName = String(row['Nama Karyawan'] || '').trim();
             const termDate = parseDate(row['Tanggal Exit (YYYY-MM-DD) (*)']);
             const type = row['Tipe Exit (*)'];
+            const reason = row['Alasan (*)'];
             
             let severance = Number(row['Uang Pesangon (PHK)']) || 0;
             let penalty = Number(row['Biaya Penalti (Resign)']) || 0;
@@ -446,16 +497,55 @@ export const disciplineService = {
               mitigationApplied = true;
             }
 
+            // Smart matching logic for files
+            let matchedFileId = null;
+            let matchedFilename = null;
+            if (internalNik && termDate) {
+              const normalizedNik = internalNik.toLowerCase();
+              const normalizedDate = termDate.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+              Object.entries(bulkFiles).forEach(([fileName, fileId]) => {
+                const normalizedFileName = fileName.toLowerCase();
+                if (normalizedFileName.includes(normalizedNik) && normalizedFileName.includes(normalizedDate)) {
+                  matchedFileId = fileId;
+                  matchedFilename = fileName;
+                }
+              });
+            }
+
+            const requiredFields = [
+              'Account ID (Hidden)', 'NIK Internal', 'Nama Karyawan', 
+              'Tipe Exit (*)', 'Tanggal Exit (YYYY-MM-DD) (*)', 'Alasan (*)'
+            ];
+
+            let errorMsg = '';
+            const missingFields = requiredFields.filter(field => {
+              const val = row[field];
+              return val === undefined || val === null || String(val).trim() === '';
+            });
+
+            if (missingFields.length > 0) {
+              const cleanNames = missingFields.map(f => f.replace(' (*)', '').replace(' (YYYY-MM-DD)', ''));
+              errorMsg = `Kolom wajib belum lengkap: [${cleanNames.join(', ')}]`;
+            } else if (accountId === 'ID_AKUN' || accountId === 'Jangan diubah' || accountId === 'uuid-example') {
+              errorMsg = 'Account ID tidak valid (masih menggunakan placeholder template)';
+            }
+
+            const isValid = !errorMsg;
+
             return {
-              account_id: row['Account ID (Hidden)'],
-              full_name: row['Nama Karyawan'],
+              account_id: accountId,
+              full_name: fullName,
+              internal_nik: internalNik,
               termination_type: type,
               termination_date: termDate,
-              reason: row['Alasan (*)'],
+              reason: reason,
               severance_amount: severance,
               penalty_amount: penalty,
+              file_id: matchedFileId,
+              matched_filename: matchedFilename,
               mitigationApplied,
-              isValid: !!(row['Account ID (Hidden)'] && type && termDate)
+              isValid,
+              errorMsg
             };
           });
           resolve(results);

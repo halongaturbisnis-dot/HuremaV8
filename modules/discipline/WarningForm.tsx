@@ -69,8 +69,8 @@ const WarningForm: React.FC<WarningFormProps> = ({ accountId, initialData, onClo
       <div className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-200">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-orange-600">Catat Peringatan (SP)</h3>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Kedisiplinan Karyawan</p>
+            <h3 className="text-base font-bold text-orange-600">Catat Peringatan</h3>
+
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={20} /></button>
         </div>
@@ -114,7 +114,7 @@ const WarningForm: React.FC<WarningFormProps> = ({ accountId, initialData, onClo
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Upload Scan Surat (G-Drive)</label>
+            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Upload Lampiran</label>
             <div className={`p-3 bg-gray-50 border border-dashed rounded-md ${formData.file_id ? 'border-orange-500 bg-orange-50/20' : 'border-gray-200'}`}>
               <label className="flex items-center gap-3 cursor-pointer">
                 <Upload size={16} className={formData.file_id ? 'text-orange-600' : 'text-gray-300'} />

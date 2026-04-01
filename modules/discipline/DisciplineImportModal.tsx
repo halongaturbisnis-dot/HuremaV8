@@ -24,9 +24,14 @@ const DisciplineImportModal: React.FC<DisciplineImportModalProps> = ({ onClose, 
 
     try {
       setIsProcessing(true);
+      
+      // Convert fileList to Record<string, string> for service
+      const bulkFiles: Record<string, string> = {};
+      fileList.forEach(f => { bulkFiles[f.name] = f.id; });
+
       const results = type === 'warning' 
-        ? await disciplineService.processWarningImport(file) as any[]
-        : await disciplineService.processTerminationImport(file) as any[];
+        ? await disciplineService.processWarningImport(file, bulkFiles) as any[]
+        : await disciplineService.processTerminationImport(file, bulkFiles) as any[];
       setPreviewData(results);
     } catch (error) {
       Swal.fire('Gagal', 'Format file tidak didukung atau kolom tidak sesuai.', 'error');
@@ -43,28 +48,30 @@ const DisciplineImportModal: React.FC<DisciplineImportModalProps> = ({ onClose, 
       setIsUploadingAttachments(true);
       const newFiles: { name: string; id: string }[] = [];
       
-      const uploadPromises = Array.from(files).map(async (f) => {
-        const file = f as File;
-        const fileId = await googleDriveService.uploadFile(file);
-        const fileName = file.name.split('.').slice(0, -1).join('.');
-        newFiles.push({ name: fileName, id: fileId });
-      });
-
-      await Promise.all(uploadPromises);
+      const filesArray = Array.from(files);
+      for (const file of filesArray) {
+        const fileId = await googleDriveService.uploadFile(file as File);
+        newFiles.push({ name: (file as File).name, id: fileId });
+      }
       
       const updatedFileList = [...fileList, ...newFiles];
       setFileList(updatedFileList);
       
-      // Update preview data with new attachments based on Name mapping
+      // Update preview data with new attachments based on NIK + Date mapping
       setPreviewData(prev => prev.map(row => {
-        const fullName = row.full_name || '';
-        if (!fullName) return row;
+        if (row.file_id) return row; // Skip if already matched
+
+        const internalNik = row.internal_nik || '';
+        const date = type === 'warning' ? row.issue_date : row.termination_date;
         
-        const normalizedName = String(fullName).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        if (!internalNik || !date) return row;
+        
+        const normalizedNik = internalNik.toLowerCase();
+        const normalizedDate = String(date).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
         
         const matches = updatedFileList.filter(f => {
-          const normalizedFileName = f.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-          return normalizedFileName.includes(normalizedName);
+          const normalizedFileName = f.name.toLowerCase();
+          return normalizedFileName.includes(normalizedNik) && normalizedFileName.includes(normalizedDate);
         });
 
         return {
@@ -95,14 +102,17 @@ const DisciplineImportModal: React.FC<DisciplineImportModalProps> = ({ onClose, 
     setFileList(updatedFileList);
     
     setPreviewData(prev => prev.map(row => {
-      const fullName = row.full_name || '';
-      if (!fullName) return row;
+      const internalNik = row.internal_nik || '';
+      const date = type === 'warning' ? row.issue_date : row.termination_date;
       
-      const normalizedName = String(fullName).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      if (!internalNik || !date) return row;
+      
+      const normalizedNik = internalNik.toLowerCase();
+      const normalizedDate = String(date).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
       
       const matches = updatedFileList.filter(f => {
-        const normalizedFileName = f.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-        return normalizedFileName.includes(normalizedName);
+        const normalizedFileName = f.name.toLowerCase();
+        return normalizedFileName.includes(normalizedNik) && normalizedFileName.includes(normalizedDate);
       });
 
       return {

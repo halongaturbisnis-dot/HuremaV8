@@ -213,6 +213,7 @@ export interface HealthLog {
   account_id: string;
   mcu_status: string;
   health_risk: string;
+  diagnosis?: string | null;
   file_mcu_id?: string | null;
   notes?: string | null;
   change_date: string;

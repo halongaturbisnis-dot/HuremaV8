@@ -235,18 +235,19 @@ export const careerService = {
 
               if (scheduleName.toLowerCase() === 'fleksibel') {
                 scheduleType = 'Fleksibel';
-              } else if (scheduleName.toLowerCase() === 'shift dinamis') {
-                scheduleType = 'Shift Dinamis';
               } else if (scheduleName) {
                 const sch = allSchedules.find(s => s.name.trim().toLowerCase() === scheduleName.trim().toLowerCase());
                 if (sch) {
-                  // Check if schedule belongs to the location
+                  // Check if schedule belongs to the location (including Shift Dinamis if it's in DB)
                   if (locationId && sch.location_ids && sch.location_ids.length > 0 && !sch.location_ids.includes(locationId)) {
                     scheduleError = `Jadwal '${scheduleName}' tidak valid untuk lokasi '${locationName}'.`;
                   } else {
                     scheduleId = sch.id;
                     scheduleType = sch.name;
                   }
+                } else if (scheduleName.toLowerCase() === 'shift dinamis') {
+                  // Fallback if Shift Dinamis is not in DB but used as a generic type
+                  scheduleType = 'Shift Dinamis';
                 }
               }
 

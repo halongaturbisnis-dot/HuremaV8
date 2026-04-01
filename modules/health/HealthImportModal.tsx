@@ -40,16 +40,14 @@ const HealthImportModal: React.FC<HealthImportModalProps> = ({ onClose, onSucces
       
       // Update preview data with smart matching
       setPreviewData(prev => prev.map(row => {
-        const normalizedName = (row.full_name || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        if (row.file_mcu_id) return row; // Skip if already matched
+
+        const normalizedNik = (row.internal_nik || '').toLowerCase();
         const normalizedDate = (row.change_date || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-        const target = normalizedName + normalizedDate;
 
         const matches = updatedFileList.filter(f => {
-          const normalizedFileName = f.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-          // Match if filename contains name + date (precise) or just the name (as requested)
-          return normalizedFileName.includes(target) || 
-                 (normalizedFileName.includes(normalizedName) && normalizedFileName.includes(normalizedDate)) ||
-                 normalizedFileName.includes(normalizedName);
+          const normalizedFileName = f.name.toLowerCase();
+          return normalizedFileName.includes(normalizedNik) && normalizedFileName.includes(normalizedDate);
         });
 
         return {
@@ -81,16 +79,12 @@ const HealthImportModal: React.FC<HealthImportModalProps> = ({ onClose, onSucces
     
     // Re-run matching for all rows
     setPreviewData(prev => prev.map(row => {
-      const normalizedName = (row.full_name || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      const normalizedNik = (row.internal_nik || '').toLowerCase();
       const normalizedDate = (row.change_date || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-      const target = normalizedName + normalizedDate;
 
       const matches = updatedFileList.filter(f => {
-        const normalizedFileName = f.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-        // Match if filename contains name + date (precise) or just the name (as requested)
-        return normalizedFileName.includes(target) || 
-               (normalizedFileName.includes(normalizedName) && normalizedFileName.includes(normalizedDate)) ||
-               normalizedFileName.includes(normalizedName);
+        const normalizedFileName = f.name.toLowerCase();
+        return normalizedFileName.includes(normalizedNik) && normalizedFileName.includes(normalizedDate);
       });
 
       return {
@@ -108,31 +102,13 @@ const HealthImportModal: React.FC<HealthImportModalProps> = ({ onClose, onSucces
 
     try {
       setIsProcessing(true);
-      const results = await healthService.processImport(file) as any[];
       
-      // Initial matching with existing fileList
-      const matchedResults = results.map(row => {
-        const normalizedName = (row.full_name || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-        const normalizedDate = (row.change_date || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-        const target = normalizedName + normalizedDate;
+      // Convert fileList to Record<string, string> for service
+      const bulkFiles: Record<string, string> = {};
+      fileList.forEach(f => { bulkFiles[f.name] = f.id; });
 
-        const matches = fileList.filter(f => {
-          const normalizedFileName = f.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-          // Match if filename contains name + date (precise) or just the name (as requested)
-          return normalizedFileName.includes(target) || 
-                 (normalizedFileName.includes(normalizedName) && normalizedFileName.includes(normalizedDate)) ||
-                 normalizedFileName.includes(normalizedName);
-        });
-
-        return {
-          ...row,
-          file_mcu_id: matches.length > 0 ? matches[0].id : null,
-          matched_filename: matches.length > 0 ? matches[0].name : null,
-          hasConflict: matches.length > 1
-        };
-      });
-
-      setPreviewData(matchedResults);
+      const results = await healthService.processImport(file, bulkFiles) as any[];
+      setPreviewData(results);
     } catch (error) {
       Swal.fire('Gagal', 'Format file tidak didukung atau rusak.', 'error');
     } finally {

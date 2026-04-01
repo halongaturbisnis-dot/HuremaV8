@@ -64,7 +64,7 @@ const TerminationDetailModal: React.FC<TerminationDetailModalProps> = ({ log, on
               <div className="bg-white p-4 rounded border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-2 mb-1">
                   <Calendar size={14} className="text-[#006E62]" />
-                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Tanggal Efektif</p>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Tanggal Pemberhentian</p>
                 </div>
                 <p className="text-sm font-bold text-gray-700">{formatDate(log.termination_date)}</p>
               </div>
@@ -118,7 +118,7 @@ const TerminationDetailModal: React.FC<TerminationDetailModalProps> = ({ log, on
                 ) : (
                   <div className="flex flex-col items-center gap-3 text-gray-400">
                     <FileText size={48} strokeWidth={1} />
-                    <p className="text-[10px] font-bold uppercase tracking-widest">Dokumen PDF / Non-Gambar</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest">Tidak ada preview Dokumen</p>
                     <a 
                       href={viewerUrl!} 
                       target="_blank" 
