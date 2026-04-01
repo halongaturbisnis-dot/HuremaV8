@@ -22,6 +22,27 @@ const HealthImportModal: React.FC<HealthImportModalProps> = ({ onClose, onSucces
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    // Mitigation: Check for duplicate filenames in the current batch and existing list
+    const currentBatchNames = (Array.from(files) as File[]).map(f => f.name.split('.').slice(0, -1).join('.'));
+    const existingNames = fileList.map(f => f.name);
+    
+    const duplicatesInBatch = currentBatchNames.filter((name, index) => currentBatchNames.indexOf(name) !== index);
+    const alreadyExists = currentBatchNames.filter(name => existingNames.includes(name));
+
+    if (duplicatesInBatch.length > 0 || alreadyExists.length > 0) {
+      const errorMsg = duplicatesInBatch.length > 0 
+        ? `Ditemukan nama file yang sama dalam batch ini: [${duplicatesInBatch.join(', ')}].`
+        : `Beberapa file sudah pernah diunggah sebelumnya: [${alreadyExists.join(', ')}].`;
+        
+      Swal.fire({
+        title: 'File Duplikat',
+        text: `${errorMsg} Harap pastikan setiap file memiliki nama yang unik agar sistem tidak bingung saat mapping.`,
+        icon: 'error'
+      });
+      if (e.target) e.target.value = '';
+      return;
+    }
+
     try {
       setIsUploadingAttachments(true);
       const newFiles: { name: string; id: string }[] = [];
