@@ -15,10 +15,10 @@ interface WarningFormProps {
 
 const WarningForm: React.FC<WarningFormProps> = ({ accountId, initialData, onClose, onSuccess }) => {
   const [formData, setFormData] = useState<WarningLogInput>(initialData ? {
-    account_id: initialData.account_id,
-    warning_type: initialData.warning_type,
-    reason: initialData.reason,
-    issue_date: initialData.issue_date,
+    account_id: initialData.account_id || accountId,
+    warning_type: initialData.warning_type || 'Teguran Lisan',
+    reason: initialData.reason || '',
+    issue_date: initialData.issue_date || new Date().toISOString().split('T')[0],
     file_id: initialData.file_id || ''
   } : {
     account_id: accountId,
@@ -46,6 +46,10 @@ const WarningForm: React.FC<WarningFormProps> = ({ accountId, initialData, onClo
       };
 
       if (initialData) {
+        if (!initialData.id) {
+          console.error('Update failed: initialData.id is missing', initialData);
+          throw new Error('ID Peringatan tidak ditemukan untuk proses update');
+        }
         await disciplineService.updateWarning(initialData.id, payload as any);
         Swal.fire({ title: 'Berhasil!', text: 'Surat Peringatan telah diperbarui.', icon: 'success', timer: 1500, showConfirmButton: false });
       } else {

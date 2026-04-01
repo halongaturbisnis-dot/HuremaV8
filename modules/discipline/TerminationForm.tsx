@@ -15,9 +15,9 @@ interface TerminationFormProps {
 
 const TerminationForm: React.FC<TerminationFormProps> = ({ accountId, initialData, onClose, onSuccess }) => {
   const [formData, setFormData] = useState<TerminationLogInput>(initialData ? {
-    account_id: initialData.account_id,
-    termination_type: initialData.termination_type,
-    termination_date: initialData.termination_date,
+    account_id: initialData.account_id || accountId,
+    termination_type: initialData.termination_type || 'Resign',
+    termination_date: initialData.termination_date || new Date().toISOString().split('T')[0],
     reason: initialData.reason || '',
     severance_amount: initialData.severance_amount || 0,
     penalty_amount: initialData.penalty_amount || 0,
@@ -62,6 +62,10 @@ const TerminationForm: React.FC<TerminationFormProps> = ({ accountId, initialDat
         };
 
         if (initialData) {
+          if (!initialData.id) {
+            console.error('Update failed: initialData.id is missing', initialData);
+            throw new Error('ID Pengakhiran tidak ditemukan untuk proses update');
+          }
           await disciplineService.updateTermination(initialData.id, payload as any);
           Swal.fire({ title: 'Berhasil!', text: 'Data pengakhiran telah diperbarui.', icon: 'success', timer: 1500, showConfirmButton: false });
         } else {

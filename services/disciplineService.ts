@@ -109,27 +109,45 @@ export const disciplineService = {
   },
 
   async updateWarning(id: string, input: Partial<WarningLogInput>) {
+    if (!id) throw new Error('ID Peringatan tidak valid');
+
     const sanitized = sanitizePayload({
       ...input,
       warning_type: input.warning_type ? mapWarningTypeToDB(input.warning_type) : undefined
     });
+
+    // Remove id from payload if it exists to prevent updating the primary key
+    if ('id' in sanitized) delete (sanitized as any).id;
+
     const { data, error } = await supabase
       .from('account_warning_logs')
       .update(sanitized)
       .eq('id', id)
-      .select();
+      .select()
+      .maybeSingle();
+
     if (error) throw error;
-    return { ...data[0], warning_type: mapWarningTypeToUI(data[0].warning_type) } as WarningLog;
+    if (!data) throw new Error('Data peringatan tidak ditemukan');
+    return { ...data, warning_type: mapWarningTypeToUI(data.warning_type) } as WarningLog;
   },
 
   async updateTermination(id: string, input: Partial<TerminationLogInput>) {
+    if (!id) throw new Error('ID Pengakhiran tidak valid');
+
     const sanitized = sanitizePayload(input);
+    
+    // Remove id from payload if it exists
+    if ('id' in sanitized) delete (sanitized as any).id;
+
     const { data, error } = await supabase
       .from('account_termination_logs')
       .update(sanitized)
       .eq('id', id)
-      .select();
+      .select()
+      .maybeSingle();
+
     if (error) throw error;
+    if (!data) throw new Error('Data pengakhiran tidak ditemukan');
 
     // Update end_date di profile akun jika termination_date berubah
     if (input.account_id && input.termination_date) {
@@ -138,7 +156,7 @@ export const disciplineService = {
       });
     }
 
-    return data[0] as TerminationLog;
+    return data as TerminationLog;
   },
 
   async deleteWarning(id: string) {
