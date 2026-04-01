@@ -224,6 +224,7 @@ export const certificationService = {
           const jsonData = XLSX.utils.sheet_to_json(firstSheet);
 
           const results = jsonData
+            .slice(2) // Skip "Referensi" and "Contoh" rows
             .filter((row: any) => {
               // Only filter out rows that are completely empty
               return Object.values(row).some(val => val !== null && val !== undefined && String(val).trim() !== '');

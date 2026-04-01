@@ -355,7 +355,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
               <Toolbox size={20} className="shrink-0 text-gray-400" />
               {!isCollapsed && (
                 <div className="flex items-center justify-between flex-1 overflow-hidden">
-                  <span className="font-medium text-sm truncate">Performance</span>
+                  <span className="font-medium text-sm truncate">Performa</span>
                   {isPerformanceOpen ? <ChevronDown size={16} className="text-gray-300" /> : <ChevronRight size={16} className="text-gray-300" />}
                 </div>
               )}
@@ -413,7 +413,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
               {!isCollapsed && (
                 <div className="flex items-center justify-between flex-1 overflow-hidden">
                   <div className="flex items-center gap-2 truncate">
-                    <span className="font-medium text-sm">Finance</span>
+                    <span className="font-medium text-sm">Finansial</span>
                     {(unreadReimbursements > 0 || unreadCompensations > 0) && (
                       <span className="bg-red-500 text-white text-[8px] font-bold px-1 rounded-full">NEW</span>
                     )}

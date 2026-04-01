@@ -170,6 +170,7 @@ export const careerService = {
           const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
 
           const results = jsonData
+            .slice(2) // Skip "Referensi" and "Contoh" rows
             .filter((row: any) => {
               return Object.values(row).some(val => val !== null && val !== undefined && String(val).trim() !== '');
             })
