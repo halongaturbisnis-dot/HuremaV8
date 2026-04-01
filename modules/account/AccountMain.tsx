@@ -1,0 +1,976 @@
+
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Plus, Search, Users, Grid, List as ListIcon, 
+  ArrowLeft, UserCircle, UserCheck, UserX,
+  History, FileBadge, Award, Activity, ShieldAlert,
+  Download, Upload, Image as ImageIcon, FileUp,
+  MapPin, Mail, Phone, Edit2, LogOut, Shield, Briefcase, Trash2
+} from 'lucide-react';
+import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
+import Swal from 'sweetalert2';
+import { accountService } from '../../services/accountService';
+import { locationService } from '../../services/locationService';
+import { scheduleService } from '../../services/scheduleService';
+import { financeService } from '../../services/financeService';
+import { authService } from '../../services/authService';
+import { Account, AccountInput, AuthUser, SalaryScheme } from '../../types';
+import AccountForm from './AccountForm';
+import AccountDetail from './AccountDetail';
+import AccountImportModal from './AccountImportModal';
+import Pagination from '../../components/Common/Pagination';
+import { CardSkeleton } from '../../components/Common/Skeleton';
+import LoadingSpinner from '../../components/Common/LoadingSpinner';
+import { googleDriveService } from '../../services/googleDriveService';
+
+// Import sub-modules
+import CareerLogMain from '../career/CareerLogMain';
+import HealthLogMain from '../health/HealthLogMain';
+import ContractMain from '../contract/ContractMain';
+import CertificationMain from '../certification/CertificationMain';
+import DisciplineMain from '../discipline/DisciplineMain';
+
+interface AccountMainProps {
+  user?: AuthUser | null;
+  setUser?: (user: AuthUser | null) => void;
+  isSelfProfile?: boolean;
+}
+
+
+const WhatsAppIcon = () => (
+  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" className="text-[#25D366] shrink-0">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.067 2.877 1.215 3.076.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+  </svg>
+);
+
+const getWhatsAppLink = (phone: string) => {
+  if (!phone) return '#';
+  const cleanPhone = phone.replace(/\D/g, '');
+  const finalPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone;
+  return `https://wa.me/${finalPhone}`;
+};
+
+const getGmailLink = (email: string) => {
+  if (!email) return '#';
+  return `https://mail.google.com/mail/?view=cm&fs=1&to=${email}`;
+};
+
+const AccountMain: React.FC<AccountMainProps> = ({ user, setUser, isSelfProfile = false }) => {
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [selfAccount, setSelfAccount] = useState<Account | null>(null);
+  const [salaryScheme, setSalaryScheme] = useState<SalaryScheme | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'aktif' | 'non-aktif'>('aktif');
+  const [departmentFilter, setDepartmentFilter] = useState('');
+  const [positionFilter, setPositionFilter] = useState('');
+  const [placementFilter, setPlacementFilter] = useState('');
+  const [employeeTypeFilter, setEmployeeTypeFilter] = useState('');
+  
+  const [filterOptions, setFilterOptions] = useState<{
+    departments: string[];
+    positions: string[];
+    placements: { id: string; name: string }[];
+  }>({
+    departments: [],
+    positions: [],
+    placements: []
+  });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const PAGE_SIZE = 25;
+  const [showForm, setShowForm] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const bulkImageInputRef = useRef<HTMLInputElement>(null);
+
+  // Tab State Internal Modul Akun
+  const [activeSubTab, setActiveSubTab] = useState<'data' | 'career' | 'contract' | 'cert' | 'health' | 'discipline'>('data');
+
+  useEffect(() => {
+    if (isSelfProfile && user) {
+      fetchSelfAccount();
+    } else {
+      fetchAccounts();
+    }
+  }, [isSelfProfile, user, currentPage, statusFilter, departmentFilter, positionFilter, placementFilter, employeeTypeFilter]);
+
+  useEffect(() => {
+    if (!isSelfProfile) {
+      fetchFilterOptions();
+    }
+  }, [isSelfProfile]);
+
+  const fetchFilterOptions = async () => {
+    try {
+      const [attributes, locs] = await Promise.all([
+        accountService.getDistinctAttributes(),
+        locationService.getAll()
+      ]);
+      setFilterOptions({
+        departments: attributes.grades,
+        positions: attributes.positions,
+        placements: locs.map((l: any) => ({ id: l.id, name: l.name }))
+      });
+    } catch (error) {
+      console.error('Error fetching filter options:', error);
+    }
+  };
+
+  const fetchSelfAccount = async () => {
+    if (!user) return;
+    try {
+      setIsLoading(true);
+      const acc = await accountService.getById(user.id);
+      setSelfAccount(acc);
+      
+      // Fetch salary scheme
+      const assignment = await financeService.getAssignmentByAccountId(user.id);
+      if (assignment && assignment.scheme) {
+        setSalaryScheme(assignment.scheme);
+      }
+    } catch (error) {
+      console.error('Error fetching self account:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchAccounts = async (search: string = searchTerm) => {
+    try {
+      setIsLoading(true);
+      const { data, count } = await accountService.getAll(
+        currentPage, 
+        PAGE_SIZE, 
+        search, 
+        statusFilter,
+        {
+          department: departmentFilter,
+          position: positionFilter,
+          placement: placementFilter,
+          employee_type: employeeTypeFilter
+        }
+      );
+      setAccounts(data);
+      setTotalCount(count);
+    } catch (error) {
+      Swal.fire('Gagal', 'Gagal memuat data akun', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreate = async (input: AccountInput) => {
+    setIsSaving(true);
+    const tempId = `temp-${Math.random().toString(36).substring(7)}`;
+    const optimisticAccount: Account = { 
+      ...input, 
+      id: tempId, 
+      created_at: new Date().toISOString()
+    };
+    
+    setAccounts(prev => [...prev, optimisticAccount].sort((a, b) => a.full_name.localeCompare(b.full_name)));
+    setShowForm(false);
+
+    try {
+      const created = await accountService.create(input);
+      setAccounts(prev => prev.map(acc => acc.id === tempId ? created : acc).sort((a, b) => a.full_name.localeCompare(b.full_name)));
+      Swal.fire({
+        title: 'Berhasil!',
+        text: 'Akun baru telah ditambahkan.',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      setAccounts(prev => prev.filter(acc => acc.id !== tempId));
+      Swal.fire('Gagal', 'Terjadi kesalahan saat menyimpan data', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+
+
+  const handleBulkImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const confirm = await Swal.fire({
+      title: 'Konfirmasi Bulk Upload',
+      text: `Anda memilih ${files.length} file. Sistem akan mencocokkan file berdasarkan Nama atau NIK (Format: Nama_photo.jpg). Lanjutkan?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#006E62',
+      confirmButtonText: 'Ya, Unggah',
+      cancelButtonText: 'Batal'
+    });
+
+    if (!confirm.isConfirmed) {
+      if (bulkImageInputRef.current) bulkImageInputRef.current.value = '';
+      return;
+    }
+
+    setIsSaving(true);
+    const results = { success: 0, failed: 0, errors: [] as string[] };
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileName = file.name.split('.').slice(0, -1).join('.'); // Remove extension
+      
+      try {
+        // Parse filename: [Identifier]_[Type]
+        const parts = fileName.split('_');
+        if (parts.length < 2) {
+          throw new Error(`Format nama file tidak valid. Gunakan: Nama_photo.jpg`);
+        }
+
+        const typeStr = parts[parts.length - 1].toLowerCase();
+        const identifier = parts.slice(0, -1).join('_'); // Handle names with underscores
+
+        let type: 'photo' | 'ktp' | 'ijazah' | 'sk' | 'mcu' | 'kontrak';
+        let folderId: string;
+
+        if (typeStr.includes('photo') || typeStr.includes('foto')) {
+          type = 'photo';
+          folderId = 'photos';
+        } else if (typeStr.includes('ktp')) {
+          type = 'ktp';
+          folderId = 'ktp';
+        } else if (typeStr.includes('ijazah') || typeStr.includes('diploma')) {
+          type = 'ijazah';
+          folderId = 'ijazah';
+        } else if (typeStr.includes('sk')) {
+          type = 'sk';
+          folderId = 'sk';
+        } else if (typeStr.includes('mcu')) {
+          type = 'mcu';
+          folderId = 'mcu';
+        } else if (typeStr.includes('kontrak') || typeStr.includes('contract')) {
+          type = 'kontrak';
+          folderId = 'contracts';
+        } else {
+          throw new Error(`Tipe dokumen "${typeStr}" tidak dikenal. Gunakan: photo, ktp, ijazah, sk, mcu, atau kontrak.`);
+        }
+
+        // 1. Upload to Google Drive
+        const driveFileId = await googleDriveService.uploadFile(file, folderId);
+
+        // 2. Update Database
+        await accountService.updateImageByNikOrName(identifier, type, driveFileId);
+        results.success++;
+      } catch (err: any) {
+        results.failed++;
+        results.errors.push(`${file.name}: ${err.message}`);
+      }
+    }
+
+    setIsSaving(false);
+    if (bulkImageInputRef.current) bulkImageInputRef.current.value = '';
+
+    let message = `${results.success} file berhasil diunggah & dicocokkan.`;
+    if (results.failed > 0) {
+      message += `\n${results.failed} file gagal.`;
+    }
+
+    await Swal.fire({
+      title: results.failed === 0 ? 'Bulk Upload Berhasil' : 'Selesai dengan Catatan',
+      text: message,
+      icon: results.failed === 0 ? 'success' : 'warning',
+      footer: results.failed > 0 ? `<div style="max-height: 150px; overflow-y: auto; text-align: left; font-size: 10px; color: #ef4444; background: #fef2f2; padding: 8px; border-radius: 4px; border: 1px solid #fee2e2;">${results.errors.join('<br/>')}</div>` : null
+    });
+
+    fetchAccounts();
+  };
+
+  const handleUpdate = async (id: string, input: Partial<AccountInput>) => {
+    const originalAccounts = [...accounts];
+    
+    // Optimistic update
+    setAccounts(prev => prev.map(acc => {
+      if (acc.id === id) {
+        return { ...acc, ...input } as Account;
+      }
+      return acc;
+    }).sort((a, b) => a.full_name.localeCompare(b.full_name)));
+    
+    setShowForm(false);
+    setEditingAccount(null);
+    setIsSaving(true);
+
+    try {
+      const updated = await accountService.update(id, input);
+      setAccounts(prev => prev.map(acc => acc.id === id ? updated : acc).sort((a, b) => a.full_name.localeCompare(b.full_name)));
+      
+      Swal.fire({
+        title: 'Terupdate!',
+        text: 'Data akun berhasil diperbarui.',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      setAccounts(originalAccounts);
+      Swal.fire('Gagal', 'Gagal memperbarui data', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    const result = await Swal.fire({
+      title: 'Apakah Anda yakin?',
+      text: "Akun ini akan dihapus permanen.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#006E62',
+      cancelButtonColor: '#ef4444',
+      confirmButtonText: 'Ya, hapus!',
+      cancelButtonText: 'Batal'
+    });
+
+    if (result.isConfirmed) {
+      const originalAccounts = [...accounts];
+      
+      // Optimistic delete
+      setAccounts(prev => prev.filter(acc => acc.id !== id));
+      setSelectedIds(prev => prev.filter(sid => sid !== id));
+      setSelectedAccountId(null);
+      setIsSaving(true);
+
+      try {
+        await accountService.delete(id);
+        Swal.fire('Terhapus!', 'Akun telah dihapus.', 'success');
+      } catch (error) {
+        setAccounts(originalAccounts);
+        Swal.fire('Gagal', 'Gagal menghapus data', 'error');
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+
+    const result = await Swal.fire({
+      title: 'Hapus Masal?',
+      text: `Apakah Anda yakin ingin menghapus ${selectedIds.length} akun terpilih secara permanen?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Ya, Hapus Semua',
+      cancelButtonText: 'Batal'
+    });
+
+    if (result.isConfirmed) {
+      setIsSaving(true);
+      try {
+        for (const id of selectedIds) {
+          await accountService.delete(id);
+        }
+        setAccounts(prev => prev.filter(acc => !selectedIds.includes(acc.id)));
+        setSelectedIds([]);
+        Swal.fire('Berhasil!', 'Data terpilih telah dihapus.', 'success');
+      } catch (error) {
+        Swal.fire('Gagal', 'Beberapa data mungkin gagal dihapus.', 'error');
+        fetchAccounts();
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === accounts.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(accounts.map(acc => acc.id));
+    }
+  };
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const getStatusStyle = (type: string, inactive: boolean) => {
+    if (inactive) return 'bg-red-50 text-red-600 border-red-100';
+    
+    switch (type) {
+      case 'Tetap':
+        return 'bg-[#006E62]/10 text-[#006E62] border-[#006E62]/20';
+      case 'Kontrak':
+        return 'bg-blue-50 text-blue-600 border-blue-100';
+      case 'Magang':
+        return 'bg-orange-50 text-orange-600 border-orange-100';
+      case 'Harian':
+        return 'bg-purple-50 text-purple-600 border-purple-100';
+      default:
+        return 'bg-gray-50 text-gray-500 border-gray-100';
+    }
+  };
+  if (selectedAccountId) {
+    return (
+      <div className="animate-in fade-in slide-in-from-right duration-300">
+        <button 
+          onClick={() => setSelectedAccountId(null)}
+          className="mb-4 flex items-center gap-2 text-gray-500 hover:text-[#006E62] transition-colors font-bold text-xs uppercase"
+        >
+          <ArrowLeft size={16} /> Kembali ke Daftar
+        </button>
+        <AccountDetail
+          id={selectedAccountId}
+          data={accounts.find(a => a.id === selectedAccountId)}
+          onClose={() => setSelectedAccountId(null)}
+          onEdit={(acc) => { setEditingAccount(acc); setShowForm(true); }}
+          onDelete={(id) => handleDelete(id)}
+        />
+        {showForm && (
+          <AccountForm 
+            onClose={() => { setShowForm(false); setEditingAccount(null); }}
+            onSubmit={editingAccount ? (data) => handleUpdate(editingAccount.id, data) : handleCreate}
+            initialData={editingAccount || undefined}
+          />
+        )}
+      </div>
+    );
+  }
+
+  const DetailRow = ({ label, value, isPhone = false, isEmail = false }: { label: string, value: any, isPhone?: boolean, isEmail?: boolean }) => (
+    <div>
+      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mb-0.5">{label}</p>
+      {isPhone && value && value !== '-' ? (
+        <a 
+          href={getWhatsAppLink(value)} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-xs text-gray-700 font-medium leading-tight hover:text-[#006E62] transition-colors"
+        >
+          <WhatsAppIcon />
+          {value}
+        </a>
+      ) : isEmail && value && value !== '-' ? (
+        <a 
+          href={getGmailLink(value)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-gray-700 font-medium leading-tight hover:text-[#006E62] transition-colors hover:underline"
+        >
+          {value}
+        </a>
+      ) : (
+        <p className="text-xs text-gray-700 font-medium leading-tight">{value || '-'}</p>
+      )}
+    </div>
+  );
+
+  // Self Profile View
+  if (isSelfProfile) {
+    if (isLoading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-[#006E62] border-t-transparent rounded-full animate-spin"></div></div>;
+    if (!selfAccount) return <div className="text-center py-20 text-gray-400">Data profil tidak ditemukan.</div>;
+
+    if (showForm) {
+      return (
+        <AccountForm 
+          onClose={() => setShowForm(false)} 
+          onSubmit={async (data) => {
+            setIsSaving(true);
+            try {
+              const updated = await accountService.update(selfAccount.id, data);
+              setSelfAccount(updated);
+              setShowForm(false);
+              Swal.fire('Berhasil', 'Profil Anda telah diperbarui.', 'success');
+            } catch (error) {
+              Swal.fire('Gagal', 'Gagal memperbarui profil.', 'error');
+            } finally {
+              setIsSaving(false);
+            }
+          }}
+          initialData={selfAccount}
+          isSelfEdit={true}
+        />
+      );
+    }
+
+    return (
+      <div className="space-y-6 animate-in fade-in duration-300 pb-20">
+        {isSaving && <LoadingSpinner />}
+        
+        {/* Header Profile */}
+        <div className="bg-white rounded-md border border-gray-100 p-6 flex flex-col md:flex-row gap-6 items-start shadow-sm">
+          <div className="w-32 h-32 rounded-md border-4 border-gray-50 overflow-hidden shrink-0 shadow-inner">
+            {selfAccount.photo_google_id ? (
+              <img src={googleDriveService.getFileUrl(selfAccount.photo_google_id)} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400"><UserCircle size={48} /></div>
+            )}
+          </div>
+          
+          <div className="flex-1 space-y-2">
+            <div className="flex items-center gap-3">
+               <h2 className="text-2xl font-bold text-gray-800 tracking-tight">{selfAccount.full_name}</h2>
+               <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded border ${getStatusStyle(selfAccount.employee_type, !!(selfAccount.end_date && selfAccount.end_date <= today))}`}>
+                 {selfAccount.employee_type}
+               </span>
+            </div>
+            <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">{selfAccount.position} • {selfAccount.grade} • {selfAccount.internal_nik}</p>
+            <div className="flex flex-wrap gap-4 pt-2">
+               <div className="flex items-center gap-1.5 text-xs text-gray-600"><MapPin size={14} className="text-gray-400" /> {selfAccount.location?.name || '-'}</div>
+               <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                 <Mail size={14} className="text-gray-400" /> 
+                 {selfAccount.email ? (
+                   <a 
+                     href={getGmailLink(selfAccount.email)} 
+                     target="_blank" 
+                     rel="noopener noreferrer" 
+                     className="hover:text-[#006E62] hover:underline transition-colors"
+                   >
+                     {selfAccount.email}
+                   </a>
+                 ) : '-'}
+               </div>
+               <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                 <Phone size={14} className="text-gray-400" /> 
+                 {selfAccount.phone ? (
+                   <a 
+                     href={getWhatsAppLink(selfAccount.phone)} 
+                     target="_blank" 
+                     rel="noopener noreferrer" 
+                     className="flex items-center gap-1 hover:text-[#006E62] transition-colors"
+                   >
+                     <WhatsAppIcon />
+                     {selfAccount.phone}
+                   </a>
+                 ) : '-'}
+               </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+             <button 
+               onClick={() => setShowForm(true)} 
+               className="flex items-center gap-2 bg-[#006E62] text-white px-4 py-2 rounded shadow-sm hover:bg-[#005a50] transition-all text-xs font-bold uppercase"
+             >
+               <Edit2 size={14} /> Edit Profil
+             </button>
+             <button 
+               onClick={async () => {
+                 const res = await Swal.fire({
+                   title: 'Logout?',
+                   text: 'Anda akan keluar dari aplikasi.',
+                   icon: 'question',
+                   showCancelButton: true,
+                   confirmButtonColor: '#ef4444',
+                   confirmButtonText: 'Ya, Logout',
+                   cancelButtonText: 'Batal'
+                 });
+                 if (res.isConfirmed && setUser) {
+                   authService.logout();
+                   setUser(null);
+                 }
+               }} 
+               className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded border border-red-100 hover:bg-red-100 transition-all text-xs font-bold uppercase"
+             >
+               <LogOut size={14} /> Keluar
+             </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Identitas Lengkap */}
+          <div className="bg-white border border-gray-100 p-5 rounded-md shadow-sm space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-2">
+              <Users size={16} className="text-[#006E62]" />
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-400">Identitas Lengkap</h4>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+               <DetailRow label="NIK KTP" value={selfAccount.nik_ktp} />
+               <DetailRow label="Tanggal Lahir" value={selfAccount.dob} />
+               <DetailRow label="Gender" value={selfAccount.gender} />
+               <DetailRow label="Agama" value={selfAccount.religion} />
+               <DetailRow label="Status Nikah" value={selfAccount.marital_status} />
+               <DetailRow label="Tanggungan" value={selfAccount.dependents_count} />
+            </div>
+            <DetailRow label="Alamat Domisili" value={selfAccount.address} />
+            <div className="grid grid-cols-2 gap-4">
+               <DetailRow label="Pendidikan" value={selfAccount.last_education} />
+               <DetailRow label="Jurusan" value={selfAccount.major} />
+            </div>
+            <div className="pt-2 border-t border-gray-50">
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mb-2">Kontak Darurat</p>
+              <div className="grid grid-cols-2 gap-4">
+                <DetailRow label="Nama" value={selfAccount.emergency_contact_name} />
+                <DetailRow label="Hubungan" value={selfAccount.emergency_contact_rel} />
+                <DetailRow label="No HP" value={selfAccount.emergency_contact_phone} isPhone />
+              </div>
+            </div>
+          </div>
+
+          {/* Karier & Penempatan */}
+          <div className="bg-white border border-gray-100 p-5 rounded-md shadow-sm space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-2">
+              <Briefcase size={16} className="text-[#006E62]" />
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-400">Karier & Penempatan</h4>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <DetailRow label="Jabatan" value={selfAccount.position} />
+              <DetailRow label="Departemen" value={selfAccount.grade} />
+              <DetailRow label="NIK Internal" value={selfAccount.internal_nik} />
+              <DetailRow label="Tipe Karyawan" value={selfAccount.employee_type} />
+              <DetailRow label="Jadwal" value={selfAccount.schedule_type} />
+              <DetailRow label="Mulai Kerja" value={selfAccount.start_date} />
+            </div>
+            <DetailRow label="Lokasi Penempatan" value={selfAccount.location?.name} />
+          </div>
+
+          {/* Keamanan & Akses */}
+          <div className="bg-white border border-gray-100 p-5 rounded-md shadow-sm space-y-4">
+            <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-2">
+              <Shield size={16} className="text-[#006E62]" />
+              <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-400">Keamanan & Akses</h4>
+            </div>
+            <div className="space-y-4">
+              <div className="p-3 bg-gray-50 rounded border border-gray-100">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Kode Akses</p>
+                <p className="text-lg font-mono font-bold text-[#006E62] tracking-[0.2em]">{selfAccount.access_code}</p>
+              </div>
+              <div className="p-3 bg-gray-50 rounded border border-gray-100">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Password</p>
+                <p className="text-sm font-mono text-gray-600">********</p>
+                <p className="text-[9px] text-gray-400 italic mt-1">Gunakan tombol Edit Profil untuk mengubah password.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const SubTab = ({ id, label, icon: Icon }: { id: any, label: string, icon: any }) => (
+    <button
+      onClick={() => setActiveSubTab(id)}
+      className={`flex items-center gap-2 px-5 py-3 text-[11px] font-bold uppercase tracking-widest border-b-2 transition-all whitespace-nowrap ${
+        activeSubTab === id ? 'border-[#006E62] text-[#006E62] bg-emerald-50/30' : 'border-transparent text-gray-400 hover:text-gray-600'
+      }`}
+    >
+      <Icon size={14} />
+      {label}
+    </button>
+  );
+
+  return (
+    <div className="space-y-6">
+      {isSaving && <LoadingSpinner />}
+
+      {/* Internal Sub-Tabs Navigation */}
+      <div className="flex border-b border-gray-100 overflow-x-auto scrollbar-none bg-white -mt-4 mb-6">
+        <SubTab id="data" label="Data Akun" icon={Users} />
+        <SubTab id="contract" label="Kontrak Kerja" icon={FileBadge} />
+        <SubTab id="career" label="Log Karir" icon={History} />
+        <SubTab id="cert" label="Sertifikasi" icon={Award} />
+        <SubTab id="health" label="Log Kesehatan" icon={Activity} />
+        <SubTab id="discipline" label="Peringatan & Keluar" icon={ShieldAlert} />
+      </div>
+
+      {activeSubTab === 'data' ? (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="relative flex-1 max-w-md flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    type="text"
+                    placeholder="Cari (Nama, NIK, Jabatan)..."
+                    className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all text-sm"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setCurrentPage(1);
+                        fetchAccounts(searchTerm);
+                      }
+                    }}
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    setCurrentPage(1);
+                    fetchAccounts(searchTerm);
+                  }}
+                  className="bg-[#006E62] text-white p-2 rounded-md hover:bg-[#005a50] transition-colors"
+                  title="Cari"
+                >
+                  <Search size={18} />
+                </button>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {selectedIds.length > 0 && (
+                  <button 
+                    onClick={handleBulkDelete}
+                    className="flex items-center gap-2 bg-red-50 text-red-600 px-3 py-2 rounded-md border border-red-100 hover:bg-red-100 transition-all text-xs font-bold uppercase mr-2"
+                  >
+                    <Trash2 size={14} />
+                    Hapus ({selectedIds.length})
+                  </button>
+                )}
+                
+                <button 
+                  onClick={() => setShowImportModal(true)}
+                  className="flex items-center gap-2 bg-white text-[#006E62] border border-[#006E62] px-4 py-2 rounded-md hover:bg-emerald-50 transition-colors shadow-sm"
+                >
+                  <FileUp size={18} />
+                  <span className="font-bold text-sm uppercase tracking-tighter">Impor Massal</span>
+                </button>
+
+                <button 
+                  onClick={() => { setEditingAccount(null); setShowForm(true); }}
+                  className="flex items-center gap-2 bg-[#006E62] text-white px-4 py-2 rounded-md hover:bg-[#005a50] transition-colors shadow-sm"
+                >
+                  <Plus size={18} />
+                  <span className="font-bold text-sm uppercase tracking-tighter">Tambah Akun</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Dropdowns */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <select
+                className="bg-white border border-gray-200 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#006E62]"
+                value={departmentFilter}
+                onChange={(e) => {
+                  setDepartmentFilter(e.target.value);
+                  setSearchTerm('');
+                  setCurrentPage(1);
+                }}
+              >
+                <option value="">Semua Departemen</option>
+                {filterOptions.departments.map(dept => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
+              </select>
+
+              <select
+                className="bg-white border border-gray-200 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#006E62]"
+                value={positionFilter}
+                onChange={(e) => {
+                  setPositionFilter(e.target.value);
+                  setSearchTerm('');
+                  setCurrentPage(1);
+                }}
+              >
+                <option value="">Semua Jabatan</option>
+                {filterOptions.positions.map(pos => (
+                  <option key={pos} value={pos}>{pos}</option>
+                ))}
+              </select>
+
+              <select
+                className="bg-white border border-gray-200 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#006E62]"
+                value={placementFilter}
+                onChange={(e) => {
+                  setPlacementFilter(e.target.value);
+                  setSearchTerm('');
+                  setCurrentPage(1);
+                }}
+              >
+                <option value="">Semua Penempatan</option>
+                {filterOptions.placements.map(loc => (
+                  <option key={loc.id} value={loc.id}>{loc.name}</option>
+                ))}
+              </select>
+
+              <select
+                className="bg-white border border-gray-200 rounded-md px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#006E62]"
+                value={employeeTypeFilter}
+                onChange={(e) => {
+                  setEmployeeTypeFilter(e.target.value);
+                  setSearchTerm('');
+                  setCurrentPage(1);
+                }}
+              >
+                <option value="">Semua Status</option>
+                <option value="Tetap">Tetap</option>
+                <option value="Kontrak">Kontrak</option>
+                <option value="Magang">Magang</option>
+                <option value="Harian">Harian</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex border-b border-gray-100">
+            <button
+              onClick={() => { setStatusFilter('aktif'); setCurrentPage(1); setSearchTerm(''); }}
+              className={`px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-2 ${
+                statusFilter === 'aktif' ? 'border-[#006E62] text-[#006E62]' : 'border-transparent text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              <UserCheck size={14} />
+              Karyawan Aktif {statusFilter === 'aktif' && <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] bg-[#006E62] text-white`}>{totalCount}</span>}
+            </button>
+            <button
+              onClick={() => { setStatusFilter('non-aktif'); setCurrentPage(1); setSearchTerm(''); }}
+              className={`px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b-2 transition-all flex items-center gap-2 ${
+                statusFilter === 'non-aktif' ? 'border-red-500 text-red-600' : 'border-transparent text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              <UserX size={14} />
+              Karyawan Non-Aktif {statusFilter === 'non-aktif' && <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] bg-red-500 text-white`}>{totalCount}</span>}
+            </button>
+          </div>
+
+          {isLoading ? (
+            <div className="bg-white border border-gray-100 rounded-md p-8 flex justify-center">
+              <div className="w-8 h-8 border-4 border-[#006E62] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : accounts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+              <Users size={48} strokeWidth={1} className="mb-4" />
+              <p className="text-lg">Data akun {statusFilter === 'aktif' ? 'aktif' : 'non-aktif'} tidak ditemukan.</p>
+            </div>
+          ) : (
+            <div className="bg-white border border-gray-100 rounded-md overflow-hidden shadow-sm overflow-x-auto">
+              <table className="w-full text-left min-w-[700px]">
+                <thead className="bg-gray-50 text-[10px] font-bold text-gray-500 uppercase">
+                  <tr>
+                    <th className="px-6 py-3 w-10">
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-gray-300 text-[#006E62] focus:ring-[#006E62]"
+                        checked={selectedIds.length === accounts.length && accounts.length > 0}
+                        onChange={toggleSelectAll}
+                      />
+                    </th>
+                    <th className="px-6 py-3">Nama & Posisi</th>
+                    <th className="px-6 py-3">NIK Internal</th>
+                    <th className="px-6 py-3">Lokasi Penempatan</th>
+                    <th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {accounts.map(account => {
+                    const isInactive = account.end_date && account.end_date <= today;
+                    const isSelected = selectedIds.includes(account.id);
+                    return (
+                      <tr 
+                        key={account.id} 
+                        className={`hover:bg-gray-50 transition-colors ${isSelected ? 'bg-emerald-50/20' : ''}`}
+                      >
+                        <td className="px-6 py-4">
+                          <input 
+                            type="checkbox" 
+                            className="rounded border-gray-300 text-[#006E62] focus:ring-[#006E62]"
+                            checked={isSelected}
+                            onChange={() => toggleSelect(account.id)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </td>
+                        <td className="px-6 py-4" onClick={() => setSelectedAccountId(account.id)}>
+                          <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden shrink-0 border border-gray-200 flex items-center justify-center">
+                            {account.photo_google_id ? (
+                              <img src={googleDriveService.getFileUrl(account.photo_google_id)} className="w-full h-full object-cover" />
+                            ) : (
+                              <UserCircle size={20} className="text-gray-400" />
+                            )}
+                          </div>
+                            <div>
+                              <div className="font-bold text-[#006E62] text-xs">{account.full_name}</div>
+                              <div className="text-[9px] text-gray-400 uppercase font-bold">{account.position}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-xs font-mono text-gray-500" onClick={() => setSelectedAccountId(account.id)}>{account.internal_nik}</td>
+                        <td className="px-6 py-4 text-xs text-gray-500" onClick={() => setSelectedAccountId(account.id)}>{(account as any).location?.name || '-'}</td>
+                        <td className="px-6 py-4" onClick={() => setSelectedAccountId(account.id)}>
+                          <span className={`text-[9px] font-bold px-2 py-1 border rounded-full uppercase ${getStatusStyle(account.employee_type, !!isInactive)}`}>
+                            {isInactive ? 'NON-AKTIF' : account.employee_type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right align-middle">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleDelete(account.id); }}
+                            className="p-1.5 text-[#ef4444] hover:bg-red-50 rounded transition-colors inline-flex items-center justify-center"
+                            title="Hapus Akun"
+                          >
+                            <Trash2 size={14} className="text-[#ef4444]" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="mt-6 flex justify-between items-center bg-white p-4 rounded-md border border-gray-100 shadow-sm">
+            <div className="text-xs text-gray-500 font-medium">
+              Menampilkan <span className="text-[#006E62]">{accounts.length}</span> dari <span className="text-[#006E62]">{totalCount}</span> data akun
+            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalCount={totalCount}
+              pageSize={PAGE_SIZE}
+              onPageChange={(page) => setCurrentPage(page)}
+            />
+          </div>
+        </div>
+      ) : activeSubTab === 'career' ? (
+        <div className="animate-in fade-in duration-300">
+          <CareerLogMain />
+        </div>
+      ) : activeSubTab === 'contract' ? (
+        <div className="animate-in fade-in duration-300">
+          <ContractMain />
+        </div>
+      ) : activeSubTab === 'cert' ? (
+        <div className="animate-in fade-in duration-300">
+          <CertificationMain />
+        </div>
+      ) : activeSubTab === 'health' ? (
+        <div className="animate-in fade-in duration-300">
+          <HealthLogMain />
+        </div>
+      ) : activeSubTab === 'discipline' ? (
+        <div className="animate-in fade-in duration-300">
+          <DisciplineMain />
+        </div>
+      ) : null}
+
+      {showForm && (
+        <AccountForm 
+          onClose={() => { setShowForm(false); setEditingAccount(null); }}
+          onSubmit={editingAccount ? (data) => handleUpdate(editingAccount.id, data) : handleCreate}
+          initialData={editingAccount || undefined}
+        />
+      )}
+
+      {showImportModal && (
+        <AccountImportModal 
+          onClose={() => setShowImportModal(false)}
+          onSuccess={() => {
+            setShowImportModal(false);
+            fetchAccounts();
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+export default AccountMain;
