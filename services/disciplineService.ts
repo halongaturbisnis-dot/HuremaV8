@@ -123,12 +123,12 @@ export const disciplineService = {
       .from('account_warning_logs')
       .update(sanitized)
       .eq('id', id)
-      .select()
-      .maybeSingle();
+      .select();
 
     if (error) throw error;
-    if (!data) throw new Error('Data peringatan tidak ditemukan');
-    return { ...data, warning_type: mapWarningTypeToUI(data.warning_type) } as WarningLog;
+    if (!data || data.length === 0) throw new Error('Data peringatan tidak ditemukan');
+    const updatedData = data[0];
+    return { ...updatedData, warning_type: mapWarningTypeToUI(updatedData.warning_type) } as WarningLog;
   },
 
   async updateTermination(id: string, input: Partial<TerminationLogInput>) {
@@ -143,11 +143,12 @@ export const disciplineService = {
       .from('account_termination_logs')
       .update(sanitized)
       .eq('id', id)
-      .select()
-      .maybeSingle();
+      .select();
 
     if (error) throw error;
-    if (!data) throw new Error('Data pengakhiran tidak ditemukan');
+    if (!data || data.length === 0) throw new Error('Data pengakhiran tidak ditemukan');
+
+    const updatedData = data[0];
 
     // Update end_date di profile akun jika termination_date berubah
     if (input.account_id && input.termination_date) {
@@ -156,7 +157,7 @@ export const disciplineService = {
       });
     }
 
-    return data as TerminationLog;
+    return updatedData as TerminationLog;
   },
 
   async deleteWarning(id: string) {
