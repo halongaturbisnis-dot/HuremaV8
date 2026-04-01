@@ -48,30 +48,36 @@ const DisciplineImportModal: React.FC<DisciplineImportModalProps> = ({ onClose, 
       setIsUploadingAttachments(true);
       const newFiles: { name: string; id: string }[] = [];
       
-      const filesArray = Array.from(files);
+      const filesArray = Array.from(files) as File[];
       for (const file of filesArray) {
-        const fileId = await googleDriveService.uploadFile(file as File);
-        newFiles.push({ name: (file as File).name, id: fileId });
+        // Check for duplicates in current fileList or current batch
+        const isDuplicate = fileList.some(f => f.name === file.name) || 
+                          newFiles.some(f => f.name === file.name);
+        
+        if (isDuplicate) {
+          console.warn(`File skip: ${file.name} sudah ada.`);
+          continue;
+        }
+
+        const fileId = await googleDriveService.uploadFile(file);
+        newFiles.push({ name: file.name, id: fileId });
       }
       
       const updatedFileList = [...fileList, ...newFiles];
       setFileList(updatedFileList);
       
-      // Update preview data with new attachments based on NIK + Date mapping
+      // Update preview data with new attachments based on Employee Name mapping
       setPreviewData(prev => prev.map(row => {
         if (row.file_id) return row; // Skip if already matched
 
-        const internalNik = row.internal_nik || '';
-        const date = type === 'warning' ? row.issue_date : row.termination_date;
+        const fullName = row.full_name || '';
+        if (!fullName) return row;
         
-        if (!internalNik || !date) return row;
-        
-        const normalizedNik = internalNik.toLowerCase();
-        const normalizedDate = String(date).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        const normalizedName = fullName.toLowerCase();
         
         const matches = updatedFileList.filter(f => {
           const normalizedFileName = f.name.toLowerCase();
-          return normalizedFileName.includes(normalizedNik) && normalizedFileName.includes(normalizedDate);
+          return normalizedFileName.includes(normalizedName);
         });
 
         return {
@@ -82,13 +88,17 @@ const DisciplineImportModal: React.FC<DisciplineImportModalProps> = ({ onClose, 
         };
       }));
       
-      Swal.fire({
-        title: 'Berhasil!',
-        text: `${files.length} dokumen berhasil ditambahkan.`,
-        icon: 'success',
-        timer: 1500,
-        showConfirmButton: false
-      });
+      if (newFiles.length > 0) {
+        Swal.fire({
+          title: 'Berhasil!',
+          text: `${newFiles.length} dokumen berhasil ditambahkan.`,
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      } else {
+        Swal.fire('Info', 'Tidak ada file baru yang diunggah (semua file duplikat).', 'info');
+      }
     } catch (error) {
       Swal.fire('Gagal', 'Gagal mengunggah beberapa dokumen.', 'error');
     } finally {
@@ -102,17 +112,14 @@ const DisciplineImportModal: React.FC<DisciplineImportModalProps> = ({ onClose, 
     setFileList(updatedFileList);
     
     setPreviewData(prev => prev.map(row => {
-      const internalNik = row.internal_nik || '';
-      const date = type === 'warning' ? row.issue_date : row.termination_date;
+      const fullName = row.full_name || '';
+      if (!fullName) return row;
       
-      if (!internalNik || !date) return row;
-      
-      const normalizedNik = internalNik.toLowerCase();
-      const normalizedDate = String(date).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      const normalizedName = fullName.toLowerCase();
       
       const matches = updatedFileList.filter(f => {
         const normalizedFileName = f.name.toLowerCase();
-        return normalizedFileName.includes(normalizedNik) && normalizedFileName.includes(normalizedDate);
+        return normalizedFileName.includes(normalizedName);
       });
 
       return {
@@ -213,6 +220,7 @@ const DisciplineImportModal: React.FC<DisciplineImportModalProps> = ({ onClose, 
                           <th className="px-4 py-2">{type === 'warning' ? 'Tipe SP' : 'Tipe Exit'}</th>
                           <th className="px-4 py-2">Alasan</th>
                           <th className="px-4 py-2">{type === 'warning' ? 'Tgl SP' : 'Tgl Exit'}</th>
+                          <th className="px-4 py-2">Keterangan</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
@@ -241,6 +249,9 @@ const DisciplineImportModal: React.FC<DisciplineImportModalProps> = ({ onClose, 
                             </td>
                             <td className="px-4 py-2 truncate max-w-xs">{row.reason}</td>
                             <td className="px-4 py-2">{type === 'warning' ? row.issue_date : row.termination_date}</td>
+                            <td className={`px-4 py-2 font-medium ${row.isValid ? 'text-emerald-600' : 'text-red-600'}`}>
+                              {row.isValid ? 'Data Valid' : row.errorMsg}
+                            </td>
                           </tr>
                         ))}
                       </tbody>

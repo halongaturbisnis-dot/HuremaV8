@@ -17,6 +17,34 @@ const sanitizePayload = (payload: any) => {
   return sanitized;
 };
 
+const mapWarningTypeToDB = (type: string) => {
+  if (type.includes('SP1')) return 'SP1';
+  if (type.includes('SP2')) return 'SP2';
+  if (type.includes('SP3')) return 'SP3';
+  if (type.includes('Teguran')) return 'Teguran';
+  return type;
+};
+
+const mapWarningTypeToUI = (type: string) => {
+  if (type === 'SP1') return 'Surat Peringatan 1 (SP1)';
+  if (type === 'SP2') return 'Surat Peringatan 2 (SP2)';
+  if (type === 'SP3') return 'Surat Peringatan 3 (SP3)';
+  if (type === 'Teguran') return 'Teguran Lisan';
+  return type;
+};
+
+const mapTerminationTypeToDB = (type: string) => {
+  if (type.includes('Resign')) return 'Resign';
+  if (type.includes('Pemecatan') || type.includes('PHK')) return 'Pemecatan';
+  return type;
+};
+
+const mapTerminationTypeToUI = (type: string) => {
+  if (type === 'Resign') return 'Resign';
+  if (type === 'Pemecatan') return 'Pemecatan / PHK';
+  return type;
+};
+
 export const disciplineService = {
   // --- Warnings ---
   async getWarningsAll(page: number = 1, limit: number = 25, searchQuery: string = '') {
@@ -42,7 +70,13 @@ export const disciplineService = {
       .range(from, to);
 
     if (error) throw error;
-    return { data: data as WarningLogExtended[], count: count || 0 };
+    
+    const mappedData = (data || []).map(item => ({
+      ...item,
+      warning_type: mapWarningTypeToUI(item.warning_type)
+    }));
+
+    return { data: mappedData as WarningLogExtended[], count: count || 0 };
   },
 
   async getWarningsByAccountId(accountId: string) {
@@ -52,28 +86,40 @@ export const disciplineService = {
       .eq('account_id', accountId)
       .order('issue_date', { ascending: false });
     if (error) throw error;
-    return (data || []) as WarningLog[];
+    
+    const mappedData = (data || []).map(item => ({
+      ...item,
+      warning_type: mapWarningTypeToUI(item.warning_type)
+    }));
+
+    return mappedData as WarningLog[];
   },
 
   async createWarning(input: WarningLogInput) {
-    const sanitized = sanitizePayload(input);
+    const sanitized = sanitizePayload({
+      ...input,
+      warning_type: mapWarningTypeToDB(input.warning_type)
+    });
     const { data, error } = await supabase
       .from('account_warning_logs')
       .insert([sanitized])
       .select();
     if (error) throw error;
-    return data[0] as WarningLog;
+    return { ...data[0], warning_type: mapWarningTypeToUI(data[0].warning_type) } as WarningLog;
   },
 
   async updateWarning(id: string, input: Partial<WarningLogInput>) {
-    const sanitized = sanitizePayload(input);
+    const sanitized = sanitizePayload({
+      ...input,
+      warning_type: input.warning_type ? mapWarningTypeToDB(input.warning_type) : undefined
+    });
     const { data, error } = await supabase
       .from('account_warning_logs')
       .update(sanitized)
       .eq('id', id)
       .select();
     if (error) throw error;
-    return data[0] as WarningLog;
+    return { ...data[0], warning_type: mapWarningTypeToUI(data[0].warning_type) } as WarningLog;
   },
 
   async updateTermination(id: string, input: Partial<TerminationLogInput>) {
@@ -142,7 +188,13 @@ export const disciplineService = {
       .range(from, to);
 
     if (error) throw error;
-    return { data: data as TerminationLogExtended[], count: count || 0 };
+    
+    const mappedData = (data || []).map(item => ({
+      ...item,
+      termination_type: mapTerminationTypeToUI(item.termination_type)
+    }));
+
+    return { data: mappedData as TerminationLogExtended[], count: count || 0 };
   },
 
   async getTerminationByAccountId(accountId: string) {
@@ -152,11 +204,20 @@ export const disciplineService = {
       .eq('account_id', accountId)
       .maybeSingle();
     if (error) throw error;
-    return data as TerminationLog | null;
+    
+    if (!data) return null;
+
+    return {
+      ...data,
+      termination_type: mapTerminationTypeToUI(data.termination_type)
+    } as TerminationLog;
   },
 
   async createTermination(input: TerminationLogInput) {
-    const sanitized = sanitizePayload(input);
+    const sanitized = sanitizePayload({
+      ...input,
+      termination_type: mapTerminationTypeToDB(input.termination_type)
+    });
     const { data, error } = await supabase
       .from('account_termination_logs')
       .insert([sanitized])
@@ -174,13 +235,13 @@ export const disciplineService = {
         account_id: input.account_id,
         termination_type: input.termination_type,
         termination_date: input.termination_date,
-        amount: input.termination_type === 'Pemecatan / PHK' ? input.severance_amount : input.penalty_amount,
-        type: input.termination_type === 'Pemecatan / PHK' ? 'Severance' : 'Penalty',
+        amount: input.termination_type.includes('PHK') ? input.severance_amount : input.penalty_amount,
+        type: input.termination_type.includes('PHK') ? 'Severance' : 'Penalty',
         reason: input.reason
       });
     }
 
-    return data[0] as TerminationLog;
+    return { ...data[0], termination_type: mapTerminationTypeToUI(data[0].termination_type) } as TerminationLog;
   },
 
   async deleteTermination(id: string, accountId: string) {
@@ -216,7 +277,7 @@ export const disciplineService = {
     const { data: accounts, error } = await supabase
       .from('accounts')
       .select('id, internal_nik, full_name')
-      .is('end_date', null)
+      .or('end_date.is.null,end_date.eq.""')
       .not('access_code', 'ilike', '%SPADMIN%');
 
     if (error) throw error;
@@ -307,18 +368,17 @@ export const disciplineService = {
             const internalNik = String(row['NIK Internal'] || '').trim();
             const fullName = String(row['Nama Karyawan'] || '').trim();
             const issueDate = parseDate(row['Tanggal (YYYY-MM-DD) (*)']);
-            const warningType = row['Jenis Peringatan (*)'];
+            const warningType = String(row['Jenis Peringatan (*)'] || '').trim();
             const reason = row['Alasan (*)'];
 
-            // Smart matching logic for files
+            // Smart matching logic for files - Based on Employee Name only
             let matchedFileId = null;
             let matchedFilename = null;
-            if (internalNik && issueDate) {
-              const normalizedNik = internalNik.toLowerCase();
-              const normalizedDate = issueDate.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            if (fullName) {
+              const normalizedName = fullName.toLowerCase();
               Object.entries(bulkFiles).forEach(([fileName, fileId]) => {
                 const normalizedFileName = fileName.toLowerCase();
-                if (normalizedFileName.includes(normalizedNik) && normalizedFileName.includes(normalizedDate)) {
+                if (normalizedFileName.includes(normalizedName)) {
                   matchedFileId = fileId;
                   matchedFilename = fileName;
                 }
@@ -341,6 +401,12 @@ export const disciplineService = {
               errorMsg = `Kolom wajib belum lengkap: [${cleanNames.join(', ')}]`;
             } else if (accountId === 'ID_AKUN' || accountId === 'Jangan diubah' || accountId === 'uuid-example') {
               errorMsg = 'Account ID tidak valid (masih menggunakan placeholder template)';
+            } else {
+              // Validate Warning Type
+              const validTypes = ['Teguran Lisan', 'Surat Peringatan 1 (SP1)', 'Surat Peringatan 2 (SP2)', 'Surat Peringatan 3 (SP3)'];
+              if (!validTypes.includes(warningType)) {
+                errorMsg = `Jenis Peringatan '${warningType}' tidak valid. Gunakan pilihan dari template.`;
+              }
             }
 
             const isValid = !errorMsg;
@@ -371,7 +437,7 @@ export const disciplineService = {
 
     const payload = validData.map(item => ({
       account_id: item.account_id,
-      warning_type: item.warning_type,
+      warning_type: mapWarningTypeToDB(item.warning_type),
       reason: item.reason,
       issue_date: item.issue_date,
       file_id: item.file_id || null
@@ -386,7 +452,7 @@ export const disciplineService = {
     const { data: accounts, error } = await supabase
       .from('accounts')
       .select('id, internal_nik, full_name')
-      .is('end_date', null)
+      .or('end_date.is.null,end_date.eq.""')
       .not('access_code', 'ilike', '%SPADMIN%');
 
     if (error) throw error;
@@ -481,7 +547,7 @@ export const disciplineService = {
             const internalNik = String(row['NIK Internal'] || '').trim();
             const fullName = String(row['Nama Karyawan'] || '').trim();
             const termDate = parseDate(row['Tanggal Exit (YYYY-MM-DD) (*)']);
-            const type = row['Tipe Exit (*)'];
+            const type = String(row['Tipe Exit (*)'] || '').trim();
             const reason = row['Alasan (*)'];
             
             let severance = Number(row['Uang Pesangon (PHK)']) || 0;
@@ -497,15 +563,14 @@ export const disciplineService = {
               mitigationApplied = true;
             }
 
-            // Smart matching logic for files
+            // Smart matching logic for files - Based on Employee Name only
             let matchedFileId = null;
             let matchedFilename = null;
-            if (internalNik && termDate) {
-              const normalizedNik = internalNik.toLowerCase();
-              const normalizedDate = termDate.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            if (fullName) {
+              const normalizedName = fullName.toLowerCase();
               Object.entries(bulkFiles).forEach(([fileName, fileId]) => {
                 const normalizedFileName = fileName.toLowerCase();
-                if (normalizedFileName.includes(normalizedNik) && normalizedFileName.includes(normalizedDate)) {
+                if (normalizedFileName.includes(normalizedName)) {
                   matchedFileId = fileId;
                   matchedFilename = fileName;
                 }
@@ -528,6 +593,12 @@ export const disciplineService = {
               errorMsg = `Kolom wajib belum lengkap: [${cleanNames.join(', ')}]`;
             } else if (accountId === 'ID_AKUN' || accountId === 'Jangan diubah' || accountId === 'uuid-example') {
               errorMsg = 'Account ID tidak valid (masih menggunakan placeholder template)';
+            } else {
+              // Validate Termination Type
+              const validTypes = ['Resign', 'Pemecatan / PHK'];
+              if (!validTypes.includes(type)) {
+                errorMsg = `Tipe Exit '${type}' tidak valid. Gunakan pilihan dari template.`;
+              }
             }
 
             const isValid = !errorMsg;
@@ -562,7 +633,7 @@ export const disciplineService = {
     // 1. Bulk Insert Termination Logs
     const logPayload = validData.map(item => ({
       account_id: item.account_id,
-      termination_type: item.termination_type,
+      termination_type: mapTerminationTypeToDB(item.termination_type),
       termination_date: item.termination_date,
       reason: item.reason,
       severance_amount: Number(item.severance_amount) || 0,
@@ -580,7 +651,7 @@ export const disciplineService = {
       });
 
       if (item.severance_amount > 0 || item.penalty_amount > 0) {
-        const isSeverance = item.termination_type === 'Pemecatan / PHK';
+        const isSeverance = item.termination_type.includes('PHK');
         await financeService.createCompensation({
           account_id: item.account_id,
           termination_type: item.termination_type,
