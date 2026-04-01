@@ -277,7 +277,7 @@ export const disciplineService = {
     const { data: accounts, error } = await supabase
       .from('accounts')
       .select('id, internal_nik, full_name')
-      .or('end_date.is.null,end_date.eq.""')
+      .is('end_date', null)
       .not('access_code', 'ilike', '%SPADMIN%');
 
     if (error) throw error;
@@ -452,7 +452,7 @@ export const disciplineService = {
     const { data: accounts, error } = await supabase
       .from('accounts')
       .select('id, internal_nik, full_name')
-      .or('end_date.is.null,end_date.eq.""')
+      .is('end_date', null)
       .not('access_code', 'ilike', '%SPADMIN%');
 
     if (error) throw error;
