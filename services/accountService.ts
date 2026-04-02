@@ -592,6 +592,15 @@ export const accountService = {
               const lastEducation = normalizeOption(getVal('Pendidikan Terakhir (*)'), VALID_OPTIONS.last_education);
               const isLeaveAccumulatedStr = normalizeOption(getVal('Akumulasi Cuti (Ya/Tidak) (*)'), VALID_OPTIONS.yes_no);
               
+              // Validate Contract End Date
+              const contractNumber = getVal('Nomor Kontrak (*)');
+              const startDate = formatExcelDate(row['Mulai Kontrak (YYYY-MM-DD) (*)']);
+              const endDate = formatExcelDate(row['Akhir Kontrak (YYYY-MM-DD)']);
+              
+              if (contractType !== 'PKWTT' && !endDate) {
+                errorMsg = 'Tgl Akhir Kontrak wajib diisi untuk jenis kontrak selain PKWTT.';
+              }
+
               // Mapping Jenis Kontrak ke Jenis Karyawan
               let employeeType = 'Kontrak';
               if (contractType === 'PKWTT') employeeType = 'Tetap';
@@ -705,11 +714,11 @@ export const accountService = {
                 ktp_google_id: fileMatches.ktp_google_id,
                 diploma_google_id: fileMatches.diploma_google_id,
                 file_sk_id: fileMatches.file_sk_id,
-                contract_initial: getVal('Nomor Kontrak') ? {
-                  contract_number: getVal('Nomor Kontrak'),
-                  contract_type: getVal('Jenis Kontrak') || (getVal('Jenis Karyawan (*)') === 'Tetap' ? 'PKWTT' : 'PKWT'),
-                  start_date: formatExcelDate(row['Mulai Kontrak (YYYY-MM-DD)']) || formatExcelDate(row['Tgl Mulai (YYYY-MM-DD) (*)']),
-                  end_date: formatExcelDate(row['Akhir Kontrak (YYYY-MM-DD)']) || formatExcelDate(row['Tgl Akhir (YYYY-MM-DD)']),
+                contract_initial: getVal('Nomor Kontrak (*)') ? {
+                  contract_number: getVal('Nomor Kontrak (*)'),
+                  contract_type: getVal('Jenis Kontrak (*)'),
+                  start_date: formatExcelDate(row['Mulai Kontrak (YYYY-MM-DD) (*)']),
+                  end_date: formatExcelDate(row['Akhir Kontrak (YYYY-MM-DD)']),
                   file_id: fileMatches.contract_file_id
                 } : null,
                 isValid,

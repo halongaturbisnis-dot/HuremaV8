@@ -533,7 +533,7 @@ const AccountForm: React.FC<AccountFormProps> = ({ onClose, onSubmit, initialDat
                                 ) : (
                                   <Upload size={12} className="text-gray-400 shrink-0" />
                                 )}
-                                <span className="text-[10px] text-gray-500 truncate">{formData.file_sk_id ? 'SK Terlampir' : 'PDF/Gambar SK'}</span>
+                                <span className="text-[10px] text-gray-500 truncate">{formData.file_sk_id ? 'SK Terlampir' : 'Pilih file SK'}</span>
                                 <input id="file_sk_id" type="file" className="hidden" accept="image/*,application/pdf" onChange={(e) => handleFileUpload(e, 'file_sk_id')} />
                               </label>
                               {uploading['file_sk_id'] && <div className="w-4 h-4 border-2 border-[#006E62] border-t-transparent rounded-full animate-spin"></div>}
@@ -630,7 +630,7 @@ const AccountForm: React.FC<AccountFormProps> = ({ onClose, onSubmit, initialDat
                           </div>
                           <div className="flex-1">
                             <div className="text-[8px] font-bold text-gray-400 group-hover:text-[#006E62] uppercase leading-none mb-1">Upload Ijazah</div>
-                            <div className="text-[10px] text-gray-300 truncate">{formData.diploma_google_id ? 'FILE TERSIMPAN' : 'Pilih File (PDF/Gambar)'}</div>
+                            <div className="text-[10px] text-gray-300 truncate">{formData.diploma_google_id ? 'FILE TERSIMPAN' : 'Pilih File'}</div>
                           </div>
                           <input id="diploma_google_id" type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => handleFileUpload(e, 'diploma_google_id')} />
                           {uploading['diploma_google_id'] && <div className="shrink-0"><div className="w-3 h-3 border-2 border-[#006E62] border-t-transparent rounded-full animate-spin"></div></div>}
