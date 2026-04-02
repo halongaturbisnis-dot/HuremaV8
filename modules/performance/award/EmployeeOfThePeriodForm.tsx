@@ -185,7 +185,7 @@ const EmployeeOfThePeriodForm: React.FC<EmployeeOfThePeriodFormProps> = ({ onClo
               disabled={isSaving}
               className="flex items-center gap-2 bg-[#006E62] text-white px-8 py-2 rounded shadow-md hover:bg-[#005a50] transition-all text-xs font-bold uppercase disabled:opacity-50"
             >
-              {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Simpan Penghargaan
+              {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Simpan
             </button>
           </div>
         </form>
