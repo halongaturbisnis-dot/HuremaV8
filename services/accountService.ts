@@ -840,13 +840,13 @@ export const accountService = {
       // Log kesehatan awal dihapus sesuai permintaan user
     ];
 
-    if (contract_initial && contract_initial.contract_number) {
+    if (contract_initial && (contract_initial.contract_number || contract_initial.contract_type || contract_initial.start_date)) {
       promises.push(supabase.from('account_contracts').insert([{
         account_id: newAccount.id,
-        contract_number: contract_initial.contract_number,
+        contract_number: contract_initial.contract_number || null,
         contract_type: contract_initial.contract_type || (account.employee_type === 'Kontrak' ? 'PKWT' : account.employee_type),
         start_date: contract_initial.start_date || account.start_date,
-        end_date: contract_initial.end_date || account.end_date,
+        end_date: contract_initial.end_date || account.end_date || null,
         file_id: contract_initial.file_id || null,
         notes: 'Initial Contract Record'
       }]));
