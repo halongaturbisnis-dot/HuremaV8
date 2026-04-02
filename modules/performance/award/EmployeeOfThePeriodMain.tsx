@@ -71,25 +71,24 @@ const EmployeeOfThePeriodMain: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <Trophy className="text-amber-500" size={28} />
-            Employee of The Period
+            Best Employee
           </h2>
-          <p className="text-sm text-gray-500 italic">Apresiasi bagi bintang-bintang HUREMA yang bersinar terang.</p>
+          <p className="text-sm text-gray-500 italic">Daftar Karyawan Teladan</p>
         </div>
         {isAdmin && (
           <button
             onClick={() => setIsFormOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all text-sm font-bold shadow-md uppercase tracking-wider"
+            className="flex items-center gap-2 px-4 py-2 bg-[#006E62] text-white rounded-lg hover:bg-[#005a50] transition-all text-sm font-bold shadow-md uppercase tracking-wider"
           >
             <Plus size={18} />
-            Tambah Pemenang
+            Tambah
           </button>
         )}
       </div>
 
       {/* Hero Section - Latest Winner */}
       {latestAward ? (
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 p-1 shadow-xl">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#006E62] via-[#005a50] to-[#004d45] p-1 shadow-xl">
           <div className="bg-white rounded-[15px] overflow-hidden">
             <div className="grid md:grid-cols-12 gap-0">
               <div className="md:col-span-5 relative h-64 md:h-auto bg-gray-100">
@@ -117,11 +116,11 @@ const EmployeeOfThePeriodMain: React.FC = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-amber-50 text-amber-200">
+                  <div className="w-full h-full flex items-center justify-center bg-[#006E62]/10 text-[#006E62]">
                     <User size={80} strokeWidth={1} />
                   </div>
                 )}
-                <div className="absolute top-4 left-4 bg-amber-500 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg flex items-center gap-1.5">
+                <div className="absolute top-4 left-4 bg-[#006E62] text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg flex items-center gap-1.5">
                   <Star size={12} fill="white" />
                   Pemenang Utama
                 </div>
@@ -134,7 +133,7 @@ const EmployeeOfThePeriodMain: React.FC = () => {
                 
                 <div className="space-y-6 relative z-10">
                   <div>
-                    <div className="flex items-center gap-2 text-amber-600 mb-2">
+                    <div className="flex items-center gap-2 text-[#006E62] mb-2">
                       <Calendar size={18} />
                       <span className="text-sm font-bold uppercase tracking-widest">
                         Periode {new Date(0, latestAward.month - 1).toLocaleString('id-ID', { month: 'long' })} {latestAward.year}
@@ -147,7 +146,7 @@ const EmployeeOfThePeriodMain: React.FC = () => {
 
                   {latestAward.reason && (
                     <div className="relative">
-                      <Quote className="absolute -left-6 -top-2 text-amber-200" size={32} />
+                      <Quote className="absolute -left-6 -top-2 text-[#006E62]/20" size={32} />
                       <p className="text-gray-600 italic leading-relaxed text-lg pl-2">
                         {latestAward.reason}
                       </p>
@@ -179,7 +178,7 @@ const EmployeeOfThePeriodMain: React.FC = () => {
           <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
             <Trophy size={40} className="text-gray-200" />
           </div>
-          <p className="text-gray-500 font-medium">Belum ada data Employee of The Period yang diumumkan.</p>
+          <p className="text-gray-500 font-medium">Belum ada data</p>
         </div>
       )}
 
@@ -215,7 +214,7 @@ const EmployeeOfThePeriodMain: React.FC = () => {
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                   <div className="absolute bottom-4 left-4 right-4">
-                    <p className="text-amber-400 text-[10px] font-bold uppercase tracking-widest mb-1">
+                    <p className="text-[#006E62] text-[10px] font-bold uppercase tracking-widest mb-1">
                       {new Date(0, award.month - 1).toLocaleString('id-ID', { month: 'long' })} {award.year}
                     </p>
                     <h4 className="text-white font-bold truncate">
@@ -225,7 +224,7 @@ const EmployeeOfThePeriodMain: React.FC = () => {
                   {isAdmin && (
                     <button 
                       onClick={() => handleDelete(award.id)}
-                      className="absolute top-2 right-2 p-2 bg-white/10 hover:bg-red-500 text-white rounded-lg backdrop-blur-md transition-all opacity-0 group-hover:opacity-100"
+                      className="absolute top-2 right-2 p-2 bg-white/10 hover:bg-[#005a50] text-white rounded-lg backdrop-blur-md transition-all opacity-0 group-hover:opacity-100"
                     >
                       <Trash2 size={14} />
                     </button>

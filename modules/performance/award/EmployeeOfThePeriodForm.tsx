@@ -26,7 +26,9 @@ const EmployeeOfThePeriodForm: React.FC<EmployeeOfThePeriodFormProps> = ({ onClo
     const fetchAccounts = async () => {
       try {
         const data = await accountService.getAll();
-        setAccounts(data);
+        // Filter active accounts: end_date is null or in the future
+        const activeAccounts = data.filter((acc: Account) => !acc.end_date || new Date(acc.end_date) > new Date());
+        setAccounts(activeAccounts);
       } catch (error) {
         console.error('Error fetching accounts:', error);
       }
@@ -60,7 +62,11 @@ const EmployeeOfThePeriodForm: React.FC<EmployeeOfThePeriodFormProps> = ({ onClo
         year: formData.year,
         reason: formData.reason
       };
+      
+      // Check if it's an update or create. The form doesn't seem to have an ID prop for update.
+      // Assuming it's only for create based on the current structure.
       await awardService.createEmployeeOfThePeriod(input);
+      
       Swal.fire({ title: 'Berhasil!', text: 'Penghargaan telah ditambahkan.', icon: 'success', timer: 1500, showConfirmButton: false });
       onSuccess();
     } catch (error) {
@@ -83,8 +89,8 @@ const EmployeeOfThePeriodForm: React.FC<EmployeeOfThePeriodFormProps> = ({ onClo
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-200">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
           <div>
-            <h3 className="text-base font-bold text-gray-800">Kelola Employee of The Period</h3>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Pilih Bintang HUREMA Bulan Ini</p>
+            <h3 className="text-base font-bold text-gray-800">Kelola Best Employee</h3>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Pilih Karyawan Teladan</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={20} /></button>
         </div>
@@ -98,7 +104,7 @@ const EmployeeOfThePeriodForm: React.FC<EmployeeOfThePeriodFormProps> = ({ onClo
                 <select 
                   value={formData.month}
                   onChange={(e) => setFormData({...formData, month: Number(e.target.value)})}
-                  className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none bg-white"
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-[#006E62] outline-none bg-white"
                 >
                   {months.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
                 </select>
@@ -112,7 +118,7 @@ const EmployeeOfThePeriodForm: React.FC<EmployeeOfThePeriodFormProps> = ({ onClo
                   type="number"
                   value={formData.year}
                   onChange={(e) => setFormData({...formData, year: Number(e.target.value)})}
-                  className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none"
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-[#006E62] outline-none"
                 />
               </div>
             </div>
@@ -127,7 +133,7 @@ const EmployeeOfThePeriodForm: React.FC<EmployeeOfThePeriodFormProps> = ({ onClo
                 placeholder="Cari nama atau NIK..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none"
+                className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-[#006E62] outline-none"
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-gray-200">
@@ -137,18 +143,22 @@ const EmployeeOfThePeriodForm: React.FC<EmployeeOfThePeriodFormProps> = ({ onClo
                   onClick={() => toggleAccount(acc.id)}
                   className={`flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-all ${
                     selectedAccountIds.includes(acc.id) 
-                      ? 'border-amber-500 bg-amber-50' 
+                      ? 'border-[#006E62] bg-[#006E62]/10' 
                       : 'border-gray-100 hover:border-gray-300'
                   }`}
                 >
                   <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 overflow-hidden">
-                    <User size={16} />
+                    {acc.photo_google_id ? (
+                      <img src={googleDriveService.getFileUrl(acc.photo_google_id)} alt={acc.full_name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    ) : (
+                      <User size={16} />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] font-bold text-gray-800 truncate">{acc.full_name}</p>
                     <p className="text-[8px] text-gray-400 uppercase">{acc.internal_nik}</p>
                   </div>
-                  {selectedAccountIds.includes(acc.id) && <CheckCircle2 size={14} className="text-amber-500" />}
+                  {selectedAccountIds.includes(acc.id) && <CheckCircle2 size={14} className="text-[#006E62]" />}
                 </div>
               ))}
             </div>
@@ -163,7 +173,7 @@ const EmployeeOfThePeriodForm: React.FC<EmployeeOfThePeriodFormProps> = ({ onClo
                 value={formData.reason}
                 onChange={(e) => setFormData({...formData, reason: e.target.value})}
                 placeholder="Tuliskan alasan mengapa pegawai ini terpilih..."
-                className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-amber-500 outline-none resize-none"
+                className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-[#006E62] outline-none resize-none"
               />
             </div>
           </div>
@@ -172,7 +182,7 @@ const EmployeeOfThePeriodForm: React.FC<EmployeeOfThePeriodFormProps> = ({ onClo
             <button type="button" onClick={onClose} className="px-4 py-2 text-xs font-bold text-gray-500 uppercase">Batal</button>
             <button 
               disabled={isSaving}
-              className="flex items-center gap-2 bg-amber-500 text-white px-8 py-2 rounded shadow-md hover:bg-amber-600 transition-all text-xs font-bold uppercase disabled:opacity-50"
+              className="flex items-center gap-2 bg-[#006E62] text-white px-8 py-2 rounded shadow-md hover:bg-[#005a50] transition-all text-xs font-bold uppercase disabled:opacity-50"
             >
               {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Simpan Penghargaan
             </button>

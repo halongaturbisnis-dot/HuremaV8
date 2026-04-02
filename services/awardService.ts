@@ -57,6 +57,17 @@ export const awardService = {
     return data[0] as EmployeeOfThePeriod;
   },
 
+  async updateEmployeeOfThePeriod(id: string, input: EmployeeOfThePeriodInput) {
+    const { data, error } = await supabase
+      .from('employee_of_the_period')
+      .update(input)
+      .eq('id', id)
+      .select();
+    
+    if (error) throw error;
+    return data[0] as EmployeeOfThePeriod;
+  },
+
   async deleteEmployeeOfThePeriod(id: string) {
     const { error } = await supabase
       .from('employee_of_the_period')
