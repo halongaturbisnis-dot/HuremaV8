@@ -185,8 +185,9 @@ const AccountMain: React.FC<AccountMainProps> = ({ user, setUser, isSelfProfile 
     setShowForm(false);
 
     try {
-      const created = await accountService.create(input);
-      setAccounts(prev => prev.map(acc => acc.id === tempId ? created : acc).sort((a, b) => a.full_name.localeCompare(b.full_name)));
+      await accountService.create(input);
+      // Background refresh untuk memastikan data sinkron
+      await fetchAccounts();
       Swal.fire({
         title: 'Berhasil!',
         text: 'Akun baru telah ditambahkan.',
@@ -320,8 +321,9 @@ const AccountMain: React.FC<AccountMainProps> = ({ user, setUser, isSelfProfile 
     setIsSaving(true);
 
     try {
-      const updated = await accountService.update(id, input);
-      setAccounts(prev => prev.map(acc => acc.id === id ? updated : acc).sort((a, b) => a.full_name.localeCompare(b.full_name)));
+      await accountService.update(id, input);
+      // Background refresh untuk memastikan data sinkron
+      await fetchAccounts();
       
       Swal.fire({
         title: 'Terupdate!',
