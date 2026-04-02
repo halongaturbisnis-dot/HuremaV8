@@ -71,14 +71,16 @@ export const healthService = {
     ws.addRow(exampleRow);
     
     // Add All Accounts (Row 4 onwards)
-    accounts.forEach(acc => {
-      ws.addRow([
-        acc.id,
-        acc.internal_nik,
-        acc.full_name,
-        '', '', '', ''
-      ]);
-    });
+    accounts
+      .filter(acc => !acc.end_date || new Date(acc.end_date) > new Date())
+      .forEach(acc => {
+        ws.addRow([
+          acc.id,
+          acc.internal_nik,
+          acc.full_name,
+          '', '', '', ''
+        ]);
+      });
 
     // Style headers
     const headerRow = ws.getRow(1);
