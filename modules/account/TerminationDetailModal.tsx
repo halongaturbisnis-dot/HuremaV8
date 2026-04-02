@@ -7,10 +7,9 @@ import { googleDriveService } from '../../services/googleDriveService';
 interface TerminationDetailModalProps {
   log: TerminationLog;
   onClose: () => void;
-  onEdit?: () => void;
 }
 
-const TerminationDetailModal: React.FC<TerminationDetailModalProps> = ({ log, onClose, onEdit }) => {
+const TerminationDetailModal: React.FC<TerminationDetailModalProps> = ({ log, onClose }) => {
   const formatDate = (dateStr?: string | null) => {
     if (!dateStr) return '-';
     return new Date(dateStr).toLocaleDateString('id-ID', {
@@ -146,14 +145,6 @@ const TerminationDetailModal: React.FC<TerminationDetailModalProps> = ({ log, on
           >
             Tutup
           </button>
-          {onEdit && (
-            <button 
-              onClick={onEdit} 
-              className="px-8 py-2 bg-[#006E62] text-white rounded text-xs font-bold uppercase hover:bg-[#005a50] transition-colors flex items-center gap-2"
-            >
-              <Edit2 size={14} /> Edit
-            </button>
-          )}
         </div>
       </div>
     </div>

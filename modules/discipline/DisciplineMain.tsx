@@ -22,9 +22,7 @@ const DisciplineMain: React.FC = () => {
   const [importType, setImportType] = useState<'warning' | 'termination'>('warning');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedWarning, setSelectedWarning] = useState<WarningLogExtended | null>(null);
-  const [editingWarning, setEditingWarning] = useState<WarningLogExtended | null>(null);
   const [selectedTermination, setSelectedTermination] = useState<TerminationLogExtended | null>(null);
-  const [editingTermination, setEditingTermination] = useState<TerminationLogExtended | null>(null);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -310,13 +308,6 @@ const DisciplineMain: React.FC = () => {
                     <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-2">
                         <button 
-                          onClick={() => setEditingWarning(w)}
-                          className="p-1.5 text-[#006E62] hover:bg-emerald-50 rounded transition-colors"
-                          title="Edit Peringatan"
-                        >
-                          <Edit2 size={14} className="text-[#006E62]" />
-                        </button>
-                        <button 
                           onClick={() => handleDeleteWarning(w.id)} 
                           className="p-1.5 text-[#ef4444] hover:bg-red-50 rounded transition-colors"
                           title="Hapus Peringatan"
@@ -400,13 +391,6 @@ const DisciplineMain: React.FC = () => {
                     <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-2">
                         <button 
-                          onClick={() => setEditingTermination(t)}
-                          className="p-1.5 text-[#006E62] hover:bg-emerald-50 rounded transition-colors"
-                          title="Edit Pengakhiran"
-                        >
-                          <Edit2 size={14} className="text-[#006E62]" />
-                        </button>
-                        <button 
                           onClick={() => handleDeleteTermination(t.id, t.account_id)} 
                           className="p-1.5 text-[#ef4444] hover:bg-red-50 rounded transition-colors"
                           title="Hapus Pengakhiran"
@@ -436,21 +420,6 @@ const DisciplineMain: React.FC = () => {
         <WarningDetailModal 
           log={selectedWarning} 
           onClose={() => setSelectedWarning(null)} 
-          onEdit={() => {
-            const data = selectedWarning;
-            setSelectedWarning(null);
-            setEditingWarning(data);
-          }}
-        />
-      )}
-
-      {/* Warning Edit Modal */}
-      {editingWarning && (
-        <WarningForm 
-          accountId={editingWarning.account_id} 
-          initialData={editingWarning}
-          onClose={() => setEditingWarning(null)} 
-          onSuccess={() => { setEditingWarning(null); fetchData(); }} 
         />
       )}
 
@@ -459,21 +428,6 @@ const DisciplineMain: React.FC = () => {
         <TerminationDetailModal 
           log={selectedTermination} 
           onClose={() => setSelectedTermination(null)} 
-          onEdit={() => {
-            const data = selectedTermination;
-            setSelectedTermination(null);
-            setEditingTermination(data);
-          }}
-        />
-      )}
-
-      {/* Termination Edit Modal */}
-      {editingTermination && (
-        <TerminationForm 
-          accountId={editingTermination.account_id} 
-          initialData={editingTermination}
-          onClose={() => setEditingTermination(null)} 
-          onSuccess={() => { setEditingTermination(null); fetchData(); }} 
         />
       )}
       <div className="mt-6 flex justify-between items-center bg-white p-4 rounded-md border border-gray-100 shadow-sm">

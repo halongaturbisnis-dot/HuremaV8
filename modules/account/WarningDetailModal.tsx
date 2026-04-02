@@ -7,10 +7,9 @@ import { googleDriveService } from '../../services/googleDriveService';
 interface WarningDetailModalProps {
   log: WarningLog;
   onClose: () => void;
-  onEdit?: () => void;
 }
 
-const WarningDetailModal: React.FC<WarningDetailModalProps> = ({ log, onClose, onEdit }) => {
+const WarningDetailModal: React.FC<WarningDetailModalProps> = ({ log, onClose }) => {
   const formatDate = (dateStr?: string | null) => {
     if (!dateStr) return '-';
     return new Date(dateStr).toLocaleDateString('id-ID', {
@@ -139,14 +138,6 @@ const WarningDetailModal: React.FC<WarningDetailModalProps> = ({ log, onClose, o
           >
             Tutup
           </button>
-          {onEdit && (
-            <button 
-              onClick={onEdit} 
-              className="px-8 py-2 bg-[#006E62] text-white rounded text-xs font-bold uppercase hover:bg-[#005a50] transition-colors flex items-center gap-2"
-            >
-              <Edit2 size={14} /> Edit
-            </button>
-          )}
         </div>
       </div>
     </div>

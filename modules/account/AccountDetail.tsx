@@ -1050,11 +1050,6 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ id, onClose, onEdit, onDe
         <WarningDetailModal 
           log={selectedWarningDetail} 
           onClose={() => setSelectedWarningDetail(null)} 
-          onEdit={!isReadOnly ? () => {
-            const data = selectedWarningDetail;
-            setSelectedWarningDetail(null);
-            setShowWarningForm({ show: true, data });
-          } : undefined}
         />
       )}
 
@@ -1062,11 +1057,6 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ id, onClose, onEdit, onDe
         <TerminationDetailModal 
           log={selectedTerminationDetail} 
           onClose={() => setSelectedTerminationDetail(null)} 
-          onEdit={!isReadOnly ? () => {
-            const data = selectedTerminationDetail;
-            setSelectedTerminationDetail(null);
-            setShowTerminationForm({ show: true, data });
-          } : undefined}
         />
       )}
 
