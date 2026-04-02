@@ -111,10 +111,11 @@ export const disciplineService = {
   async updateWarning(id: string, input: Partial<WarningLogInput>) {
     if (!id) throw new Error('ID Peringatan tidak valid');
 
-    const sanitized = sanitizePayload({
+    const sanitized = {
       ...input,
       warning_type: input.warning_type ? mapWarningTypeToDB(input.warning_type) : undefined
-    });
+    };
+    if (sanitized.file_id === '' || sanitized.file_id === undefined) sanitized.file_id = null;
 
     // Remove id from payload if it exists to prevent updating the primary key
     if ('id' in sanitized) delete (sanitized as any).id;
@@ -134,7 +135,8 @@ export const disciplineService = {
   async updateTermination(id: string, input: Partial<TerminationLogInput>) {
     if (!id) throw new Error('ID Pengakhiran tidak valid');
 
-    const sanitized = sanitizePayload(input);
+    const sanitized = { ...input };
+    if (sanitized.file_id === '' || sanitized.file_id === undefined) sanitized.file_id = null;
     
     // Remove id from payload if it exists
     if ('id' in sanitized) delete (sanitized as any).id;

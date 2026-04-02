@@ -73,7 +73,8 @@ const TerminationForm: React.FC<TerminationFormProps> = ({ accountId, initialDat
           Swal.fire({ title: 'Berhasil!', text: 'Proses exit telah diselesaikan.', icon: 'success', timer: 1500, showConfirmButton: false });
         }
         onSuccess();
-      } catch (error) {
+      } catch (error: any) {
+        console.error('Save error:', error);
         Swal.fire('Gagal', 'Terjadi kesalahan.', 'error');
       } finally {
         setIsSaving(false);

@@ -57,7 +57,8 @@ const WarningForm: React.FC<WarningFormProps> = ({ accountId, initialData, onClo
         Swal.fire({ title: 'Berhasil!', text: 'Surat Peringatan telah dicatat.', icon: 'success', timer: 1500, showConfirmButton: false });
       }
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Save error:', error);
       Swal.fire('Gagal', 'Terjadi kesalahan saat menyimpan data.', 'error');
     } finally {
       setIsSaving(false);
