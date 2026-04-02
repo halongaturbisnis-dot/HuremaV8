@@ -289,6 +289,9 @@ const AccountForm: React.FC<AccountFormProps> = ({ onClose, onSubmit, initialDat
             // Ensure PKWTT has null end_date
             if (payload.contract_initial.contract_type === 'PKWTT') {
               payload.contract_initial.end_date = null;
+            } else if (payload.contract_initial.end_date === '') {
+              // Jika bukan PKWTT dan end_date kosong, pastikan null
+              payload.contract_initial.end_date = null;
             }
 
             if (payload.employee_type === 'Tetap') {
