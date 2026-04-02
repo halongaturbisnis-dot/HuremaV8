@@ -656,10 +656,14 @@ export const disciplineService = {
               const validTypes = ['Resign', 'Pemecatan / PHK'];
               if (!validTypes.includes(type)) {
                 errorMsg = `Tipe Exit '${type}' tidak valid. Gunakan pilihan dari template.`;
-              } else if (type === 'Resign' && penalty <= 0) {
-                errorMsg = 'Resign harus memiliki biaya penalti > 0.';
-              } else if (type === 'Pemecatan / PHK' && severance <= 0) {
-                errorMsg = 'Pemecatan harus memiliki uang pesangon > 0.';
+              } else if (type === 'Resign') {
+                if (severance > 0) {
+                  errorMsg = 'Resign tidak boleh memiliki uang pesangon.';
+                }
+              } else if (type === 'Pemecatan / PHK') {
+                if (penalty > 0) {
+                  errorMsg = 'Pemecatan tidak boleh memiliki biaya penalti.';
+                }
               }
             }
 
