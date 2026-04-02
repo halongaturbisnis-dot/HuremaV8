@@ -18,14 +18,14 @@ CREATE INDEX IF NOT EXISTS idx_eotp_period ON public.employee_of_the_period (yea
 ALTER TABLE public.employee_of_the_period ENABLE ROW LEVEL SECURITY;
 
 -- Policies
-CREATE POLICY "Allow select for authenticated" ON public.employee_of_the_period
-    FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow select for public" ON public.employee_of_the_period
+    FOR SELECT TO public USING (true);
 
-CREATE POLICY "Allow insert for authenticated" ON public.employee_of_the_period
-    FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Allow insert for public" ON public.employee_of_the_period
+    FOR INSERT TO public WITH CHECK (true);
 
-CREATE POLICY "Allow update for authenticated" ON public.employee_of_the_period
-    FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "Allow update for public" ON public.employee_of_the_period
+    FOR UPDATE TO public USING (true);
 
-CREATE POLICY "Allow delete for authenticated" ON public.employee_of_the_period
-    FOR DELETE TO authenticated USING (true);
+CREATE POLICY "Allow delete for public" ON public.employee_of_the_period
+    FOR DELETE TO public USING (true);

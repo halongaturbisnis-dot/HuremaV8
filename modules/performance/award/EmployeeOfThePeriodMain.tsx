@@ -90,42 +90,50 @@ const EmployeeOfThePeriodMain: React.FC = () => {
       {latestAward ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {latestAward.accounts?.map((acc) => (
-            <div key={acc.id} className="group bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
-              <div className="aspect-video relative bg-gray-100 overflow-hidden">
+            <div key={acc.id} className="group bg-white rounded-xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col items-center text-center relative">
+              {/* Photo Circle */}
+              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#006E62]/10 mb-4">
                 {acc.photo_google_id ? (
                   <img 
                     src={googleDriveService.getFileUrl(acc.photo_google_id)} 
                     alt={acc.full_name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-200"><User size={48} /></div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                <div className="absolute top-2 left-2 bg-[#006E62] text-white px-2 py-1 rounded text-[9px] font-bold uppercase tracking-widest shadow-lg flex items-center gap-1">
-                  <Star size={10} fill="white" />
-                  Best Employee
-                </div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <p className="text-[#006E62] text-[9px] font-bold uppercase tracking-widest mb-1">
-                    {new Date(0, latestAward.month - 1).toLocaleString('id-ID', { month: 'long' })} {latestAward.year}
-                  </p>
-                  <h4 className="text-white font-bold truncate text-sm">{acc.full_name}</h4>
-                  <p className="text-white/80 text-[10px] truncate">{acc.position}</p>
-                </div>
-                {isAdmin && (
-                  <button 
-                    onClick={() => handleDelete(latestAward.id)}
-                    className="absolute top-2 right-2 p-2 bg-white/10 hover:bg-[#005a50] text-white rounded-lg backdrop-blur-md transition-all opacity-0 group-hover:opacity-100"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
               </div>
-              <div className="p-4">
+              
+              {/* Label */}
+              <div className="absolute top-4 left-4 bg-[#006E62] text-white px-2 py-1 rounded text-[9px] font-bold uppercase tracking-widest shadow-lg flex items-center gap-1">
+                <Star size={10} fill="white" />
+                Best Employee
+              </div>
+
+              {/* Info */}
+              <div className="space-y-1 mb-4">
+                <p className="text-[#006E62] text-[9px] font-bold uppercase tracking-widest">
+                  {new Date(0, latestAward.month - 1).toLocaleString('id-ID', { month: 'long' })} {latestAward.year}
+                </p>
+                <h4 className="font-bold text-gray-800 text-sm truncate">{acc.full_name}</h4>
+                <p className="text-gray-400 text-[10px] truncate">{acc.position}</p>
+              </div>
+
+              {/* Reason */}
+              <div className="w-full pt-4 border-t border-gray-50">
                 <p className="text-xs text-gray-500 line-clamp-2 italic">"{latestAward.reason || 'Tanpa keterangan.'}"</p>
               </div>
+
+              {/* Delete Button */}
+              {isAdmin && (
+                <button 
+                  onClick={() => handleDelete(latestAward.id)}
+                  className="absolute top-2 right-2 p-2 text-gray-300 hover:text-[#006E62] transition-all opacity-0 group-hover:opacity-100"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
             </div>
           ))}
         </div>
