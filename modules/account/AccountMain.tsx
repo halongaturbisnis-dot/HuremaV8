@@ -170,10 +170,15 @@ const AccountMain: React.FC<AccountMainProps> = ({ user, setUser, isSelfProfile 
   const handleCreate = async (input: AccountInput) => {
     setIsSaving(true);
     const tempId = `temp-${Math.random().toString(36).substring(7)}`;
+    
+    // Temukan nama lokasi untuk optimistic update
+    const locationName = filterOptions.placements.find(l => l.id === input.location_id)?.name || '-';
+    
     const optimisticAccount: Account = { 
       ...input, 
       id: tempId, 
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      location: { name: locationName } as any
     };
     
     setAccounts(prev => [...prev, optimisticAccount].sort((a, b) => a.full_name.localeCompare(b.full_name)));
@@ -293,10 +298,19 @@ const AccountMain: React.FC<AccountMainProps> = ({ user, setUser, isSelfProfile 
   const handleUpdate = async (id: string, input: Partial<AccountInput>) => {
     const originalAccounts = [...accounts];
     
+    // Temukan nama lokasi baru untuk optimistic update jika location_id berubah
+    const newLocationName = input.location_id 
+      ? (filterOptions.placements.find(l => l.id === input.location_id)?.name || '-')
+      : undefined;
+    
     // Optimistic update
     setAccounts(prev => prev.map(acc => {
       if (acc.id === id) {
-        return { ...acc, ...input } as Account;
+        const updatedAcc = { ...acc, ...input } as Account;
+        if (newLocationName) {
+          updatedAcc.location = { name: newLocationName };
+        }
+        return updatedAcc;
       }
       return acc;
     }).sort((a, b) => a.full_name.localeCompare(b.full_name)));
