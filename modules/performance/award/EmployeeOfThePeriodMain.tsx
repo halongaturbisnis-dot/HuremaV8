@@ -219,6 +219,7 @@ const EmployeeOfThePeriodMain: React.FC = () => {
 
       {isFormOpen && (
         <EmployeeOfThePeriodForm 
+          awards={awards}
           onClose={() => setIsFormOpen(false)}
           onSuccess={() => {
             setIsFormOpen(false);

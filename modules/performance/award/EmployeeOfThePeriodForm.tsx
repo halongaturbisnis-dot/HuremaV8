@@ -8,11 +8,12 @@ import { Account, EmployeeOfThePeriodInput } from '../../../types';
 import Swal from 'sweetalert2';
 
 interface EmployeeOfThePeriodFormProps {
+  awards: EmployeeOfThePeriod[];
   onClose: () => void;
   onSuccess: () => void;
 }
 
-const EmployeeOfThePeriodForm: React.FC<EmployeeOfThePeriodFormProps> = ({ onClose, onSuccess }) => {
+const EmployeeOfThePeriodForm: React.FC<EmployeeOfThePeriodFormProps> = ({ awards, onClose, onSuccess }) => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
@@ -52,6 +53,13 @@ const EmployeeOfThePeriodForm: React.FC<EmployeeOfThePeriodFormProps> = ({ onClo
     e.preventDefault();
     if (selectedAccountIds.length === 0) {
       Swal.fire('Peringatan', 'Pilih minimal satu pegawai.', 'warning');
+      return;
+    }
+
+    // Check for duplicate
+    const isDuplicate = awards.some(award => award.month === formData.month && award.year === formData.year);
+    if (isDuplicate) {
+      Swal.fire('Peringatan', 'Data untuk bulan dan tahun tersebut sudah ada. Silakan edit data yang sudah ada.', 'warning');
       return;
     }
 
