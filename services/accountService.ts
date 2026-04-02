@@ -595,12 +595,16 @@ export const accountService = {
               // Validate Contract End Date
               const contractNumber = getVal('Nomor Kontrak (*)');
               const startDate = formatExcelDate(row['Mulai Kontrak (YYYY-MM-DD) (*)']);
-              const endDate = formatExcelDate(row['Akhir Kontrak (YYYY-MM-DD)']);
+              let endDate = formatExcelDate(row['Akhir Kontrak (YYYY-MM-DD)']);
               
               // Normalisasi ketat untuk PKWTT
               const normalizedContractType = contractType ? contractType.trim().toUpperCase() : '';
               
-              if (normalizedContractType !== 'PKWTT' && !endDate) {
+              // Aturan Bisnis: Jika PKWTT, abaikan tanggal akhir (set ke null)
+              if (normalizedContractType === 'PKWTT') {
+                endDate = null;
+              } else if (!endDate) {
+                // Jika bukan PKWTT dan tanggal akhir kosong, error
                 errorMsg = 'Tgl Akhir Kontrak wajib diisi untuk jenis kontrak selain PKWTT.';
               }
 
