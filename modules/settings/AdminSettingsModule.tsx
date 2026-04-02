@@ -21,6 +21,16 @@ const AdminSettingsModule: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const handleFocus = () => {
+      fetchData();
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
+  useEffect(() => {
     if (accounts.length > 0) {
       const activeAccountIds = accounts
         .filter(acc => !acc.end_date || new Date(acc.end_date) > new Date())
