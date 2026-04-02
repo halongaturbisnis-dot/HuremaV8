@@ -597,7 +597,10 @@ export const accountService = {
               const startDate = formatExcelDate(row['Mulai Kontrak (YYYY-MM-DD) (*)']);
               const endDate = formatExcelDate(row['Akhir Kontrak (YYYY-MM-DD)']);
               
-              if (contractType !== 'PKWTT' && !endDate) {
+              // Normalisasi ketat untuk PKWTT
+              const normalizedContractType = contractType ? contractType.trim().toUpperCase() : '';
+              
+              if (normalizedContractType !== 'PKWTT' && !endDate) {
                 errorMsg = 'Tgl Akhir Kontrak wajib diisi untuk jenis kontrak selain PKWTT.';
               }
 
