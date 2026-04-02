@@ -268,21 +268,31 @@ export const disciplineService = {
   },
 
   async deleteTermination(id: string, accountId: string) {
-    // 1. Ambil ID file
-    const { data } = await supabase.from('account_termination_logs').select('file_id').eq('id', id).single();
+    // 1. Ambil data termination untuk keperluan sinkronisasi
+    const { data: terminationData, error: fetchError } = await supabase
+      .from('account_termination_logs')
+      .select('file_id, termination_date')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError) throw fetchError;
     
     // 2. Hapus file dari Drive
-    if (data?.file_id) {
+    if (terminationData?.file_id) {
       const { googleDriveService } = await import('./googleDriveService');
-      await googleDriveService.deleteFile(data.file_id);
+      await googleDriveService.deleteFile(terminationData.file_id);
     }
 
-    // 3. Hapus dari DB
+    // 3. Hapus Kompensasi terkait
+    if (terminationData?.termination_date) {
+      await financeService.deleteCompensationByTermination(accountId, terminationData.termination_date);
+    }
+
+    // 4. Hapus dari DB
     const { error } = await supabase.from('account_termination_logs').delete().eq('id', id);
     if (error) throw error;
 
-    // 4. Aktifkan kembali akun dengan mensinkronisasi status dan tanggal dari kontrak terakhir
-    // Kita panggil syncAccountStatusAndDates untuk memastikan profil akun terupdate
+    // 5. Aktifkan kembali akun dengan mensinkronisasi status dan tanggal dari kontrak terakhir
     await contractService.syncAccountStatusAndDates(accountId);
     
     return true;

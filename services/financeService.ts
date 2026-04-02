@@ -490,6 +490,17 @@ export const financeService = {
     return data[0] as Compensation;
   },
 
+  async deleteCompensationByTermination(accountId: string, terminationDate: string) {
+    const { error } = await supabase
+      .from('account_compensation_logs')
+      .delete()
+      .eq('account_id', accountId)
+      .eq('termination_date', terminationDate);
+    
+    if (error) throw error;
+    return true;
+  },
+
   async markCompensationAsRead(id: string) {
     const { error } = await supabase
       .from('account_compensation_logs')
