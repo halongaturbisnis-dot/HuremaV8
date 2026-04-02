@@ -279,7 +279,7 @@ export const disciplineService = {
     if (input.severance_amount > 0 || input.penalty_amount > 0) {
       await financeService.createCompensation({
         account_id: input.account_id,
-        termination_type: input.termination_type,
+        termination_type: mapTerminationTypeToDB(input.termination_type),
         termination_date: input.termination_date,
         amount: input.termination_type.includes('PHK') ? input.severance_amount : input.penalty_amount,
         type: input.termination_type.includes('PHK') ? 'Severance' : 'Penalty',
@@ -652,10 +652,14 @@ export const disciplineService = {
             } else if (accountId === 'ID_AKUN' || accountId === 'Jangan diubah' || accountId === 'uuid-example') {
               errorMsg = 'Account ID tidak valid (masih menggunakan placeholder template)';
             } else {
-              // Validate Termination Type
+              // Validate Termination Type and Amounts
               const validTypes = ['Resign', 'Pemecatan / PHK'];
               if (!validTypes.includes(type)) {
                 errorMsg = `Tipe Exit '${type}' tidak valid. Gunakan pilihan dari template.`;
+              } else if (type === 'Resign' && penalty <= 0) {
+                errorMsg = 'Resign harus memiliki biaya penalti > 0.';
+              } else if (type === 'Pemecatan / PHK' && severance <= 0) {
+                errorMsg = 'Pemecatan harus memiliki uang pesangon > 0.';
               }
             }
 
@@ -712,7 +716,7 @@ export const disciplineService = {
         const isSeverance = item.termination_type.includes('PHK');
         await financeService.createCompensation({
           account_id: item.account_id,
-          termination_type: item.termination_type,
+          termination_type: mapTerminationTypeToDB(item.termination_type),
           termination_date: item.termination_date,
           amount: isSeverance ? item.severance_amount : item.penalty_amount,
           type: isSeverance ? 'Severance' : 'Penalty',

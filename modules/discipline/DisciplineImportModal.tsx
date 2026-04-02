@@ -220,6 +220,12 @@ const DisciplineImportModal: React.FC<DisciplineImportModalProps> = ({ onClose, 
                           <th className="px-4 py-2">{type === 'warning' ? 'Tipe SP' : 'Tipe Exit'}</th>
                           <th className="px-4 py-2">Alasan</th>
                           <th className="px-4 py-2">{type === 'warning' ? 'Tgl SP' : 'Tgl Exit'}</th>
+                          {type === 'termination' && (
+                            <>
+                              <th className="px-4 py-2">Pesangon</th>
+                              <th className="px-4 py-2">Penalti</th>
+                            </>
+                          )}
                           <th className="px-4 py-2">Keterangan</th>
                         </tr>
                       </thead>
@@ -249,6 +255,12 @@ const DisciplineImportModal: React.FC<DisciplineImportModalProps> = ({ onClose, 
                             </td>
                             <td className="px-4 py-2 truncate max-w-xs">{row.reason}</td>
                             <td className="px-4 py-2">{type === 'warning' ? row.issue_date : row.termination_date}</td>
+                            {type === 'termination' && (
+                              <>
+                                <td className="px-4 py-2">{row.severance_amount.toLocaleString('id-ID')}</td>
+                                <td className="px-4 py-2">{row.penalty_amount.toLocaleString('id-ID')}</td>
+                              </>
+                            )}
                             <td className={`px-4 py-2 font-medium ${row.isValid ? 'text-emerald-600' : 'text-red-600'}`}>
                               {row.isValid ? 'Data Valid' : row.errorMsg}
                             </td>
