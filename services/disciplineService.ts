@@ -127,7 +127,19 @@ export const disciplineService = {
       .select();
 
     if (error) throw error;
-    if (!data || data.length === 0) throw new Error('Data peringatan tidak ditemukan');
+    
+    // Fetch the record to confirm it exists if update returned no data
+    if (!data || data.length === 0) {
+      const { data: checkData, error: checkError } = await supabase
+        .from('account_warning_logs')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      
+      if (checkError || !checkData) throw new Error('Data peringatan tidak ditemukan');
+      return { ...checkData, warning_type: mapWarningTypeToUI(checkData.warning_type) } as WarningLog;
+    }
+
     const updatedData = data[0];
     return { ...updatedData, warning_type: mapWarningTypeToUI(updatedData.warning_type) } as WarningLog;
   },
@@ -148,7 +160,18 @@ export const disciplineService = {
       .select();
 
     if (error) throw error;
-    if (!data || data.length === 0) throw new Error('Data pengakhiran tidak ditemukan');
+    
+    // Fetch the record to confirm it exists if update returned no data
+    if (!data || data.length === 0) {
+      const { data: checkData, error: checkError } = await supabase
+        .from('account_termination_logs')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      
+      if (checkError || !checkData) throw new Error('Data pengakhiran tidak ditemukan');
+      return checkData as TerminationLog;
+    }
 
     const updatedData = data[0];
 
