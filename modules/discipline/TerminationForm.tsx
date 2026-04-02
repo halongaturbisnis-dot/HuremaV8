@@ -96,12 +96,23 @@ const TerminationForm: React.FC<TerminationFormProps> = ({ accountId, initialDat
     }
   };
 
+  const formatCurrencyInput = (value: number | string) => {
+    const stringValue = String(value).replace(/[^0-9]/g, '');
+    if (!stringValue) return '';
+    const numberValue = parseInt(stringValue, 10);
+    return `Rp ${numberValue.toLocaleString('id-ID')}`;
+  };
+
+  const parseCurrencyInput = (value: string) => {
+    return parseInt(value.replace(/[^0-9]/g, ''), 10) || 0;
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-40 p-4">
       <div className="bg-white rounded-md shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-200">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-red-600">Proses Pemberhentian (Exit)</h3>
+            <h3 className="text-base font-bold text-[#006E62]">Pemberhentian Karyawan</h3>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={20} /></button>
         </div>
@@ -152,9 +163,9 @@ const TerminationForm: React.FC<TerminationFormProps> = ({ accountId, initialDat
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Uang Pesangon (IDR)</label>
               <input 
-                type="number"
-                value={formData.severance_amount}
-                onChange={(e) => setFormData({...formData, severance_amount: Number(e.target.value), penalty_amount: 0})}
+                type="text"
+                value={formatCurrencyInput(formData.severance_amount)}
+                onChange={(e) => setFormData({...formData, severance_amount: parseCurrencyInput(e.target.value), penalty_amount: 0})}
                 className="w-full px-3 py-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-red-500 outline-none bg-emerald-50/10 font-bold"
               />
             </div>
@@ -162,9 +173,9 @@ const TerminationForm: React.FC<TerminationFormProps> = ({ accountId, initialDat
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Biaya Penalti / Ganti Rugi (IDR)</label>
               <input 
-                type="number"
-                value={formData.penalty_amount}
-                onChange={(e) => setFormData({...formData, penalty_amount: Number(e.target.value), severance_amount: 0})}
+                type="text"
+                value={formatCurrencyInput(formData.penalty_amount)}
+                onChange={(e) => setFormData({...formData, penalty_amount: parseCurrencyInput(e.target.value), severance_amount: 0})}
                 className="w-full px-3 py-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-red-500 outline-none bg-orange-50/10 font-bold"
               />
             </div>

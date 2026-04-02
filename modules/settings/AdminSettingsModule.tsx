@@ -20,6 +20,15 @@ const AdminSettingsModule: React.FC = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (accounts.length > 0) {
+      const activeAccountIds = accounts.map(acc => acc.id);
+      setHrAdmins(prev => prev.filter(id => activeAccountIds.includes(id)));
+      setPerformanceAdmins(prev => prev.filter(id => activeAccountIds.includes(id)));
+      setFinanceAdmins(prev => prev.filter(id => activeAccountIds.includes(id)));
+    }
+  }, [accounts]);
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -111,8 +120,8 @@ const AdminSettingsModule: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-gray-800 tracking-tight uppercase">Pengaturan Admin</h2>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Kelola hak akses admin khusus untuk pegawai</p>
+          <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Pengaturan Admin</h2>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">KELOLA HAK AKSES ADMIN KHUSUS UNTUK PEGAWAI</p>
         </div>
         <button
           onClick={handleSave}
@@ -135,11 +144,6 @@ const AdminSettingsModule: React.FC = () => {
               <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">Admin Kepegawaian</h3>
             </div>
             <p className="text-[10px] text-gray-500 leading-relaxed">Akses untuk mengelola data karyawan, absensi, dan dokumen digital.</p>
-            <div className="mt-4 flex items-center justify-between">
-              <span className="text-[10px] font-black text-emerald-600 bg-emerald-100 px-2 py-1 rounded-md uppercase">
-                {hrAdmins.length} Terpilih
-              </span>
-            </div>
           </div>
           <div className="p-4 border-b border-gray-50">
             <div className="relative">
@@ -189,11 +193,6 @@ const AdminSettingsModule: React.FC = () => {
               <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">Admin Performa</h3>
             </div>
             <p className="text-[10px] text-gray-500 leading-relaxed">Akses untuk mengelola KPI, Key Activities, dan Laporan Sales.</p>
-            <div className="mt-4 flex items-center justify-between">
-              <span className="text-[10px] font-black text-orange-600 bg-orange-100 px-2 py-1 rounded-md uppercase">
-                {performanceAdmins.length} Terpilih
-              </span>
-            </div>
           </div>
           <div className="p-4 border-b border-gray-50">
             <div className="relative">
@@ -243,11 +242,6 @@ const AdminSettingsModule: React.FC = () => {
               <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">Admin Finansial</h3>
             </div>
             <p className="text-[10px] text-gray-500 leading-relaxed">Akses untuk mengelola Payroll, Reimburse, dan Skema Gaji.</p>
-            <div className="mt-4 flex items-center justify-between">
-              <span className="text-[10px] font-black text-indigo-600 bg-indigo-100 px-2 py-1 rounded-md uppercase">
-                {financeAdmins.length} Terpilih
-              </span>
-            </div>
           </div>
           <div className="p-4 border-b border-gray-50">
             <div className="relative">
