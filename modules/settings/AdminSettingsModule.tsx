@@ -22,10 +22,25 @@ const AdminSettingsModule: React.FC = () => {
 
   useEffect(() => {
     if (accounts.length > 0) {
-      const activeAccountIds = accounts.map(acc => acc.id);
-      setHrAdmins(prev => prev.filter(id => activeAccountIds.includes(id)));
-      setPerformanceAdmins(prev => prev.filter(id => activeAccountIds.includes(id)));
-      setFinanceAdmins(prev => prev.filter(id => activeAccountIds.includes(id)));
+      const activeAccountIds = accounts
+        .filter(acc => !acc.end_date || new Date(acc.end_date) > new Date())
+        .map(acc => acc.id);
+      
+      const newHrAdmins = hrAdmins.filter(id => activeAccountIds.includes(id));
+      const newPerformanceAdmins = performanceAdmins.filter(id => activeAccountIds.includes(id));
+      const newFinanceAdmins = financeAdmins.filter(id => activeAccountIds.includes(id));
+
+      let changed = false;
+      if (newHrAdmins.length !== hrAdmins.length) { setHrAdmins(newHrAdmins); changed = true; }
+      if (newPerformanceAdmins.length !== performanceAdmins.length) { setPerformanceAdmins(newPerformanceAdmins); changed = true; }
+      if (newFinanceAdmins.length !== financeAdmins.length) { setFinanceAdmins(newFinanceAdmins); changed = true; }
+
+      if (changed) {
+        // Auto-save changes to database if any admin was removed due to inactivity
+        settingsService.updateSetting('admin_hr_ids', newHrAdmins, 'Daftar ID Pegawai dengan akses Admin Kepegawaian');
+        settingsService.updateSetting('admin_performance_ids', newPerformanceAdmins, 'Daftar ID Pegawai dengan akses Admin Performa');
+        settingsService.updateSetting('admin_finance_ids', newFinanceAdmins, 'Daftar ID Pegawai dengan akses Admin Finance');
+      }
     }
   }, [accounts]);
 
@@ -94,6 +109,7 @@ const AdminSettingsModule: React.FC = () => {
   const getSortedAccounts = (adminIds: string[]) => {
     return accounts
       .filter(acc => acc.full_name !== 'Superadmin')
+      .filter(acc => !acc.end_date || new Date(acc.end_date) > new Date()) // Hanya akun aktif
       .filter(acc => 
         acc.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         acc.internal_nik.toLowerCase().includes(searchTerm.toLowerCase())
