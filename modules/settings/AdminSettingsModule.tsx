@@ -20,40 +20,6 @@ const AdminSettingsModule: React.FC = () => {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    const handleFocus = () => {
-      fetchData();
-    };
-    window.addEventListener('focus', handleFocus);
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (accounts.length > 0) {
-      const activeAccountIds = accounts
-        .filter(acc => !acc.end_date || new Date(acc.end_date) > new Date())
-        .map(acc => acc.id);
-      
-      const newHrAdmins = hrAdmins.filter(id => activeAccountIds.includes(id));
-      const newPerformanceAdmins = performanceAdmins.filter(id => activeAccountIds.includes(id));
-      const newFinanceAdmins = financeAdmins.filter(id => activeAccountIds.includes(id));
-
-      let changed = false;
-      if (newHrAdmins.length !== hrAdmins.length) { setHrAdmins(newHrAdmins); changed = true; }
-      if (newPerformanceAdmins.length !== performanceAdmins.length) { setPerformanceAdmins(newPerformanceAdmins); changed = true; }
-      if (newFinanceAdmins.length !== financeAdmins.length) { setFinanceAdmins(newFinanceAdmins); changed = true; }
-
-      if (changed) {
-        // Auto-save changes to database if any admin was removed due to inactivity
-        settingsService.updateSetting('admin_hr_ids', newHrAdmins, 'Daftar ID Pegawai dengan akses Admin Kepegawaian');
-        settingsService.updateSetting('admin_performance_ids', newPerformanceAdmins, 'Daftar ID Pegawai dengan akses Admin Performa');
-        settingsService.updateSetting('admin_finance_ids', newFinanceAdmins, 'Daftar ID Pegawai dengan akses Admin Finance');
-      }
-    }
-  }, [accounts]);
-
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -64,10 +30,15 @@ const AdminSettingsModule: React.FC = () => {
         settingsService.getSetting('admin_finance_ids', [])
       ]);
       
+      // Filter out inactive accounts from admin lists immediately upon loading
+      const activeAccountIds = accData
+        .filter(acc => !acc.end_date || new Date(acc.end_date) > new Date())
+        .map(acc => acc.id);
+
       setAccounts(accData);
-      setHrAdmins(hrData);
-      setPerformanceAdmins(perfData);
-      setFinanceAdmins(finData);
+      setHrAdmins(hrData.filter((id: string) => activeAccountIds.includes(id)));
+      setPerformanceAdmins(perfData.filter((id: string) => activeAccountIds.includes(id)));
+      setFinanceAdmins(finData.filter((id: string) => activeAccountIds.includes(id)));
     } catch (error) {
       console.error('Error fetching admin settings:', error);
       Swal.fire('Error', 'Gagal memuat data pengaturan admin', 'error');
