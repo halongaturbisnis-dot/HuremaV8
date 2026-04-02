@@ -88,90 +88,46 @@ const EmployeeOfThePeriodMain: React.FC = () => {
 
       {/* Hero Section - Latest Winner */}
       {latestAward ? (
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#006E62] via-[#005a50] to-[#004d45] p-1 shadow-xl">
-          <div className="bg-white rounded-[15px] overflow-hidden">
-            <div className="grid md:grid-cols-12 gap-0">
-              <div className="md:col-span-5 relative h-64 md:h-auto bg-gray-100">
-                {latestAward.accounts && latestAward.accounts.length > 0 ? (
-                  <div className="flex h-full">
-                    {latestAward.accounts.map((acc, idx) => (
-                      <div key={acc.id} className="flex-1 relative overflow-hidden group">
-                        {acc.photo_google_id ? (
-                          <img 
-                            src={googleDriveService.getFileUrl(acc.photo_google_id)} 
-                            alt={acc.full_name}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            referrerPolicy="no-referrer"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-                            <UserCircle size={80} strokeWidth={1} />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
-                          <p className="text-white text-xs font-bold uppercase tracking-widest">{acc.full_name}</p>
-                          <p className="text-white/80 text-[10px] uppercase">{acc.position}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {latestAward.accounts?.map((acc) => (
+            <div key={acc.id} className="group bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+              <div className="aspect-video relative bg-gray-100 overflow-hidden">
+                {acc.photo_google_id ? (
+                  <img 
+                    src={googleDriveService.getFileUrl(acc.photo_google_id)} 
+                    alt={acc.full_name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                  />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-[#006E62]/10 text-[#006E62]">
-                    <User size={80} strokeWidth={1} />
-                  </div>
+                  <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-200"><User size={48} /></div>
                 )}
-                <div className="absolute top-4 left-4 bg-[#006E62] text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg flex items-center gap-1.5">
-                  <Star size={12} fill="white" />
-                  Pemenang Utama
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                <div className="absolute top-2 left-2 bg-[#006E62] text-white px-2 py-1 rounded text-[9px] font-bold uppercase tracking-widest shadow-lg flex items-center gap-1">
+                  <Star size={10} fill="white" />
+                  Best Employee
                 </div>
+                <div className="absolute bottom-4 left-4 right-4">
+                  <p className="text-[#006E62] text-[9px] font-bold uppercase tracking-widest mb-1">
+                    {new Date(0, latestAward.month - 1).toLocaleString('id-ID', { month: 'long' })} {latestAward.year}
+                  </p>
+                  <h4 className="text-white font-bold truncate text-sm">{acc.full_name}</h4>
+                  <p className="text-white/80 text-[10px] truncate">{acc.position}</p>
+                </div>
+                {isAdmin && (
+                  <button 
+                    onClick={() => handleDelete(latestAward.id)}
+                    className="absolute top-2 right-2 p-2 bg-white/10 hover:bg-[#005a50] text-white rounded-lg backdrop-blur-md transition-all opacity-0 group-hover:opacity-100"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
-              
-              <div className="md:col-span-7 p-8 md:p-12 flex flex-col justify-center relative">
-                <div className="absolute top-0 right-0 p-8 opacity-5">
-                  <Award size={160} />
-                </div>
-                
-                <div className="space-y-6 relative z-10">
-                  <div>
-                    <div className="flex items-center gap-2 text-[#006E62] mb-2">
-                      <Calendar size={18} />
-                      <span className="text-sm font-bold uppercase tracking-widest">
-                        Periode {new Date(0, latestAward.month - 1).toLocaleString('id-ID', { month: 'long' })} {latestAward.year}
-                      </span>
-                    </div>
-                    <h3 className="text-3xl font-black text-gray-900 leading-tight">
-                      {latestAward.accounts?.map(a => a.full_name).join(' & ')}
-                    </h3>
-                  </div>
-
-                  {latestAward.reason && (
-                    <div className="relative">
-                      <Quote className="absolute -left-6 -top-2 text-[#006E62]/20" size={32} />
-                      <p className="text-gray-600 italic leading-relaxed text-lg pl-2">
-                        {latestAward.reason}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="pt-4 flex items-center gap-4">
-                    <div className="flex -space-x-3">
-                      {latestAward.accounts?.map((acc) => (
-                        <div key={acc.id} className="w-10 h-10 rounded-full border-2 border-white bg-gray-200 overflow-hidden shadow-sm">
-                          {acc.photo_google_id ? (
-                            <img src={googleDriveService.getFileUrl(acc.photo_google_id)} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400"><User size={16} /></div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="h-8 w-px bg-gray-100"></div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Terpilih Berdasarkan Performa Terbaik</p>
-                  </div>
-                </div>
+              <div className="p-4">
+                <p className="text-xs text-gray-500 line-clamp-2 italic">"{latestAward.reason || 'Tanpa keterangan.'}"</p>
               </div>
             </div>
-          </div>
+          ))}
         </div>
       ) : (
         <div className="bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center">
