@@ -10,7 +10,9 @@ export interface EmployeeReportData {
   contractTypeDistribution: { name: string; value: number }[];
   tenureDistribution: { name: string; value: number }[];
   healthRiskProfile: { name: string; value: number }[];
-  disciplineSummary: { name: string; value: number }[];
+  religionDistribution: { name: string; value: number }[];
+  departmentDistribution: { name: string; value: number }[];
+  certificationDistribution: { name: string; value: number }[];
 }
 
 export interface Location {

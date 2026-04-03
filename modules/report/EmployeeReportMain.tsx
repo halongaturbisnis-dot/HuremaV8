@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Users, UserPlus, UserMinus, Download, RefreshCw, Filter } from 'lucide-react';
+import { Users, UserPlus, UserMinus, RefreshCw } from 'lucide-react';
 import { reportService } from '../../services/reportService';
 import { EmployeeReportData } from '../../types';
 import StatCard from './StatCard';
 import { ChartContainer, SimpleBarChart, SimplePieChart } from './ChartComponents';
 import Swal from 'sweetalert2';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 const EmployeeReportMain: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -25,6 +27,62 @@ const EmployeeReportMain: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const showEmployeeModal = async (title: string, type: 'total' | 'new' | 'exit') => {
+    const employees = await reportService.getEmployeesByType(type);
+    
+    const tableHtml = `
+      <div class="overflow-x-auto max-h-[400px]">
+        <table class="w-full text-sm text-left text-gray-500">
+          <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+            <tr>
+              <th class="px-6 py-3">NIK</th>
+              <th class="px-6 py-3">Nama</th>
+              <th class="px-6 py-3">Jabatan</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${employees.map(e => `
+              <tr class="bg-white border-b">
+                <td class="px-6 py-4">${e.internal_nik}</td>
+                <td class="px-6 py-4">${e.full_name}</td>
+                <td class="px-6 py-4">${e.position}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    Swal.fire({
+      title: title,
+      html: tableHtml,
+      width: '800px',
+      showCloseButton: true,
+      showConfirmButton: true,
+      confirmButtonText: 'Ekspor Excel',
+      confirmButtonColor: '#006E62',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        exportToExcel(employees, title);
+      }
+    });
+  };
+
+  const exportToExcel = (employees: any[], title: string) => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(title);
+    worksheet.columns = [
+      { header: 'NIK', key: 'internal_nik', width: 20 },
+      { header: 'Nama', key: 'full_name', width: 30 },
+      { header: 'Jabatan', key: 'position', width: 20 },
+    ];
+    worksheet.addRows(employees);
+    workbook.xlsx.writeBuffer().then(buffer => {
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      saveAs(blob, `${title}.xlsx`);
+    });
   };
 
   useEffect(() => {
@@ -58,11 +116,6 @@ const EmployeeReportMain: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-all"
           >
             <RefreshCw size={18} />
-            <span>Refresh</span>
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-[#006E62] text-white rounded-lg hover:bg-[#005a50] transition-all shadow-sm">
-            <Download size={18} />
-            <span>Ekspor PDF</span>
           </button>
         </div>
       </div>
@@ -75,6 +128,7 @@ const EmployeeReportMain: React.FC = () => {
           icon={Users} 
           color="bg-blue-500" 
           description="Karyawan aktif saat ini"
+          onClick={() => showEmployeeModal('Total Karyawan', 'total')}
         />
         <StatCard 
           title="Karyawan Baru" 
@@ -82,6 +136,7 @@ const EmployeeReportMain: React.FC = () => {
           icon={UserPlus} 
           color="bg-emerald-500" 
           description="Bergabung dalam 30 hari terakhir"
+          onClick={() => showEmployeeModal('Karyawan Baru', 'new')}
         />
         <StatCard 
           title="Karyawan Exit" 
@@ -89,6 +144,7 @@ const EmployeeReportMain: React.FC = () => {
           icon={UserMinus} 
           color="bg-rose-500" 
           description="Keluar dalam 30 hari terakhir"
+          onClick={() => showEmployeeModal('Karyawan Exit', 'exit')}
         />
       </div>
 
@@ -132,10 +188,16 @@ const EmployeeReportMain: React.FC = () => {
         </ChartContainer>
       </div>
 
-      {/* Discipline Summary */}
-      <div className="grid grid-cols-1 gap-6">
-        <ChartContainer title="Ringkasan Kedisiplinan (Surat Peringatan)">
-          <SimpleBarChart data={data.disciplineSummary} />
+      {/* New Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <ChartContainer title="Sebaran Agama">
+          <SimplePieChart data={data.religionDistribution} />
+        </ChartContainer>
+        <ChartContainer title="Sebaran Departemen">
+          <SimpleBarChart data={data.departmentDistribution} />
+        </ChartContainer>
+        <ChartContainer title="Sebaran Sertifikasi">
+          <SimpleBarChart data={data.certificationDistribution} />
         </ChartContainer>
       </div>
     </div>

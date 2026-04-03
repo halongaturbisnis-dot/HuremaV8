@@ -4,9 +4,12 @@ import { EmployeeReportData, AttendanceSummary, LeaveSummary, OvertimeSummary, P
 export const reportService = {
   async getEmployeeReportData(): Promise<EmployeeReportData> {
     // Fetch all accounts
+    const today = new Date().toISOString().split('T')[0];
     const { data: accounts, error: accountsError } = await supabase
       .from('accounts')
-      .select('*, location:locations(name)');
+      .select('*, location:locations(name)')
+      .not('access_code', 'ilike', '%SPADMIN%')
+      .or(`end_date.is.null,end_date.gt.${today}`);
 
     if (accountsError) throw new Error(accountsError.message);
 
@@ -19,9 +22,14 @@ export const reportService = {
       .select('*')
       .gte('termination_date', thirtyDaysAgo.toISOString());
 
-    // Fetch warnings for discipline summary
-    const { data: warnings } = await supabase
-      .from('warning_logs')
+    // Fetch warnings for discipline summary - REMOVED
+    // const { data: warnings } = await supabase
+    //   .from('warning_logs')
+    //   .select('*');
+
+    // Fetch certifications
+    const { data: certifications } = await supabase
+      .from('account_certifications')
       .select('*');
 
     const totalEmployees = accounts.length;
@@ -33,6 +41,30 @@ export const reportService = {
     }).length;
 
     const exitEmployees = terminations?.length || 0;
+
+    // Religion Distribution
+    const religionMap = accounts.reduce((acc: any, curr) => {
+      const rel = curr.religion || 'Tidak Diketahui';
+      acc[rel] = (acc[rel] || 0) + 1;
+      return acc;
+    }, {});
+    const religionDistribution = Object.entries(religionMap).map(([name, value]) => ({ name, value: value as number }));
+
+    // Department Distribution
+    const deptMap = accounts.reduce((acc: any, curr) => {
+      const dept = curr.department || 'Tidak Diketahui';
+      acc[dept] = (acc[dept] || 0) + 1;
+      return acc;
+    }, {});
+    const departmentDistribution = Object.entries(deptMap).map(([name, value]) => ({ name, value: value as number }));
+
+    // Certification Distribution
+    const certMap = (certifications || []).reduce((acc: any, curr) => {
+      const cert = curr.cert_type || 'Tidak Diketahui';
+      acc[cert] = (acc[cert] || 0) + 1;
+      return acc;
+    }, {});
+    const certificationDistribution = Object.entries(certMap).map(([name, value]) => ({ name, value: value as number }));
 
     // Gender Ratio
     const genderMap = accounts.reduce((acc: any, curr) => {
@@ -116,13 +148,6 @@ export const reportService = {
     }, {});
     const healthRiskProfile = Object.entries(healthMap).map(([name, value]) => ({ name, value: value as number }));
 
-    // Discipline Summary
-    const warningMap = (warnings || []).reduce((acc: any, curr) => {
-      acc[curr.warning_type] = (acc[curr.warning_type] || 0) + 1;
-      return acc;
-    }, {});
-    const disciplineSummary = Object.entries(warningMap).map(([name, value]) => ({ name, value: value as number }));
-
     return {
       totalEmployees,
       newEmployees,
@@ -135,8 +160,37 @@ export const reportService = {
       contractTypeDistribution,
       tenureDistribution,
       healthRiskProfile,
-      disciplineSummary,
+      religionDistribution,
+      departmentDistribution,
+      certificationDistribution,
     };
+  },
+
+  async getEmployeesByType(type: 'total' | 'new' | 'exit'): Promise<any[]> {
+    const today = new Date().toISOString().split('T')[0];
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    if (type === 'exit') {
+        const { data: terminations } = await supabase
+            .from('termination_logs')
+            .select('account_id, account:accounts(*)')
+            .gte('termination_date', thirtyDaysAgo.toISOString());
+        return terminations?.map((t: any) => t.account) || [];
+    }
+
+    let query = supabase
+      .from('accounts')
+      .select('*, location:locations(name)')
+      .not('access_code', 'ilike', '%SPADMIN%')
+      .or(`end_date.is.null,end_date.gt.${today}`);
+
+    if (type === 'new') {
+        query = query.gte('start_date', thirtyDaysAgo.toISOString());
+    }
+
+    const { data: accounts } = await query;
+    return accounts || [];
   },
 
   async getAttendanceReportSummary(startDate: string, endDate: string): Promise<AttendanceSummary[]> {
