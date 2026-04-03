@@ -341,7 +341,7 @@ const App: React.FC = () => {
               <NavItemMobile id="overtime" icon={Timer} label="Presensi Lembur" indent />
               <NavItemMobile id="permission" icon={ClipboardList} label="Izin" indent />
               <NavItemMobile id="annual_leave" icon={Calendar} label="Cuti Tahunan" indent />
-              {user?.gender === 'Perempuan' && (
+              {(user?.gender === 'Perempuan' || user?.role === 'admin' || user?.is_hr_admin) && (
                 <NavItemMobile id="maternity_leave" icon={Heart} label="Cuti Melahirkan" indent />
               )}
               {isAdmin && (

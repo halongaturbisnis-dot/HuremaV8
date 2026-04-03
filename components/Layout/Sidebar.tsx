@@ -325,7 +325,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
                 setActiveTab={setActiveTab}
                 isCollapsed={isCollapsed}
               />
-              {user?.gender === 'Perempuan' && (
+              {(user?.gender === 'Perempuan' || user?.role === 'admin' || user?.is_hr_admin) && (
                 <NavItem 
                   id="maternity_leave" 
                   icon={Heart} 
