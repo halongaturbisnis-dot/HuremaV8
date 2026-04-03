@@ -167,9 +167,17 @@ const PengumumanMain: React.FC<PengumumanMainProps> = ({ user }) => {
               >
                 &lt;
               </button>
-              <button className="px-4 py-1 rounded-lg text-xs font-bold bg-[#006E62] text-white">
-                {page}
-              </button>
+              
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button 
+                  key={i} 
+                  onClick={() => setPage(i + 1)} 
+                  className={`px-3 py-1 rounded-lg text-xs font-bold ${page === i + 1 ? 'bg-[#006E62] text-white' : 'bg-white border border-gray-200 text-gray-600'}`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+
               <button 
                 onClick={() => setPage(Math.min(totalPages, page + 1))} 
                 disabled={page === totalPages}
