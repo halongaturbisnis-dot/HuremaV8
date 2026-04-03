@@ -110,9 +110,9 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300 max-h-[95vh]">
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0 bg-amber-50/30">
+        <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0 bg-[#006E62]/5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-[#006E62]/10 text-[#006E62] flex items-center justify-center">
               <Megaphone size={20} />
             </div>
             <div>
@@ -135,7 +135,7 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Contoh: Libur Bersama Idul Fitri"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-sm font-bold text-gray-700"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006E62]/20 focus:border-[#006E62] transition-all text-sm font-bold text-gray-700"
                 />
               </div>
 
@@ -145,7 +145,7 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Tuliskan detail pengumuman di sini..."
-                  className="w-full h-48 px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 focus:border-amber-600 transition-all text-sm font-medium text-gray-700 resize-none"
+                  className="w-full h-48 px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006E62]/20 focus:border-[#006E62] transition-all text-sm font-medium text-gray-700 resize-none"
                 />
               </div>
 
@@ -155,7 +155,7 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
                   <select 
                     value={category}
                     onChange={(e) => setCategory(e.target.value as any)}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 text-sm font-bold text-gray-700"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006E62]/20 text-sm font-bold text-gray-700"
                   >
                     <option value="Info">Informasi Umum</option>
                     <option value="Urgent">Mendesak (Urgent)</option>
@@ -171,7 +171,7 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
                       setTargetType(e.target.value as any);
                       setTargetIds([]);
                     }}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 text-sm font-bold text-gray-700"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006E62]/20 text-sm font-bold text-gray-700"
                   >
                     <option value="All">Seluruh Karyawan</option>
                     <option value="Department">Departemen Spesifik</option>
@@ -187,7 +187,7 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
                     type="datetime-local"
                     value={publishStart}
                     onChange={(e) => setPublishStart(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 text-sm font-bold text-gray-700"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006E62]/20 text-sm font-bold text-gray-700"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -196,7 +196,7 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
                     type="datetime-local"
                     value={publishEnd}
                     onChange={(e) => setPublishEnd(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600/20 text-sm font-bold text-gray-700"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006E62]/20 text-sm font-bold text-gray-700"
                   />
                 </div>
               </div>
@@ -214,7 +214,7 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
                         <button 
                           key={dep}
                           onClick={() => toggleTargetId(dep)}
-                          className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(dep) ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-white border-gray-100 text-gray-600 hover:border-amber-200'}`}
+                          className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(dep) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
                         >
                           <span className="text-xs font-bold uppercase">{dep}</span>
                           {targetIds.includes(dep) && <Save size={14} />}
@@ -225,7 +225,7 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
                         <button 
                           key={acc.id}
                           onClick={() => toggleTargetId(acc.id)}
-                          className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(acc.id) ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-white border-gray-100 text-gray-600 hover:border-amber-200'}`}
+                          className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(acc.id) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
                         >
                           <div className="text-left">
                             <p className="text-[10px] font-bold">{acc.full_name}</p>
@@ -246,7 +246,7 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
                     type="button" 
                     onClick={() => fileInputRef.current?.click()} 
                     disabled={isUploading}
-                    className="text-[10px] font-bold text-amber-600 uppercase flex items-center gap-1 hover:underline disabled:opacity-50"
+                    className="text-[10px] font-bold text-[#006E62] uppercase flex items-center gap-1 hover:underline disabled:opacity-50"
                   >
                     <Plus size={12} /> Tambah File
                   </button>
@@ -260,7 +260,7 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
                 </div>
 
                 {isUploading && (
-                  <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 text-amber-600 rounded-xl animate-pulse">
+                  <div className="flex items-center gap-2 px-3 py-2 bg-[#006E62]/10 text-[#006E62] rounded-xl animate-pulse">
                     <Loader2 size={14} className="animate-spin" />
                     <span className="text-[10px] font-bold uppercase tracking-widest">Mengunggah...</span>
                   </div>
@@ -302,7 +302,7 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
           <button 
             onClick={handleSave}
             disabled={isSaving || isUploading}
-            className="flex-[2] py-3 bg-amber-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-amber-700 transition-all shadow-lg shadow-amber-600/20 flex items-center justify-center gap-2 disabled:opacity-50"
+            className="flex-[2] py-3 bg-[#006E62] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-[#005a50] transition-all shadow-lg shadow-[#006E62]/20 flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
             {announcement ? 'Perbarui Pengumuman' : 'Publikasikan Sekarang'}

@@ -95,79 +95,79 @@ const PengumumanMain: React.FC<PengumumanMainProps> = ({ user }) => {
     }
 
     const totalPages = Math.ceil(totalCount / itemsPerPage);
+    const startItem = (page - 1) * itemsPerPage + 1;
+    const endItem = Math.min(page * itemsPerPage, totalCount);
 
     return (
-      <div className="bg-white rounded-[40px] border border-gray-100 overflow-hidden shadow-sm">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50/50 border-b border-gray-100">
-              <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pengumuman</th>
-              <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Kategori</th>
-              <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target</th>
-              <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Periode Tayang</th>
-              <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {announcements.map(ann => (
-              <tr key={ann.id} onClick={() => setSelectedAnnouncement(ann)} className="hover:bg-gray-50/50 transition-colors cursor-pointer">
-                <td className="px-8 py-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-[#006E62]/10 text-[#006E62] flex items-center justify-center shrink-0">
-                      <Megaphone size={18} />
-                    </div>
+      <div className="space-y-4">
+        <div className="bg-white rounded-[40px] border border-gray-100 overflow-hidden shadow-sm">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50/50 border-b border-gray-100">
+                <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pengumuman</th>
+                <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Kategori</th>
+                <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Periode Tayang</th>
+                <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {announcements.map(ann => (
+                <tr key={ann.id} onClick={() => setSelectedAnnouncement(ann)} className="hover:bg-gray-50/50 transition-colors cursor-pointer">
+                  <td className="px-8 py-5">
                     <div>
                       <p className="text-sm font-bold text-gray-800">{ann.title}</p>
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Oleh: {ann.creator?.full_name}</p>
                     </div>
-                  </div>
-                </td>
-                <td className="px-8 py-5">
-                  <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg ${ann.category === 'Urgent' ? 'bg-rose-50 text-rose-600' : ann.category === 'Event' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
-                    {ann.category}
-                  </span>
-                </td>
-                <td className="px-8 py-5">
-                  <p className="text-[10px] font-bold text-gray-600 uppercase tracking-tight">{ann.target_type}</p>
-                </td>
-                <td className="px-8 py-5">
-                  <div className="flex flex-col gap-1">
-                    <p className="text-[9px] font-bold text-gray-600 uppercase tracking-tight">Mulai: {new Date(ann.publish_start).toLocaleDateString('id-ID')}</p>
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Selesai: {new Date(ann.publish_end).toLocaleDateString('id-ID')}</p>
-                  </div>
-                </td>
-                <td className="px-8 py-5 text-right">
-                  <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                    <button 
-                      onClick={() => {
-                        setEditingAnnouncement(ann);
-                        setIsFormOpen(true);
-                      }}
-                      className="p-2 text-[#006E62] hover:bg-[#006E62]/10 rounded-xl transition-all"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(ann.id)}
-                      className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {totalPages > 1 && (
-          <div className="p-4 flex justify-center gap-2">
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <button key={i} onClick={() => setPage(i + 1)} className={`px-3 py-1 rounded-lg text-xs font-bold ${page === i + 1 ? 'bg-[#006E62] text-white' : 'bg-gray-100 text-gray-600'}`}>
-                {i + 1}
-              </button>
-            ))}
-          </div>
-        )}
+                  </td>
+                  <td className="px-8 py-5">
+                    <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg ${ann.category === 'Urgent' ? 'bg-rose-50 text-rose-600' : ann.category === 'Event' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+                      {ann.category}
+                    </span>
+                  </td>
+                  <td className="px-8 py-5">
+                    <div className="flex flex-col gap-1">
+                      <p className="text-[9px] font-bold text-gray-600 uppercase tracking-tight">Mulai: {new Date(ann.publish_start).toLocaleDateString('id-ID')}</p>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Selesai: {new Date(ann.publish_end).toLocaleDateString('id-ID')}</p>
+                    </div>
+                  </td>
+                  <td className="px-8 py-5 text-right">
+                    <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                      <button 
+                        onClick={() => {
+                          setEditingAnnouncement(ann);
+                          setIsFormOpen(true);
+                        }}
+                        className="p-2 text-[#006E62] hover:bg-[#006E62]/10 rounded-xl transition-all"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(ann.id)}
+                        className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex items-center justify-between px-4">
+          <p className="text-xs font-bold text-gray-500">
+            Menampilkan {totalCount > 0 ? startItem : 0} hingga {endItem} dari {totalCount} data
+          </p>
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2">
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button key={i} onClick={() => setPage(i + 1)} className={`px-3 py-1 rounded-lg text-xs font-bold ${page === i + 1 ? 'bg-[#006E62] text-white' : 'bg-gray-100 text-gray-600'}`}>
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -209,7 +209,15 @@ const PengumumanMain: React.FC<PengumumanMainProps> = ({ user }) => {
         </div>
       </div>
 
-      {isLoading ? (
+      {selectedAnnouncement ? (
+        <AnnouncementDetail 
+          announcement={selectedAnnouncement}
+          userId={user.id}
+          isAdmin={isAdmin}
+          onClose={() => setSelectedAnnouncement(null)}
+          onRead={fetchData}
+        />
+      ) : isLoading ? (
         <div className="flex flex-col items-center justify-center py-32">
           <Loader2 size={48} className="animate-spin text-[#006E62] mb-4" />
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest animate-pulse">Memuat Pengumuman...</p>
@@ -234,16 +242,6 @@ const PengumumanMain: React.FC<PengumumanMainProps> = ({ user }) => {
             {renderTable(pastAnnouncements, pastPage, setPastPage, pastCount)}
           </section>
         </div>
-      )}
-
-      {selectedAnnouncement && (
-        <AnnouncementDetail 
-          announcement={selectedAnnouncement}
-          userId={user.id}
-          isAdmin={isAdmin}
-          onClose={() => setSelectedAnnouncement(null)}
-          onRead={fetchData}
-        />
       )}
 
       {isFormOpen && (
