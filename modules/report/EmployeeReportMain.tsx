@@ -189,15 +189,12 @@ const EmployeeReportMain: React.FC = () => {
       </div>
 
       {/* New Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ChartContainer title="Sebaran Agama">
           <SimplePieChart data={data.religionDistribution} />
         </ChartContainer>
         <ChartContainer title="Sebaran Departemen">
           <SimpleBarChart data={data.departmentDistribution} />
-        </ChartContainer>
-        <ChartContainer title="Sebaran Sertifikasi">
-          <SimpleBarChart data={data.certificationDistribution} />
         </ChartContainer>
       </div>
     </div>

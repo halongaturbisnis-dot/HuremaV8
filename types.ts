@@ -12,7 +12,6 @@ export interface EmployeeReportData {
   healthRiskProfile: { name: string; value: number }[];
   religionDistribution: { name: string; value: number }[];
   departmentDistribution: { name: string; value: number }[];
-  certificationDistribution: { name: string; value: number }[];
 }
 
 export interface Location {

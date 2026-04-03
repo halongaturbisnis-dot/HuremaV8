@@ -38,6 +38,14 @@ export const reportService = {
 
     const exitEmployees = exitAccountIds.size;
 
+    const totalEmployees = accounts.length;
+    
+    // New employees in last 30 days
+    const newEmployees = accounts.filter(a => {
+      if (!a.start_date) return false;
+      return new Date(a.start_date) >= thirtyDaysAgo;
+    }).length;
+
     // Religion Distribution
     const religionMap = accounts.reduce((acc: any, curr) => {
       const rel = curr.religion || 'Tidak Diketahui';
@@ -53,14 +61,6 @@ export const reportService = {
       return acc;
     }, {});
     const departmentDistribution = Object.entries(deptMap).map(([name, value]) => ({ name: (name as string) || 'Tidak Diketahui', value: value as number }));
-
-    // Certification Distribution
-    const certMap = (certifications || []).reduce((acc: any, curr) => {
-      const cert = curr.cert_type || 'Tidak Diketahui';
-      acc[cert] = (acc[cert] || 0) + 1;
-      return acc;
-    }, {});
-    const certificationDistribution = Object.entries(certMap).map(([name, value]) => ({ name: (name as string) || 'Tidak Diketahui', value: value as number }));
 
     // Gender Ratio
     const genderMap = accounts.reduce((acc: any, curr) => {
@@ -158,7 +158,6 @@ export const reportService = {
       healthRiskProfile,
       religionDistribution,
       departmentDistribution,
-      certificationDistribution,
     };
   },
 
