@@ -70,10 +70,10 @@ const EmployeeOfThePeriodMain: React.FC = () => {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
             Best Employee
           </h2>
-          <p className="text-sm text-gray-500 bold">Daftar Karyawan Teladan</p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Daftar Karyawan Teladan</p>
         </div>
         {isAdmin && (
           <button

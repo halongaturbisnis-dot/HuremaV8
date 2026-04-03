@@ -228,7 +228,7 @@ const DailyMonitoring: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Pemantauan Harian</h2>
-          <p className="text-sm text-gray-500 uppercase">Status kehadiran karyawan hari ini</p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Status kehadiran karyawan hari ini</p>
         </div>
         <div className="relative w-full md:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
