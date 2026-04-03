@@ -428,7 +428,12 @@ export interface Submission {
   account?: {
     full_name: string;
     internal_nik: string;
+    photo_google_id?: string | null;
   };
+  verifier?: {
+    full_name: string;
+    photo_google_id?: string | null;
+  } | null;
 }
 
 export interface AppSetting {

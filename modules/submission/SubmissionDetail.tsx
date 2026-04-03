@@ -25,9 +25,30 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
   };
 
   const DataItem = ({ label, value }: { label: string, value: string }) => (
-    <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+    <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 h-full">
       <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">{label}</p>
       <p className="text-xs font-bold text-gray-700">{value}</p>
+    </div>
+  );
+
+  const ProfileItem = ({ label, name, photoId }: { label: string, name: string, photoId?: string | null }) => (
+    <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex items-center gap-3 h-full">
+      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm bg-gray-200 flex items-center justify-center shrink-0">
+        {photoId ? (
+          <img 
+            src={googleDriveService.getFileUrl(photoId)} 
+            alt={name} 
+            className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <User size={20} className="text-gray-400" />
+        )}
+      </div>
+      <div>
+        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{label}</p>
+        <p className="text-xs font-bold text-gray-700">{name}</p>
+      </div>
     </div>
   );
 
@@ -36,15 +57,8 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in duration-200">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-             <div className={`p-2 rounded-lg ${
-                submission.status === 'Pending' ? 'bg-orange-50 text-orange-600' :
-                submission.status === 'Disetujui' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
-             }`}>
-                <Clock size={20} />
-             </div>
              <div>
                 <h3 className="text-base font-bold text-gray-800">Detail Pengajuan {submission.type}</h3>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">ID: {submission.id.slice(0,8)}</p>
              </div>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -54,7 +68,11 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           <div className="grid grid-cols-2 gap-4">
-             <DataItem label="Pengaju" value={submission.account?.full_name || '-'} />
+             <ProfileItem 
+                label="Pengaju" 
+                name={submission.account?.full_name || '-'} 
+                photoId={submission.account?.photo_google_id} 
+             />
              <DataItem label="NIK Internal" value={submission.account?.internal_nik || '-'} />
              <DataItem label="Tanggal Pengajuan" value={formatDate(submission.created_at)} />
              <DataItem label="Status Saat Ini" value={submission.status} />
@@ -63,12 +81,39 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
           <div className="space-y-2">
             <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b pb-1">Data Spesifik Pengajuan</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-               {Object.entries(submission.submission_data).map(([key, value]: [string, any]) => (
-                 <div key={key} className="flex justify-between items-center p-2 bg-emerald-50/20 rounded border border-emerald-100/30">
-                    <span className="text-[10px] font-medium text-gray-500 capitalize">{key.replace('_', ' ')}</span>
-                    <span className="text-[10px] font-bold text-[#006E62]">{value}</span>
-                 </div>
-               ))}
+               {(() => {
+                 const data = { ...submission.submission_data };
+                 const keys = Object.keys(data).filter(k => !k.toLowerCase().endsWith('_id'));
+                 
+                 // Find Start Date and End Date keys (case insensitive)
+                 const startDateKey = keys.find(k => k.toLowerCase().replace(' ', '') === 'startdate');
+                 const endDateKey = keys.find(k => k.toLowerCase().replace(' ', '') === 'enddate');
+
+                 const otherKeys = keys.filter(k => k !== startDateKey && k !== endDateKey);
+
+                 return (
+                   <>
+                     {startDateKey && (
+                       <div key={startDateKey} className="flex justify-between items-center p-2 bg-emerald-50/20 rounded border border-emerald-100/30">
+                          <span className="text-[10px] font-medium text-gray-500 capitalize">{startDateKey.replace('_', ' ')}</span>
+                          <span className="text-[10px] font-bold text-[#006E62]">{data[startDateKey]}</span>
+                       </div>
+                     )}
+                     {endDateKey && (
+                       <div key={endDateKey} className="flex justify-between items-center p-2 bg-emerald-50/20 rounded border border-emerald-100/30">
+                          <span className="text-[10px] font-medium text-gray-500 capitalize">{endDateKey.replace('_', ' ')}</span>
+                          <span className="text-[10px] font-bold text-[#006E62]">{data[endDateKey]}</span>
+                       </div>
+                     )}
+                     {otherKeys.map(key => (
+                       <div key={key} className="flex justify-between items-center p-2 bg-emerald-50/20 rounded border border-emerald-100/30">
+                          <span className="text-[10px] font-medium text-gray-500 capitalize">{key.replace('_', ' ')}</span>
+                          <span className="text-[10px] font-bold text-[#006E62]">{data[key]}</span>
+                       </div>
+                     ))}
+                   </>
+                 );
+               })()}
             </div>
           </div>
 
@@ -110,9 +155,23 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                   <CheckCircle size={14} /> Informasi Verifikasi
                 </h4>
                 <div className="grid grid-cols-2 gap-4 text-[10px]">
-                   <div>
-                     <p className="text-gray-400 uppercase">Diverifikasi Oleh</p>
-                     <p className="font-bold text-gray-700">ID: {submission.verifier_id?.slice(0,8) || '-'}</p>
+                   <div className="flex items-center gap-3">
+                     <div className="w-8 h-8 rounded-full overflow-hidden border border-blue-200 bg-blue-100 flex items-center justify-center shrink-0">
+                       {submission.verifier?.photo_google_id ? (
+                         <img 
+                           src={googleDriveService.getFileUrl(submission.verifier.photo_google_id)} 
+                           alt={submission.verifier.full_name} 
+                           className="w-full h-full object-cover"
+                           referrerPolicy="no-referrer"
+                         />
+                       ) : (
+                         <User size={16} className="text-blue-400" />
+                       )}
+                     </div>
+                     <div>
+                       <p className="text-gray-400 uppercase">Diverifikasi Oleh</p>
+                       <p className="font-bold text-gray-700">{submission.verifier?.full_name || '-'}</p>
+                     </div>
                    </div>
                    <div>
                      <p className="text-gray-400 uppercase">Waktu Verifikasi</p>

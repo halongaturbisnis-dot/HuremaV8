@@ -46,8 +46,8 @@ export const submissionService = {
     // Use !inner to force an inner join when searching on the joined table
     // This prevents "ghost rows" where the submission is returned but the account is null
     const selectStr = search 
-      ? `*, account:accounts!account_id!inner(full_name, internal_nik)`
-      : `*, account:accounts!account_id(full_name, internal_nik)`;
+      ? `*, account:accounts!account_id!inner(full_name, internal_nik, photo_google_id), verifier:accounts!verifier_id(full_name, photo_google_id)`
+      : `*, account:accounts!account_id(full_name, internal_nik, photo_google_id), verifier:accounts!verifier_id(full_name, photo_google_id)`;
 
     let query = supabase
       .from('account_submissions')
