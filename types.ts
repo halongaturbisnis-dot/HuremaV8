@@ -402,7 +402,9 @@ export interface DigitalDocument {
   description?: string;
   created_at?: string;
   updated_at?: string;
-  allowed_account_ids?: string[];
+  target_type: 'All' | 'Location' | 'Department' | 'Position' | 'Individual';
+  target_ids: string[];
+  created_by?: string;
 }
 
 export type SubmissionStatus = 'Pending' | 'Disetujui' | 'Ditolak' | 'Dibatalkan';
@@ -469,9 +471,7 @@ export type MaternityLeaveRequestInput = {
   description: string;
   file_id?: string | null;
 };
-export type DocumentInput = Omit<DigitalDocument, 'id' | 'created_at' | 'updated_at' | 'allowed_account_ids'> & {
-  allowed_account_ids: string[];
-};
+export type DocumentInput = Omit<DigitalDocument, 'id' | 'created_at' | 'updated_at'>;
 export type SubmissionInput = Omit<Submission, 'id' | 'created_at' | 'updated_at' | 'status' | 'verifier_id' | 'verified_at' | 'verification_notes' | 'account'>;
 
 export type ScheduleInput = Omit<Schedule, 'id' | 'created_at' | 'updated_at' | 'rules' | 'location_ids'> & {

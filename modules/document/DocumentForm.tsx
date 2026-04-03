@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, Upload, FileText, ChevronDown, Check, Users, Search, FolderKanban } from 'lucide-react';
+import { X, Save, Upload, FileText, ChevronDown, Check, Users, Search, FolderKanban, Target, User } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { documentService } from '../../services/documentService';
 import { accountService } from '../../services/accountService';
@@ -18,31 +18,42 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onClose, onSuccess, initial
     doc_type: initialData?.doc_type || 'SOP',
     file_id: initialData?.file_id || '',
     description: initialData?.description || '',
-    allowed_account_ids: initialData?.allowed_account_ids || []
+    target_type: initialData?.target_type || 'All',
+    target_ids: initialData?.target_ids || []
   });
 
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [existingTypes, setExistingTypes] = useState<string[]>([]);
-  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [grades, setGrades] = useState<string[]>([]);
+  const [locations, setLocations] = useState<string[]>([]);
+  const [positions, setPositions] = useState<string[]>([]);
+  const [statuses, setStatuses] = useState<string[]>(['Tetap', 'Kontrak', 'Magang', 'Harian']);
+  const [searchTerm, setSearchTerm] = useState('');
   const [uploading, setUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const typeRef = useRef<HTMLDivElement>(null);
-  const userRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    accountService.getAll().then(data => setAccounts(data as any));
-    documentService.getUniqueDocTypes().then((types: any) => setExistingTypes(types));
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (typeRef.current && !typeRef.current.contains(event.target as Node)) setShowTypeDropdown(false);
-      if (userRef.current && !userRef.current.contains(event.target as Node)) setShowUserDropdown(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    fetchData();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      const accs = await accountService.getAll();
+      setAccounts(accs.filter(a => !a.end_date || new Date(a.end_date) > new Date()));
+      
+      const grds = Array.from(new Set(accs.map(a => a.grade).filter(Boolean))) as string[];
+      setGrades(grds);
+      
+      const locs = Array.from(new Set(accs.map(a => a.location?.name).filter(Boolean))) as string[];
+      setLocations(locs);
+
+      const pos = Array.from(new Set(accs.map(a => a.position).filter(Boolean))) as string[];
+      setPositions(pos);
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -68,12 +79,12 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onClose, onSuccess, initial
     }
   };
 
-  const toggleUserAccess = (id: string) => {
-    setFormData(prev => ({
+  const toggleTargetId = (id: string) => {
+    setFormData((prev: any) => ({
       ...prev,
-      allowed_account_ids: prev.allowed_account_ids.includes(id)
-        ? prev.allowed_account_ids.filter((aid: string) => aid !== id)
-        : [...prev.allowed_account_ids, id]
+      target_ids: prev.target_ids.includes(id)
+        ? prev.target_ids.filter((tid: string) => tid !== id)
+        : [...prev.target_ids, id]
     }));
   };
 
@@ -96,15 +107,6 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onClose, onSuccess, initial
       setIsSaving(false);
     }
   };
-
-  const filteredTypes = existingTypes.filter(t => 
-    t.toLowerCase().includes(formData.doc_type.toLowerCase())
-  );
-
-  const filteredAccounts = accounts.filter(acc => 
-    acc.full_name.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
-    acc.internal_nik.toLowerCase().includes(userSearchTerm.toLowerCase())
-  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
@@ -163,37 +165,16 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onClose, onSuccess, initial
                     placeholder="cth: SOP Keamanan Kantor"
                   />
                 </div>
-                <div className="space-y-1 relative" ref={typeRef}>
+                <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Jenis Dokumen</label>
-                  <div className="relative">
-                    <input 
-                      autoComplete="off"
-                      required
-                      name="doc_type"
-                      value={formData.doc_type}
-                      onChange={(e) => { handleChange(e); setShowTypeDropdown(true); }}
-                      onFocus={() => setShowTypeDropdown(true)}
-                      className="w-full px-3 py-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-[#006E62] outline-none pr-8"
-                      placeholder="Pilih atau ketik baru..."
-                    />
-                    <button type="button" onClick={() => setShowTypeDropdown(!showTypeDropdown)} className="absolute right-0 top-0 bottom-0 px-2 text-gray-400">
-                       <ChevronDown size={14} />
-                    </button>
-                  </div>
-                  {showTypeDropdown && filteredTypes.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded shadow-xl max-h-40 overflow-y-auto">
-                      {filteredTypes.map(t => (
-                        <div 
-                          key={t}
-                          onClick={() => { setFormData(prev => ({ ...prev, doc_type: t })); setShowTypeDropdown(false); }}
-                          className="px-4 py-2 text-xs hover:bg-gray-50 cursor-pointer flex items-center justify-between text-gray-700"
-                        >
-                          <span>{t}</span>
-                          {formData.doc_type === t && <Check size={12} className="text-[#006E62]" />}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <input 
+                    required
+                    name="doc_type"
+                    value={formData.doc_type}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-[#006E62] outline-none"
+                    placeholder="cth: SOP"
+                  />
                 </div>
              </div>
 
@@ -209,75 +190,98 @@ const DocumentForm: React.FC<DocumentFormProps> = ({ onClose, onSuccess, initial
                 />
              </div>
 
-             <div className="space-y-1 relative" ref={userRef}>
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                  <Users size={12} className="text-[#00FFE4]" /> Atur Hak Akses Karyawan
-                </label>
-                <div 
-                  onClick={() => setShowUserDropdown(!showUserDropdown)}
-                  className="w-full px-3 py-2 text-xs border border-gray-200 rounded flex items-center justify-between cursor-pointer bg-white"
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Target Akses</label>
+                <select 
+                  name="target_type"
+                  value={formData.target_type}
+                  onChange={(e) => {
+                    setFormData((prev: any) => ({ ...prev, target_type: e.target.value, target_ids: [] }));
+                  }}
+                  className="w-full px-3 py-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-[#006E62] outline-none"
                 >
-                  <span className="text-gray-400">
-                    {formData.allowed_account_ids.length === 0 
-                      ? '-- Pilih Karyawan yang Dapat Mengakses --' 
-                      : `${formData.allowed_account_ids.length} Karyawan Terpilih`}
-                  </span>
-                  <ChevronDown size={14} className="text-gray-400" />
-                </div>
+                  <option value="All">Seluruh Karyawan</option>
+                  <option value="Location">Lokasi Spesifik</option>
+                  <option value="Department">Departemen Spesifik</option>
+                  <option value="Position">Jabatan Spesifik</option>
+                  <option value="Individual">Individu Spesifik</option>
+                </select>
+              </div>
 
-                {showUserDropdown && (
-                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded shadow-xl max-h-60 overflow-y-auto flex flex-col p-2">
-                     <div className="relative mb-2">
-                       <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-300" size={14} />
-                       <input 
-                         type="text"
-                         autoFocus
-                         placeholder="Cari nama/nik..."
-                         className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-100 rounded outline-none focus:ring-1 focus:ring-[#006E62]"
-                         value={userSearchTerm}
-                         onChange={(e) => setUserSearchTerm(e.target.value)}
-                         onClick={(e) => e.stopPropagation()}
-                       />
-                     </div>
-                     <div className="flex-1 overflow-y-auto space-y-1">
-                       {filteredAccounts.map(acc => (
-                         <div 
-                           key={acc.id}
-                           onClick={(e) => { e.stopPropagation(); toggleUserAccess(acc.id); }}
-                           className={`flex items-center gap-2 p-2 rounded cursor-pointer text-xs hover:bg-gray-50 transition-colors ${
-                             formData.allowed_account_ids.includes(acc.id) ? 'bg-emerald-50 text-[#006E62] font-bold' : 'text-gray-600'
-                           }`}
-                         >
-                            <div className={`w-4 h-4 border rounded flex items-center justify-center shrink-0 ${
-                              formData.allowed_account_ids.includes(acc.id) ? 'bg-[#006E62] border-[#006E62] text-white' : 'border-gray-300'
-                            }`}>
-                               {formData.allowed_account_ids.includes(acc.id) && <Check size={10} />}
+              {formData.target_type !== 'All' && (
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                    <Target size={12} className="text-[#00FFE4]" /> Pilih {formData.target_type === 'Location' ? 'Lokasi' : formData.target_type === 'Department' ? 'Departemen' : formData.target_type === 'Position' ? 'Jabatan' : 'Karyawan'}
+                  </label>
+                  <input 
+                    type="text"
+                    placeholder={`Cari ${formData.target_type === 'Location' ? 'Lokasi' : formData.target_type === 'Department' ? 'Departemen' : formData.target_type === 'Position' ? 'Jabatan' : 'Karyawan'}...`}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-[#006E62] outline-none"
+                  />
+                  <div className="p-2 bg-gray-50 border border-gray-100 rounded max-h-40 overflow-y-auto space-y-1 mt-1">
+                    {(() => {
+                      const filteredAccounts = accounts.filter(a => a.full_name.toLowerCase().includes(searchTerm.toLowerCase()));
+                      const filteredGrades = grades.filter(d => d?.toLowerCase().includes(searchTerm.toLowerCase()));
+                      const filteredLocations = locations.filter(l => l?.toLowerCase().includes(searchTerm.toLowerCase()));
+                      const filteredPositions = positions.filter(p => p?.toLowerCase().includes(searchTerm.toLowerCase()));
+
+                      if (formData.target_type === 'Location') {
+                        return filteredLocations.map(loc => (
+                          <button 
+                            key={loc}
+                            type="button"
+                            onClick={() => toggleTargetId(loc)}
+                            className={`w-full flex items-center justify-between p-2 rounded text-xs ${formData.target_ids.includes(loc) ? 'bg-emerald-50 text-[#006E62] font-bold' : 'text-gray-600 hover:bg-gray-100'}`}
+                          >
+                            <span>{loc}</span>
+                            {formData.target_ids.includes(loc) && <Check size={12} />}
+                          </button>
+                        ));
+                      } else if (formData.target_type === 'Department') {
+                        return filteredGrades.map(grd => (
+                          <button 
+                            key={grd}
+                            type="button"
+                            onClick={() => toggleTargetId(grd)}
+                            className={`w-full flex items-center justify-between p-2 rounded text-xs ${formData.target_ids.includes(grd) ? 'bg-emerald-50 text-[#006E62] font-bold' : 'text-gray-600 hover:bg-gray-100'}`}
+                          >
+                            <span>{grd || 'Tanpa Departemen'}</span>
+                            {formData.target_ids.includes(grd) && <Check size={12} />}
+                          </button>
+                        ));
+                      } else if (formData.target_type === 'Position') {
+                        return filteredPositions.map(pos => (
+                          <button 
+                            key={pos}
+                            type="button"
+                            onClick={() => toggleTargetId(pos)}
+                            className={`w-full flex items-center justify-between p-2 rounded text-xs ${formData.target_ids.includes(pos) ? 'bg-emerald-50 text-[#006E62] font-bold' : 'text-gray-600 hover:bg-gray-100'}`}
+                          >
+                            <span>{pos}</span>
+                            {formData.target_ids.includes(pos) && <Check size={12} />}
+                          </button>
+                        ));
+                      } else {
+                        return filteredAccounts.map(acc => (
+                          <button 
+                            key={acc.id}
+                            type="button"
+                            onClick={() => toggleTargetId(acc.id)}
+                            className={`w-full flex items-center justify-between p-2 rounded text-xs ${formData.target_ids.includes(acc.id) ? 'bg-emerald-50 text-[#006E62] font-bold' : 'text-gray-600 hover:bg-gray-100'}`}
+                          >
+                            <div className="flex items-center gap-2">
+                               <p className="truncate">{acc.full_name}</p>
                             </div>
-                            <div className="flex-1 min-w-0">
-                               <p className="truncate leading-none">{acc.full_name}</p>
-                               <p className="text-[9px] font-normal opacity-60 uppercase mt-0.5">{acc.internal_nik} • {acc.position}</p>
-                            </div>
-                         </div>
-                       ))}
-                     </div>
+                            {formData.target_ids.includes(acc.id) && <Check size={12} />}
+                          </button>
+                        ));
+                      }
+                    })()}
                   </div>
-                )}
-
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                   {formData.allowed_account_ids.map((aid: string) => {
-                     const acc = accounts.find(a => a.id === aid);
-                     return acc ? (
-                       <span key={aid} className="px-2 py-0.5 bg-emerald-50 text-[#006E62] text-[9px] font-bold rounded flex items-center gap-1 border border-emerald-100">
-                         {acc.full_name}
-                         <X size={10} className="cursor-pointer hover:text-red-500" onClick={() => toggleUserAccess(aid)} />
-                       </span>
-                     ) : null;
-                   })}
-                   {formData.allowed_account_ids.length === 0 && (
-                     <p className="text-[9px] text-orange-500 italic font-medium">Hanya Admin yang dapat mengakses dokumen ini.</p>
-                   )}
                 </div>
-             </div>
+              )}
           </div>
         </form>
 
