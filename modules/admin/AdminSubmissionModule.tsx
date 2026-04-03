@@ -441,8 +441,8 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
       {/* Modal Tambah Libur Mandiri */}
       {showCreateModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-[#006E62]/10 rounded-xl flex items-center justify-center text-[#006E62]">
                   <Plus size={20} />
@@ -460,8 +460,9 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
               </button>
             </div>
 
-            <form onSubmit={handleCreate} className="p-6 space-y-4">
-              <div className="space-y-1.5 relative">
+            <form onSubmit={handleCreate} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-6 space-y-4 overflow-y-auto flex-1">
+                <div className="space-y-1.5 relative">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Pilih Karyawan (*)</label>
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
@@ -662,7 +663,9 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
                 </div>
               </div>
 
-              <div className="pt-4 flex gap-3">
+              </div>
+
+              <div className="p-6 pt-4 border-t border-gray-100 bg-gray-50/50 flex gap-3 shrink-0">
                 <button
                   type="button"
                   onClick={() => {

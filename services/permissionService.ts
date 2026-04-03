@@ -49,10 +49,11 @@ export const permissionService = {
 
     const status = forceStatus || 'pending';
 
+    const { file_id, ...insertData } = input;
     const { data, error } = await supabase
       .from('account_permission_requests')
       .insert({
-        ...input,
+        ...insertData,
         status,
         current_negotiator_role: status === 'approved' ? 'user' : 'admin',
         negotiation_data: [{

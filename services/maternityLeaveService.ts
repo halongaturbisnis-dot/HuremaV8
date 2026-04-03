@@ -49,10 +49,11 @@ export const maternityLeaveService = {
 
     const status = forceStatus || 'pending';
 
+    const { file_id, ...insertData } = input;
     const { data, error } = await supabase
       .from('account_maternity_leaves')
       .insert({
-        ...input,
+        ...insertData,
         status,
         current_negotiator_role: status === 'approved' ? 'user' : 'admin',
         negotiation_data: [{
