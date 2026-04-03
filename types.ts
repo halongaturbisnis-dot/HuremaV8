@@ -112,6 +112,7 @@ export interface Account {
   diploma_google_id?: string | null;
   // Karier & Penempatan
   internal_nik: string;
+  department: string;
   position: string;
   grade: string;
   location_id: string | null; // Relasi ke Location (UUID)
@@ -661,7 +662,7 @@ export interface Announcement {
   title: string;
   content: string;
   category: 'Urgent' | 'Info' | 'Event' | 'Policy';
-  target_type: 'All' | 'Department' | 'Individual';
+  target_type: 'All' | 'Location' | 'Department' | 'Position' | 'Individual' | 'Status';
   target_ids: string[]; // Department names or User IDs
   publish_start: string;
   publish_end: string;

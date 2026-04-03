@@ -1,8 +1,8 @@
 import { supabase } from '../lib/supabase';
-import { Announcement, AnnouncementRead } from '../types';
+import { Announcement, AnnouncementRead, Account } from '../types';
 
 export const announcementService = {
-  async getAnnouncements(userId: string, department?: string) {
+  async getAnnouncements(user: Account) {
     const now = new Date().toISOString();
     
     // Fetch announcements that are active and targeted to the user
@@ -22,11 +22,20 @@ export const announcementService = {
     // Filter based on targeting
     const filtered = (data as any[]).filter(ann => {
       if (ann.target_type === 'All') return true;
-      if (ann.target_type === 'Department' && department) {
-        return ann.target_ids.includes(department);
+      if (ann.target_type === 'Location' && user.location_id) {
+        return ann.target_ids.includes(user.location_id);
+      }
+      if (ann.target_type === 'Department' && user.department) {
+        return ann.target_ids.includes(user.department);
+      }
+      if (ann.target_type === 'Position' && user.position) {
+        return ann.target_ids.includes(user.position);
       }
       if (ann.target_type === 'Individual') {
-        return ann.target_ids.includes(userId);
+        return ann.target_ids.includes(user.id);
+      }
+      if (ann.target_type === 'Status' && user.employee_type) {
+        return ann.target_ids.includes(user.employee_type);
       }
       return false;
     });
@@ -35,7 +44,7 @@ export const announcementService = {
     const { data: reads, error: readError } = await supabase
       .from('announcement_reads')
       .select('announcement_id')
-      .eq('user_id', userId);
+      .eq('user_id', user.id);
 
     if (readError) throw readError;
 

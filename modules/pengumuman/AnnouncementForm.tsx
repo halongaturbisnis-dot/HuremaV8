@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Save, Paperclip, Plus, Trash2, Loader2, Megaphone, Calendar, Users, Target, AlertCircle, Info, FileText } from 'lucide-react';
+import { X, Save, Paperclip, Plus, Trash2, Loader2, Megaphone, Calendar, Users, Target, AlertCircle, Info, FileText, User } from 'lucide-react';
 import { Announcement, Account } from '../../types';
 import { googleDriveService } from '../../services/googleDriveService';
 import { announcementService } from '../../services/announcementService';
@@ -27,6 +27,9 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
   const [isUploading, setIsUploading] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
+  const [locations, setLocations] = useState<string[]>([]);
+  const [positions, setPositions] = useState<string[]>([]);
+  const [statuses, setStatuses] = useState<string[]>(['Tetap', 'Kontrak', 'Magang', 'Harian']);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -36,11 +39,16 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
   const fetchData = async () => {
     try {
       const accs = await accountService.getAll();
-      setAccounts(accs);
+      setAccounts(accs.filter(a => !a.end_date || new Date(a.end_date) > new Date()));
       
-      // Extract unique departments
       const deps = Array.from(new Set(accs.map(a => a.department).filter(Boolean))) as string[];
       setDepartments(deps);
+      
+      const locs = Array.from(new Set(accs.map(a => a.location?.name).filter(Boolean))) as string[];
+      setLocations(locs);
+
+      const pos = Array.from(new Set(accs.map(a => a.position).filter(Boolean))) as string[];
+      setPositions(pos);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     }
@@ -174,8 +182,11 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006E62]/20 text-sm font-bold text-gray-700"
                   >
                     <option value="All">Seluruh Karyawan</option>
+                    <option value="Location">Lokasi Spesifik</option>
                     <option value="Department">Departemen Spesifik</option>
+                    <option value="Position">Jabatan Spesifik</option>
                     <option value="Individual">Individu Spesifik</option>
+                    <option value="Status">Status Karyawan</option>
                   </select>
                 </div>
               </div>
@@ -206,10 +217,21 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
               {targetType !== 'All' && (
                 <div className="space-y-3">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1 flex items-center gap-2">
-                    <Target size={14} /> Pilih {targetType === 'Department' ? 'Departemen' : 'Karyawan'}
+                    <Target size={14} /> Pilih {targetType === 'Location' ? 'Lokasi' : targetType === 'Department' ? 'Departemen' : targetType === 'Position' ? 'Jabatan' : targetType === 'Individual' ? 'Karyawan' : 'Status'}
                   </label>
                   <div className="p-4 bg-gray-50 border border-gray-100 rounded-2xl max-h-[250px] overflow-y-auto scrollbar-thin space-y-2">
-                    {targetType === 'Department' ? (
+                    {targetType === 'Location' ? (
+                      locations.map(loc => (
+                        <button 
+                          key={loc}
+                          onClick={() => toggleTargetId(loc)}
+                          className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(loc) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
+                        >
+                          <span className="text-xs font-bold uppercase">{loc}</span>
+                          {targetIds.includes(loc) && <Save size={14} />}
+                        </button>
+                      ))
+                    ) : targetType === 'Department' ? (
                       departments.map(dep => (
                         <button 
                           key={dep}
@@ -220,6 +242,28 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
                           {targetIds.includes(dep) && <Save size={14} />}
                         </button>
                       ))
+                    ) : targetType === 'Position' ? (
+                      positions.map(pos => (
+                        <button 
+                          key={pos}
+                          onClick={() => toggleTargetId(pos)}
+                          className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(pos) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
+                        >
+                          <span className="text-xs font-bold uppercase">{pos}</span>
+                          {targetIds.includes(pos) && <Save size={14} />}
+                        </button>
+                      ))
+                    ) : targetType === 'Status' ? (
+                      statuses.map(stat => (
+                        <button 
+                          key={stat}
+                          onClick={() => toggleTargetId(stat)}
+                          className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(stat) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
+                        >
+                          <span className="text-xs font-bold uppercase">{stat}</span>
+                          {targetIds.includes(stat) && <Save size={14} />}
+                        </button>
+                      ))
                     ) : (
                       accounts.map(acc => (
                         <button 
@@ -227,9 +271,18 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
                           onClick={() => toggleTargetId(acc.id)}
                           className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(acc.id) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
                         >
-                          <div className="text-left">
-                            <p className="text-[10px] font-bold">{acc.full_name}</p>
-                            <p className="text-[8px] font-bold opacity-60 uppercase">{acc.department} • {acc.internal_nik}</p>
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                              {acc.photo_google_id ? (
+                                <img src={googleDriveService.getFileUrl(acc.photo_google_id)} alt={acc.full_name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                              ) : (
+                                <User size={16} className="text-gray-400" />
+                              )}
+                            </div>
+                            <div className="text-left">
+                              <p className="text-[10px] font-bold">{acc.full_name}</p>
+                              <p className="text-[8px] font-bold opacity-60 uppercase">{acc.department} • {acc.internal_nik}</p>
+                            </div>
                           </div>
                           {targetIds.includes(acc.id) && <Save size={14} />}
                         </button>

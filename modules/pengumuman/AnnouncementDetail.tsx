@@ -39,7 +39,7 @@ const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({ announcement, u
         </header>
 
         <div className="prose prose-sm max-w-none">
-          <div className="text-gray-700 leading-relaxed whitespace-pre-wrap text-sm font-medium">
+          <div className="text-gray-700 leading-relaxed whitespace-pre-wrap text-sm font-medium border border-gray-100 rounded-xl shadow-sm p-6 bg-white">
             {announcement.content}
           </div>
         </div>
