@@ -60,7 +60,7 @@ const EmployeeOfThePeriodMain: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center h-64">
         <div className="w-10 h-10 border-4 border-[#006E62] border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Memuat Hall of Fame...</p>
+        <p className="mt-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Memuat...</p>
       </div>
     );
   }
@@ -73,7 +73,7 @@ const EmployeeOfThePeriodMain: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             Best Employee
           </h2>
-          <p className="text-sm text-gray-500 italic">Daftar Karyawan Teladan</p>
+          <p className="text-sm text-gray-500 bold">Daftar Karyawan Teladan</p>
         </div>
         {isAdmin && (
           <button
