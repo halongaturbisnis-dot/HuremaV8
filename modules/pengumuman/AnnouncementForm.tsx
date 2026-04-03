@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Save, Paperclip, Plus, Trash2, Loader2, Megaphone, Calendar, Users, Target, AlertCircle, Info, FileText, User } from 'lucide-react';
+import { X, Save, Paperclip, Plus, Trash2, Loader2, Megaphone, Calendar, Users, Target, AlertCircle, Info, FileText, User, Check } from 'lucide-react';
 import { Announcement, Account } from '../../types';
 import { googleDriveService } from '../../services/googleDriveService';
 import { announcementService } from '../../services/announcementService';
@@ -115,6 +115,8 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
     );
   };
 
+  const [searchTerm, setSearchTerm] = useState('');
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300 max-h-[95vh]">
@@ -219,75 +221,90 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1 flex items-center gap-2">
                     <Target size={14} /> Pilih {targetType === 'Location' ? 'Lokasi' : targetType === 'Department' ? 'Departemen' : targetType === 'Position' ? 'Jabatan' : targetType === 'Individual' ? 'Karyawan' : 'Status'}
                   </label>
+                  <input 
+                    type="text"
+                    placeholder={`Cari ${targetType === 'Location' ? 'Lokasi' : targetType === 'Department' ? 'Departemen' : targetType === 'Position' ? 'Jabatan' : targetType === 'Individual' ? 'Karyawan' : 'Status'}...`}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full px-4 py-2 mb-2 bg-white border border-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#006E62]/20"
+                  />
                   <div className="p-4 bg-gray-50 border border-gray-100 rounded-2xl max-h-[250px] overflow-y-auto scrollbar-thin space-y-2">
-                    {targetType === 'Location' ? (
-                      locations.map(loc => (
-                        <button 
-                          key={loc}
-                          onClick={() => toggleTargetId(loc)}
-                          className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(loc) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
-                        >
-                          <span className="text-xs font-bold uppercase">{loc}</span>
-                          {targetIds.includes(loc) && <Save size={14} />}
-                        </button>
-                      ))
-                    ) : targetType === 'Department' ? (
-                      departments.map(dep => (
-                        <button 
-                          key={dep}
-                          onClick={() => toggleTargetId(dep)}
-                          className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(dep) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
-                        >
-                          <span className="text-xs font-bold uppercase">{dep}</span>
-                          {targetIds.includes(dep) && <Save size={14} />}
-                        </button>
-                      ))
-                    ) : targetType === 'Position' ? (
-                      positions.map(pos => (
-                        <button 
-                          key={pos}
-                          onClick={() => toggleTargetId(pos)}
-                          className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(pos) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
-                        >
-                          <span className="text-xs font-bold uppercase">{pos}</span>
-                          {targetIds.includes(pos) && <Save size={14} />}
-                        </button>
-                      ))
-                    ) : targetType === 'Status' ? (
-                      statuses.map(stat => (
-                        <button 
-                          key={stat}
-                          onClick={() => toggleTargetId(stat)}
-                          className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(stat) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
-                        >
-                          <span className="text-xs font-bold uppercase">{stat}</span>
-                          {targetIds.includes(stat) && <Save size={14} />}
-                        </button>
-                      ))
-                    ) : (
-                      accounts.map(acc => (
-                        <button 
-                          key={acc.id}
-                          onClick={() => toggleTargetId(acc.id)}
-                          className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(acc.id) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                              {acc.photo_google_id ? (
-                                <img src={googleDriveService.getFileUrl(acc.photo_google_id)} alt={acc.full_name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                              ) : (
-                                <User size={16} className="text-gray-400" />
-                              )}
+                    {(() => {
+                      const filteredAccounts = accounts.filter(a => a.full_name.toLowerCase().includes(searchTerm.toLowerCase()));
+                      const filteredDepartments = departments.filter(d => d?.toLowerCase().includes(searchTerm.toLowerCase()));
+                      const filteredLocations = locations.filter(l => l?.toLowerCase().includes(searchTerm.toLowerCase()));
+                      const filteredPositions = positions.filter(p => p?.toLowerCase().includes(searchTerm.toLowerCase()));
+                      const filteredStatuses = statuses.filter(s => s?.toLowerCase().includes(searchTerm.toLowerCase()));
+
+                      if (targetType === 'Location') {
+                        return filteredLocations.map(loc => (
+                          <button 
+                            key={loc}
+                            onClick={() => toggleTargetId(loc)}
+                            className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(loc) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
+                          >
+                            <span className="text-xs font-bold uppercase">{loc}</span>
+                            {targetIds.includes(loc) && <Check size={14} />}
+                          </button>
+                        ));
+                      } else if (targetType === 'Department') {
+                        return filteredDepartments.map(dep => (
+                          <button 
+                            key={dep}
+                            onClick={() => toggleTargetId(dep)}
+                            className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(dep) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
+                          >
+                            <span className="text-xs font-bold uppercase">{dep || 'Tanpa Departemen'}</span>
+                            {targetIds.includes(dep) && <Check size={14} />}
+                          </button>
+                        ));
+                      } else if (targetType === 'Position') {
+                        return filteredPositions.map(pos => (
+                          <button 
+                            key={pos}
+                            onClick={() => toggleTargetId(pos)}
+                            className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(pos) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
+                          >
+                            <span className="text-xs font-bold uppercase">{pos}</span>
+                            {targetIds.includes(pos) && <Check size={14} />}
+                          </button>
+                        ));
+                      } else if (targetType === 'Status') {
+                        return filteredStatuses.map(stat => (
+                          <button 
+                            key={stat}
+                            onClick={() => toggleTargetId(stat)}
+                            className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(stat) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
+                          >
+                            <span className="text-xs font-bold uppercase">{stat}</span>
+                            {targetIds.includes(stat) && <Check size={14} />}
+                          </button>
+                        ));
+                      } else {
+                        return filteredAccounts.map(acc => (
+                          <button 
+                            key={acc.id}
+                            onClick={() => toggleTargetId(acc.id)}
+                            className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(acc.id) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                                {acc.photo_google_id ? (
+                                  <img src={googleDriveService.getFileUrl(acc.photo_google_id)} alt={acc.full_name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                ) : (
+                                  <User size={16} className="text-gray-400" />
+                                )}
+                              </div>
+                              <div className="text-left">
+                                <p className="text-[10px] font-bold">{acc.full_name}</p>
+                                <p className="text-[8px] font-bold opacity-60 uppercase">{acc.department} • {acc.internal_nik}</p>
+                              </div>
                             </div>
-                            <div className="text-left">
-                              <p className="text-[10px] font-bold">{acc.full_name}</p>
-                              <p className="text-[8px] font-bold opacity-60 uppercase">{acc.department} • {acc.internal_nik}</p>
-                            </div>
-                          </div>
-                          {targetIds.includes(acc.id) && <Save size={14} />}
-                        </button>
-                      ))
-                    )}
+                            {targetIds.includes(acc.id) && <Check size={14} />}
+                          </button>
+                        ));
+                      }
+                    })()}
                   </div>
                 </div>
               )}
