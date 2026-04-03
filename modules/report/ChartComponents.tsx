@@ -30,7 +30,16 @@ interface SimpleBarChartProps {
 export const SimpleBarChart: React.FC<SimpleBarChartProps> = ({ data, dataKey = "value" }) => (
   <BarChart data={data}>
     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-    <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+    <XAxis 
+      dataKey="name" 
+      fontSize={12} 
+      tickLine={false} 
+      axisLine={false} 
+      interval={0} 
+      angle={-45} 
+      textAnchor="end" 
+      height={60} 
+    />
     <YAxis fontSize={12} tickLine={false} axisLine={false} />
     <Tooltip 
       cursor={{fill: '#f9fafb'}}

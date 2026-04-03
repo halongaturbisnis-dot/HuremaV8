@@ -52,7 +52,7 @@ const EmployeeOfThePeriodForm: React.FC<EmployeeOfThePeriodFormProps> = ({ award
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedAccountIds.length === 0) {
-      Swal.fire('Peringatan', 'Pilih minimal satu pegawai.', 'warning');
+      Swal.fire('Peringatan', 'Pilih minimal satu karyawan.', 'warning');
       return;
     }
 
@@ -134,7 +134,7 @@ const EmployeeOfThePeriodForm: React.FC<EmployeeOfThePeriodFormProps> = ({ award
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Pilih Pegawai ({selectedAccountIds.length} terpilih)</label>
+            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Pilih Karyawan ({selectedAccountIds.length} terpilih)</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
               <input 
@@ -181,7 +181,7 @@ const EmployeeOfThePeriodForm: React.FC<EmployeeOfThePeriodFormProps> = ({ award
                 rows={4}
                 value={formData.reason}
                 onChange={(e) => setFormData({...formData, reason: e.target.value})}
-                placeholder="Tuliskan alasan mengapa pegawai ini terpilih..."
+                placeholder="Tuliskan alasan mengapa karyawan ini terpilih..."
                 className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-[#006E62] outline-none resize-none"
               />
             </div>
