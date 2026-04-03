@@ -255,10 +255,10 @@ export const leaveService = {
   /**
    * Membuat pengajuan libur baru
    */
-  async create(input: LeaveRequestInput): Promise<LeaveRequest> {
+  async create(input: LeaveRequestInput, forceStatus?: 'approved' | 'pending', verifierId?: string): Promise<LeaveRequest> {
     // Ambil kebijakan dari settings
     const policy = await settingsService.getSetting('leave_approval_policy', 'manual');
-    const status = policy === 'auto' ? 'approved' : 'pending';
+    const status = forceStatus || (policy === 'auto' ? 'approved' : 'pending');
 
     // 1. Simpan ke tabel khusus libur mandiri
     const { data, error } = await supabase
@@ -279,6 +279,8 @@ export const leaveService = {
       type: 'Libur Mandiri',
       status: submissionStatus,
       description: input.description,
+      verifier_id: status === 'approved' ? verifierId : null,
+      verified_at: status === 'approved' ? new Date().toISOString() : null,
       submission_data: {
         start_date: input.start_date,
         end_date: input.end_date,

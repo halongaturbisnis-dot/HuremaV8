@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Clock, CheckCircle2, XCircle, AlertCircle, Eye, Loader2, Calendar, User, ArrowRight, LucideIcon } from 'lucide-react';
+import { Search, Filter, Clock, CheckCircle2, XCircle, AlertCircle, Eye, Loader2, Calendar, User, ArrowRight, LucideIcon, Plus, Trash2, X } from 'lucide-react';
 import { submissionService } from '../../services/submissionService';
-import { Submission, AuthUser, SubmissionStatus } from '../../types';
+import { accountService } from '../../services/accountService';
+import { leaveService } from '../../services/leaveService';
+import { Submission, AuthUser, SubmissionStatus, Account } from '../../types';
 import Swal from 'sweetalert2';
 import SubmissionDetail from '../submission/SubmissionDetail';
 
@@ -20,10 +22,31 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [activeAccounts, setActiveAccounts] = useState<Account[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newSubmission, setNewSubmission] = useState({
+    account_id: '',
+    start_date: '',
+    end_date: '',
+    description: ''
+  });
 
   useEffect(() => {
     fetchSubmissions();
+    if (type === 'Libur Mandiri') {
+      fetchActiveAccounts();
+    }
   }, [type]);
+
+  const fetchActiveAccounts = async () => {
+    try {
+      const data = await accountService.getAll(undefined, undefined, '', 'aktif');
+      setActiveAccounts(data);
+    } catch (error) {
+      console.error('Error fetching active accounts:', error);
+    }
+  };
 
   const fetchSubmissions = async () => {
     try {
@@ -88,6 +111,77 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
     }
   };
 
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSubmission.account_id || !newSubmission.start_date || !newSubmission.end_date) {
+      Swal.fire('Peringatan', 'Mohon lengkapi semua data wajib', 'warning');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await leaveService.create({
+        account_id: newSubmission.account_id,
+        start_date: newSubmission.start_date,
+        end_date: newSubmission.end_date,
+        description: newSubmission.description || 'Dibuatkan oleh Admin'
+      }, 'approved', user.id);
+
+      await Swal.fire({
+        title: 'Berhasil!',
+        text: 'Pengajuan libur mandiri berhasil dibuat dan otomatis disetujui.',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      setShowCreateModal(false);
+      setNewSubmission({ account_id: '', start_date: '', end_date: '', description: '' });
+      fetchSubmissions();
+    } catch (error) {
+      console.error(error);
+      Swal.fire('Error', 'Gagal membuat pengajuan', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: string, subType: string, subData: any) => {
+    try {
+      const result = await Swal.fire({
+        title: 'Hapus Pengajuan',
+        text: 'Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Ya, Hapus',
+        cancelButtonText: 'Batal'
+      });
+
+      if (result.isConfirmed) {
+        // Jika Libur Mandiri, hapus juga record di tabel libur mandiri
+        if (subType === 'Libur Mandiri' && subData.leave_request_id) {
+          await leaveService.delete(subData.leave_request_id);
+        }
+
+        await submissionService.delete(id);
+        
+        await Swal.fire({
+          title: 'Terhapus!',
+          text: 'Data pengajuan telah berhasil dihapus.',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        fetchSubmissions();
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire('Error', 'Gagal menghapus data', 'error');
+    }
+  };
+
   if (isLoading) return (
     <div className="flex flex-col items-center justify-center py-20 text-gray-400">
       <div className="w-12 h-12 border-4 border-gray-200 border-t-[#006E62] rounded-full animate-spin mb-4"></div>
@@ -110,6 +204,15 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
+          {type === 'Libur Mandiri' && (
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center justify-center gap-2 bg-[#006E62] text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#005a50] transition-all shadow-sm active:scale-95"
+            >
+              <Plus size={16} />
+              Tambah
+            </button>
+          )}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             <input 
@@ -180,7 +283,7 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-end">
+                      <div className="flex items-center justify-end gap-2">
                         <button 
                           onClick={() => {
                             setSelectedSubmission(sub);
@@ -189,8 +292,17 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
                           className="flex items-center gap-2 bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm active:scale-95"
                         >
                           <Eye size={14} />
-                          Detail & Verifikasi
+                          Detail
                         </button>
+                        {type === 'Libur Mandiri' && (
+                          <button 
+                            onClick={() => handleDelete(sub.id, sub.type, sub.submission_data)}
+                            className="flex items-center gap-2 bg-rose-50 border border-rose-100 text-rose-600 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-rose-100 hover:border-rose-200 transition-all shadow-sm active:scale-95"
+                          >
+                            <Trash2 size={14} />
+                            Hapus
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -211,6 +323,104 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
           onVerify={handleVerify}
           canVerify={selectedSubmission.status === 'Pending'}
         />
+      )}
+
+      {/* Modal Tambah Libur Mandiri */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#006E62]/10 rounded-xl flex items-center justify-center text-[#006E62]">
+                  <Plus size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-800 tracking-tight">Tambah Libur Mandiri</h3>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Bantu Pengajuan Karyawan</p>
+                </div>
+              </div>
+              <button onClick={() => setShowCreateModal(false)} className="p-2 hover:bg-gray-200/50 rounded-xl transition-colors text-gray-400">
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreate} className="p-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Pilih Pegawai (*)</label>
+                <select
+                  required
+                  value={newSubmission.account_id}
+                  onChange={(e) => setNewSubmission({ ...newSubmission, account_id: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-xs focus:ring-2 focus:ring-[#006E62] outline-none transition-all font-medium"
+                >
+                  <option value="">-- Pilih Pegawai Aktif --</option>
+                  {activeAccounts.map(acc => (
+                    <option key={acc.id} value={acc.id}>
+                      {acc.full_name} ({acc.internal_nik})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 text-emerald-600">Mulai (*)</label>
+                  <input
+                    type="date"
+                    required
+                    value={newSubmission.start_date}
+                    onChange={(e) => setNewSubmission({ ...newSubmission, start_date: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-xs focus:ring-2 focus:ring-[#006E62] outline-none transition-all font-bold text-gray-700"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 text-rose-600">Selesai (*)</label>
+                  <input
+                    type="date"
+                    required
+                    value={newSubmission.end_date}
+                    onChange={(e) => setNewSubmission({ ...newSubmission, end_date: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-xs focus:ring-2 focus:ring-[#006E62] outline-none transition-all font-bold text-gray-700"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Keterangan / Alasan</label>
+                <textarea
+                  placeholder="Contoh: Karyawan berhalangan input karena kendala teknis..."
+                  value={newSubmission.description}
+                  onChange={(e) => setNewSubmission({ ...newSubmission, description: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-xs focus:ring-2 focus:ring-[#006E62] outline-none transition-all min-h-[100px] resize-none"
+                />
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1 px-6 py-3 border border-gray-100 text-gray-400 text-xs font-bold uppercase tracking-widest rounded-2xl hover:bg-gray-50 transition-all active:scale-95"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 px-6 py-3 bg-[#006E62] text-white text-xs font-bold uppercase tracking-widest rounded-2xl hover:bg-[#005a50] transition-all shadow-lg shadow-[#006E62]/20 active:scale-95 disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Memproses...
+                    </>
+                  ) : (
+                    'Simpan & Setujui'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
