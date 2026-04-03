@@ -249,7 +249,7 @@ const PengumumanMain: React.FC<PengumumanMainProps> = ({ user }) => {
             <h3 className="text-sm font-bold text-gray-800 uppercase tracking-widest mb-4">Akan Datang</h3>
             {renderTable(upcomingAnnouncements, upcomingPage, setUpcomingPage, upcomingCount)}
           </section>
-
+          
           {/* Past */}
           <section>
             <h3 className="text-sm font-bold text-gray-800 uppercase tracking-widest mb-4">Riwayat</h3>
