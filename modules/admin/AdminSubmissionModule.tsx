@@ -3,6 +3,7 @@ import { Search, Filter, Clock, CheckCircle2, XCircle, AlertCircle, Eye, Loader2
 import { submissionService } from '../../services/submissionService';
 import { accountService } from '../../services/accountService';
 import { leaveService } from '../../services/leaveService';
+import { permissionService } from '../../services/permissionService';
 import { Submission, AuthUser, SubmissionStatus, Account } from '../../types';
 import Swal from 'sweetalert2';
 import SubmissionDetail from '../submission/SubmissionDetail';
@@ -32,12 +33,13 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
     account_id: '',
     start_date: '',
     end_date: '',
-    description: ''
+    description: '',
+    permission_type: 'Izin Sakit'
   });
 
   useEffect(() => {
     fetchSubmissions();
-    if (type === 'Libur Mandiri') {
+    if (type === 'Libur Mandiri' || type === 'Izin') {
       fetchActiveAccounts();
     }
   }, [type]);
@@ -123,16 +125,27 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
 
     try {
       setIsSubmitting(true);
-      await leaveService.create({
-        account_id: newSubmission.account_id,
-        start_date: newSubmission.start_date,
-        end_date: newSubmission.end_date,
-        description: newSubmission.description || 'Dibuatkan oleh Admin'
-      }, 'approved', user.id);
+      
+      if (type === 'Libur Mandiri') {
+        await leaveService.create({
+          account_id: newSubmission.account_id,
+          start_date: newSubmission.start_date,
+          end_date: newSubmission.end_date,
+          description: newSubmission.description || 'Dibuatkan oleh Admin'
+        }, 'approved', user.id);
+      } else if (type === 'Izin') {
+        await permissionService.create({
+          account_id: newSubmission.account_id,
+          permission_type: newSubmission.permission_type,
+          start_date: newSubmission.start_date,
+          end_date: newSubmission.end_date,
+          description: newSubmission.description || 'Dibuatkan oleh Admin'
+        }, 'approved', user.id);
+      }
 
       await Swal.fire({
         title: 'Berhasil!',
-        text: 'Pengajuan libur mandiri berhasil dibuat dan otomatis disetujui.',
+        text: `Pengajuan ${type.toLowerCase()} berhasil dibuat dan otomatis disetujui.`,
         icon: 'success',
         timer: 1500,
         showConfirmButton: false
@@ -141,7 +154,13 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
       setShowCreateModal(false);
       setSearchAccountTerm('');
       setShowAccountDropdown(false);
-      setNewSubmission({ account_id: '', start_date: '', end_date: '', description: '' });
+      setNewSubmission({ 
+        account_id: '', 
+        start_date: '', 
+        end_date: '', 
+        description: '',
+        permission_type: 'Izin Sakit'
+      });
       fetchSubmissions();
     } catch (error) {
       console.error(error);
@@ -165,9 +184,11 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
       });
 
       if (result.isConfirmed) {
-        // Jika Libur Mandiri, hapus juga record di tabel libur mandiri
+        // Jika Libur Mandiri atau Izin, hapus juga record di tabel terkait
         if (subType === 'Libur Mandiri' && subData.leave_request_id) {
           await leaveService.delete(subData.leave_request_id);
+        } else if (subType === 'Izin' && subData.permission_request_id) {
+          await permissionService.delete(subData.permission_request_id);
         }
 
         await submissionService.delete(id);
@@ -214,7 +235,7 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
-          {type === 'Libur Mandiri' && (
+          {(type === 'Libur Mandiri' || type === 'Izin') && (
             <button 
               onClick={() => setShowCreateModal(true)}
               className="flex items-center justify-center gap-2 bg-[#006E62] text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#005a50] transition-all shadow-sm active:scale-95"
@@ -304,7 +325,7 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
                           <Eye size={14} />
                           Detail
                         </button>
-                        {type === 'Libur Mandiri' && (
+                        {(type === 'Libur Mandiri' || type === 'Izin') && (
                           <button 
                             onClick={() => handleDelete(sub.id, sub.type, sub.submission_data)}
                             className="flex items-center gap-2 bg-rose-50 border border-rose-100 text-rose-600 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-rose-100 hover:border-rose-200 transition-all shadow-sm active:scale-95"
@@ -345,7 +366,7 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
                   <Plus size={20} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 tracking-tight">Tambah Libur Mandiri</h3>
+                  <h3 className="font-bold text-gray-800 tracking-tight">Tambah {type}</h3>
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Bantu Pengajuan Karyawan</p>
                 </div>
               </div>
@@ -360,7 +381,7 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
 
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div className="space-y-1.5 relative">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Pilih Pegawai (*)</label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Pilih Karyawan (*)</label>
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <input 
@@ -432,6 +453,23 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
                 )}
               </div>
 
+              {type === 'Izin' && (
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Jenis Izin (*)</label>
+                  <select
+                    required
+                    value={newSubmission.permission_type}
+                    onChange={(e) => setNewSubmission({ ...newSubmission, permission_type: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-xs focus:ring-2 focus:ring-[#006E62] outline-none transition-all font-medium"
+                  >
+                    <option value="Izin Sakit">Izin Sakit</option>
+                    <option value="Izin Keperluan Mendesak">Izin Keperluan Mendesak</option>
+                    <option value="Izin Tugas Luar">Izin Tugas Luar</option>
+                    <option value="Izin Lainnya">Izin Lainnya</option>
+                  </select>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 text-emerald-600">Mulai (*)</label>
@@ -458,7 +496,7 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Keterangan / Alasan</label>
                 <textarea
-                  placeholder="Contoh: Karyawan berhalangan input karena kendala teknis..."
+                  placeholder="Alasan pengajuan karyawan..."
                   value={newSubmission.description}
                   onChange={(e) => setNewSubmission({ ...newSubmission, description: e.target.value })}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-xs focus:ring-2 focus:ring-[#006E62] outline-none transition-all min-h-[100px] resize-none"

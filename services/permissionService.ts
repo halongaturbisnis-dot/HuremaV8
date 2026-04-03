@@ -39,7 +39,7 @@ export const permissionService = {
   /**
    * Membuat pengajuan izin baru
    */
-  async create(input: PermissionRequestInput): Promise<PermissionRequest> {
+  async create(input: PermissionRequestInput, forceStatus?: 'approved' | 'pending', verifierId?: string): Promise<PermissionRequest> {
     // Validasi sesi kustom sebelum kirim
     const currentUser = authService.getCurrentUser();
     if (!currentUser) {
@@ -47,16 +47,16 @@ export const permissionService = {
       throw new Error('Sesi Anda telah berakhir. Silakan login kembali.');
     }
 
-    console.log('Creating permission request with payload:', input);
+    const status = forceStatus || 'pending';
 
     const { data, error } = await supabase
       .from('account_permission_requests')
       .insert({
         ...input,
-        status: 'pending',
-        current_negotiator_role: 'admin',
+        status,
+        current_negotiator_role: status === 'approved' ? 'user' : 'admin',
         negotiation_data: [{
-          role: 'user',
+          role: forceStatus ? 'admin' : 'user',
           start_date: input.start_date,
           end_date: input.end_date,
           reason: input.description,
@@ -73,11 +73,14 @@ export const permissionService = {
 
     // Sinkronisasi ke tabel submissions agar muncul di daftar verifikasi pusat
     try {
+      const submissionStatus = status === 'approved' ? 'Disetujui' : 'Pending';
       await supabase.from('account_submissions').insert([{
         account_id: input.account_id,
         type: 'Izin',
-        status: 'Pending',
+        status: submissionStatus,
         description: `${input.permission_type}: ${input.description}`,
+        verifier_id: status === 'approved' ? verifierId : null,
+        verified_at: status === 'approved' ? new Date().toISOString() : null,
         submission_data: {
           permission_type: input.permission_type,
           start_date: input.start_date,
