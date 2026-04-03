@@ -17,30 +17,26 @@ export const reportService = {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
+    // Fetch terminations
     const { data: terminations } = await supabase
       .from('termination_logs')
-      .select('*')
+      .select('account_id')
       .gte('termination_date', thirtyDaysAgo.toISOString());
 
-    // Fetch warnings for discipline summary - REMOVED
-    // const { data: warnings } = await supabase
-    //   .from('warning_logs')
-    //   .select('*');
+    // Fetch contracts ending in the last 30 days
+    const { data: endingContracts } = await supabase
+      .from('account_contracts')
+      .select('account_id')
+      .gte('end_date', thirtyDaysAgo.toISOString())
+      .lte('end_date', today);
 
-    // Fetch certifications
-    const { data: certifications } = await supabase
-      .from('account_certifications')
-      .select('*');
+    // Combine unique account IDs for exit employees
+    const exitAccountIds = new Set([
+        ...(terminations?.map(t => t.account_id) || []),
+        ...(endingContracts?.map(c => c.account_id) || [])
+    ]);
 
-    const totalEmployees = accounts.length;
-    
-    // New employees in last 30 days
-    const newEmployees = accounts.filter(a => {
-      if (!a.start_date) return false;
-      return new Date(a.start_date) >= thirtyDaysAgo;
-    }).length;
-
-    const exitEmployees = terminations?.length || 0;
+    const exitEmployees = exitAccountIds.size;
 
     // Religion Distribution
     const religionMap = accounts.reduce((acc: any, curr) => {
@@ -52,11 +48,11 @@ export const reportService = {
 
     // Department Distribution
     const deptMap = accounts.reduce((acc: any, curr) => {
-      const dept = curr.department || 'Tidak Diketahui';
+      const dept = curr.grade || 'Tidak Diketahui';
       acc[dept] = (acc[dept] || 0) + 1;
       return acc;
     }, {});
-    const departmentDistribution = Object.entries(deptMap).map(([name, value]) => ({ name, value: value as number }));
+    const departmentDistribution = Object.entries(deptMap).map(([name, value]) => ({ name: (name as string) || 'Tidak Diketahui', value: value as number }));
 
     // Certification Distribution
     const certMap = (certifications || []).reduce((acc: any, curr) => {
@@ -64,7 +60,7 @@ export const reportService = {
       acc[cert] = (acc[cert] || 0) + 1;
       return acc;
     }, {});
-    const certificationDistribution = Object.entries(certMap).map(([name, value]) => ({ name, value: value as number }));
+    const certificationDistribution = Object.entries(certMap).map(([name, value]) => ({ name: (name as string) || 'Tidak Diketahui', value: value as number }));
 
     // Gender Ratio
     const genderMap = accounts.reduce((acc: any, curr) => {
@@ -176,7 +172,22 @@ export const reportService = {
             .from('termination_logs')
             .select('account_id, account:accounts(*)')
             .gte('termination_date', thirtyDaysAgo.toISOString());
-        return terminations?.map((t: any) => t.account) || [];
+        
+        const { data: endingContracts } = await supabase
+            .from('account_contracts')
+            .select('account_id, account:accounts(*)')
+            .gte('end_date', thirtyDaysAgo.toISOString())
+            .lte('end_date', today);
+
+        const exitAccounts = [
+            ...(terminations?.map((t: any) => t.account) || []),
+            ...(endingContracts?.map((c: any) => c.account) || [])
+        ];
+        
+        // Remove duplicates based on ID
+        const uniqueExitAccounts = Array.from(new Map(exitAccounts.map((a: any) => [a.id, a])).values());
+        
+        return uniqueExitAccounts;
     }
 
     let query = supabase

@@ -33,7 +33,9 @@ export const SimpleBarChart: React.FC<SimpleBarChartProps> = ({ data, dataKey = 
     <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
     <YAxis fontSize={12} tickLine={false} axisLine={false} />
     <Tooltip 
+      cursor={{fill: '#f9fafb'}}
       contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+      formatter={(value: number) => [`Jumlah Karyawan: ${value}`, '']}
     />
     <Bar dataKey={dataKey} fill="#006E62" radius={[4, 4, 0, 0]} />
   </BarChart>
@@ -58,7 +60,7 @@ export const SimplePieChart: React.FC<SimplePieChartProps> = ({ data }) => (
         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
       ))}
     </Pie>
-    <Tooltip />
+    <Tooltip formatter={(value: number) => [`Jumlah Karyawan: ${value}`, '']} />
     <Legend verticalAlign="bottom" height={36}/>
   </PieChart>
 );
