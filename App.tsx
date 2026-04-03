@@ -387,7 +387,7 @@ const App: React.FC = () => {
                   user={user!} 
                   type="Lembur" 
                   title="Manajemen Lembur" 
-                  subtitle="Verifikasi & Persetujuan Lembur Pegawai"
+                  subtitle="Pusat Pengajuan Lembur Karyawan"
                   icon={Timer}
                 />
               ) : (
@@ -401,7 +401,7 @@ const App: React.FC = () => {
                   user={user!} 
                   type="Libur Mandiri" 
                   title="Manajemen Libur Mandiri" 
-                  subtitle="Verifikasi & Persetujuan Libur Mandiri Pegawai"
+                  subtitle="Pusat Pengajuan Libur Mandiri Karyawan"
                   icon={Plane}
                 />
               ) : (
@@ -413,7 +413,7 @@ const App: React.FC = () => {
                   user={user!} 
                   type="Cuti Tahunan" 
                   title="Manajemen Cuti Tahunan" 
-                  subtitle="Verifikasi & Persetujuan Cuti Tahunan Pegawai"
+                  subtitle="Pusat Pengajuan Cuti Tahunan Karyawan"
                   icon={Calendar}
                 />
               ) : (
@@ -425,7 +425,7 @@ const App: React.FC = () => {
                   user={user!} 
                   type="Izin" 
                   title="Manajemen Izin" 
-                  subtitle="Verifikasi & Persetujuan Izin Pegawai"
+                  subtitle="Pusat Pengajuan Izin Karyawan"
                   icon={ClipboardList}
                 />
               ) : (
@@ -437,7 +437,7 @@ const App: React.FC = () => {
                   user={user!} 
                   type="Cuti Melahirkan" 
                   title="Manajemen Cuti Melahirkan" 
-                  subtitle="Verifikasi & Persetujuan Cuti Melahirkan Pegawai"
+                  subtitle="Pusat Pengajuan Cuti Melahirkan Karyawan"
                   icon={Heart}
                 />
               ) : (

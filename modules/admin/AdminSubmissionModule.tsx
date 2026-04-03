@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Clock, CheckCircle2, XCircle, AlertCircle, Eye, Loader2, Calendar, User, ArrowRight, LucideIcon, Plus, Trash2, X } from 'lucide-react';
+import { Search, Filter, Clock, CheckCircle2, XCircle, AlertCircle, Eye, Loader2, Calendar, User, ArrowRight, LucideIcon, Plus, Trash2, X, Paperclip, FileText } from 'lucide-react';
 import { submissionService } from '../../services/submissionService';
 import { accountService } from '../../services/accountService';
 import { leaveService } from '../../services/leaveService';
 import { permissionService } from '../../services/permissionService';
 import { maternityLeaveService } from '../../services/maternityLeaveService';
+import { googleDriveService } from '../../services/googleDriveService';
 import { Submission, AuthUser, SubmissionStatus, Account } from '../../types';
 import Swal from 'sweetalert2';
 import SubmissionDetail from '../submission/SubmissionDetail';
@@ -30,6 +31,7 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
   const [searchAccountTerm, setSearchAccountTerm] = useState('');
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [newSubmission, setNewSubmission] = useState({
     account_id: '',
     start_date: '',
@@ -37,6 +39,19 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
     description: '',
     permission_type: 'Izin Sakit'
   });
+
+  const resetForm = () => {
+    setNewSubmission({
+      account_id: '',
+      start_date: '',
+      end_date: '',
+      description: '',
+      permission_type: 'Izin Sakit'
+    });
+    setSearchAccountTerm('');
+    setShowAccountDropdown(false);
+    setSelectedFiles([]);
+  };
 
   useEffect(() => {
     fetchSubmissions();
@@ -119,8 +134,14 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSubmission.account_id || !newSubmission.start_date || !newSubmission.end_date) {
-      Swal.fire('Peringatan', 'Mohon lengkapi semua data wajib', 'warning');
+    if (!newSubmission.account_id || !newSubmission.start_date || !newSubmission.end_date || !newSubmission.description) {
+      Swal.fire('Peringatan', 'Mohon lengkapi semua data wajib (Karyawan, Tanggal, dan Keterangan)', 'warning');
+      return;
+    }
+
+    // Validasi Lampiran Wajib
+    if ((type === 'Izin' || type === 'Cuti Melahirkan') && selectedFiles.length === 0) {
+      Swal.fire('Peringatan', 'Lampiran wajib diunggah untuk pengajuan ini', 'warning');
       return;
     }
 
@@ -151,13 +172,28 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
 
     try {
       setIsSubmitting(true);
+
+      // Upload files if any
+      let fileIdsString = '';
+      if (selectedFiles.length > 0) {
+        try {
+          const uploadPromises = selectedFiles.map(file => googleDriveService.uploadFile(file));
+          const results = await Promise.all(uploadPromises);
+          fileIdsString = results.join(',');
+        } catch (error) {
+          Swal.fire('Error', 'Gagal mengunggah lampiran. Periksa koneksi atau kredensial Google Drive.', 'error');
+          setIsSubmitting(false);
+          return;
+        }
+      }
       
       if (type === 'Libur Mandiri') {
         await leaveService.create({
           account_id: newSubmission.account_id,
           start_date: newSubmission.start_date,
           end_date: newSubmission.end_date,
-          description: newSubmission.description || 'Dibuatkan oleh Admin'
+          description: newSubmission.description,
+          file_id: fileIdsString || null
         }, 'approved', user.id);
       } else if (type === 'Izin') {
         await permissionService.create({
@@ -165,21 +201,24 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
           permission_type: newSubmission.permission_type,
           start_date: newSubmission.start_date,
           end_date: newSubmission.end_date,
-          description: newSubmission.description || 'Dibuatkan oleh Admin'
+          description: newSubmission.description,
+          file_id: fileIdsString || null
         }, 'approved', user.id);
       } else if (type === 'Cuti Tahunan') {
         await leaveService.createAnnual({
           account_id: newSubmission.account_id,
           start_date: newSubmission.start_date,
           end_date: newSubmission.end_date,
-          description: newSubmission.description || 'Dibuatkan oleh Admin'
+          description: newSubmission.description,
+          file_id: fileIdsString || null
         }, 'approved', user.id);
       } else if (type === 'Cuti Melahirkan') {
         await maternityLeaveService.create({
           account_id: newSubmission.account_id,
           start_date: newSubmission.start_date,
           end_date: newSubmission.end_date,
-          description: newSubmission.description || 'Dibuatkan oleh Admin'
+          description: newSubmission.description,
+          file_id: fileIdsString || null
         }, 'approved', user.id);
       }
 
@@ -192,15 +231,7 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
       });
 
       setShowCreateModal(false);
-      setSearchAccountTerm('');
-      setShowAccountDropdown(false);
-      setNewSubmission({ 
-        account_id: '', 
-        start_date: '', 
-        end_date: '', 
-        description: '',
-        permission_type: 'Izin Sakit'
-      });
+      resetForm();
       fetchSubmissions();
     } catch (error) {
       console.error(error);
@@ -423,8 +454,7 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
               </div>
               <button onClick={() => {
                 setShowCreateModal(false);
-                setSearchAccountTerm('');
-                setShowAccountDropdown(false);
+                resetForm();
               }} className="p-2 hover:bg-gray-200/50 rounded-xl transition-colors text-gray-400">
                 <X size={20} />
               </button>
@@ -578,8 +608,9 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Keterangan / Alasan</label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Keterangan / Alasan (*)</label>
                 <textarea
+                  required
                   placeholder="Alasan pengajuan karyawan..."
                   value={newSubmission.description}
                   onChange={(e) => setNewSubmission({ ...newSubmission, description: e.target.value })}
@@ -587,13 +618,56 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
                 />
               </div>
 
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+                  Lampiran Dokumen {(type === 'Izin' || type === 'Cuti Melahirkan') && '(*)'}
+                </label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <label className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 hover:bg-gray-100 hover:border-[#006E62]/30 transition-all cursor-pointer group">
+                      <Paperclip size={16} className="group-hover:text-[#006E62]" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider group-hover:text-gray-600">Pilih File</span>
+                      <input 
+                        type="file" 
+                        multiple 
+                        className="hidden" 
+                        onChange={(e) => {
+                          if (e.target.files) {
+                            setSelectedFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  {selectedFiles.length > 0 && (
+                    <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
+                      {selectedFiles.map((file, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-2 bg-emerald-50/30 border border-emerald-100/50 rounded-xl group animate-in slide-in-from-left-2 duration-200">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <FileText size={14} className="text-[#006E62] shrink-0" />
+                            <span className="text-[10px] font-medium text-gray-600 truncate">{file.name}</span>
+                          </div>
+                          <button 
+                            type="button"
+                            onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))}
+                            className="p-1 text-gray-300 hover:text-rose-500 transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="pt-4 flex gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     setShowCreateModal(false);
-                    setSearchAccountTerm('');
-                    setShowAccountDropdown(false);
+                    resetForm();
                   }}
                   className="flex-1 px-6 py-3 border border-gray-100 text-gray-400 text-xs font-bold uppercase tracking-widest rounded-2xl hover:bg-gray-50 transition-all active:scale-95"
                 >

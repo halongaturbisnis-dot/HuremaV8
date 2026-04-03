@@ -79,6 +79,7 @@ export const maternityLeaveService = {
         type: 'Cuti Melahirkan',
         status: submissionStatus,
         description: input.description,
+        file_id: input.file_id,
         verifier_id: status === 'approved' ? verifierId : null,
         verified_at: status === 'approved' ? new Date().toISOString() : null,
         submission_data: {

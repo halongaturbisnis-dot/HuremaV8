@@ -311,6 +311,7 @@ export interface LeaveRequest {
   end_date: string;
   description: string;
   status: 'pending' | 'approved' | 'rejected';
+  file_id?: string | null;
   created_at?: string;
   updated_at?: string;
 }

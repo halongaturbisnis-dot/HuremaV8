@@ -82,18 +82,25 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
           {submission.file_id && (
             <div className="space-y-2">
               <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b pb-1">Lampiran Dokumen</h4>
-              <a 
-                href={googleDriveService.getFileUrl(submission.file_id).replace('=s1600', '=s0')} 
-                target="_blank" 
-                rel="noreferrer"
-                className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all group"
-              >
-                 <div className="flex items-center gap-3">
-                   <Paperclip size={18} className="text-[#006E62]" />
-                   <span className="text-xs font-bold text-gray-700">Lihat File Lampiran</span>
-                 </div>
-                 <ExternalLink size={14} className="text-gray-300 group-hover:text-[#006E62]" />
-              </a>
+              <div className="grid grid-cols-1 gap-2">
+                {submission.file_id.split(',').map((fid, index) => (
+                  <a 
+                    key={index}
+                    href={googleDriveService.getViewerUrl(fid)} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all group"
+                  >
+                     <div className="flex items-center gap-3">
+                       <Paperclip size={18} className="text-[#006E62]" />
+                       <span className="text-xs font-bold text-gray-700 truncate max-w-[200px]">
+                         {fid.includes('|') ? fid.split('|')[1] : `Lihat Lampiran ${index + 1}`}
+                       </span>
+                     </div>
+                     <ExternalLink size={14} className="text-gray-300 group-hover:text-[#006E62]" />
+                  </a>
+                ))}
+              </div>
             </div>
           )}
 
