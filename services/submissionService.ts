@@ -43,12 +43,15 @@ export const submissionService = {
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
+    // Use !inner to force an inner join when searching on the joined table
+    // This prevents "ghost rows" where the submission is returned but the account is null
+    const selectStr = search 
+      ? `*, account:accounts!account_id!inner(full_name, internal_nik)`
+      : `*, account:accounts!account_id(full_name, internal_nik)`;
+
     let query = supabase
       .from('account_submissions')
-      .select(`
-        *,
-        account:accounts!account_id(full_name, internal_nik)
-      `, { count: 'exact' })
+      .select(selectStr, { count: 'exact' })
       .eq('type', type);
 
     if (status !== 'ALL') {

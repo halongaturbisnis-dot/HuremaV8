@@ -314,13 +314,6 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
     return matchesSearch;
   });
 
-  if (isLoading) return (
-    <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-      <div className="w-12 h-12 border-4 border-gray-200 border-t-[#006E62] rounded-full animate-spin mb-4"></div>
-      <p className="text-xs font-bold uppercase tracking-widest">Memuat Data {title}...</p>
-    </div>
-  );
-
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
@@ -396,7 +389,16 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {submissions.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center justify-center text-gray-400">
+                      <div className="w-8 h-8 border-4 border-gray-200 border-t-[#006E62] rounded-full animate-spin mb-2"></div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest">Memuat...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : submissions.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-gray-400 italic text-xs">Tidak ada data pengajuan yang ditemukan.</td>
                 </tr>
