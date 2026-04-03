@@ -19,7 +19,7 @@ export const reportService = {
     
     // Fetch terminations
     const { data: terminations } = await supabase
-      .from('termination_logs')
+      .from('account_termination_logs')
       .select('account_id')
       .gte('termination_date', thirtyDaysAgo.toISOString());
 
@@ -31,10 +31,11 @@ export const reportService = {
       .lte('end_date', today);
 
     // Combine unique account IDs for exit employees
+    const activeAccountIds = new Set(accounts?.map(a => a.id) || []);
     const exitAccountIds = new Set([
         ...(terminations?.map(t => t.account_id) || []),
         ...(endingContracts?.map(c => c.account_id) || [])
-    ]);
+    ].filter(id => !activeAccountIds.has(id)));
 
     const exitEmployees = exitAccountIds.size;
 
@@ -167,8 +168,14 @@ export const reportService = {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     if (type === 'exit') {
+        const { data: activeAccounts } = await supabase
+            .from('accounts')
+            .select('id')
+            .or(`end_date.is.null,end_date.gt.${today}`);
+        const activeIds = new Set(activeAccounts?.map(a => a.id) || []);
+
         const { data: terminations } = await supabase
-            .from('termination_logs')
+            .from('account_termination_logs')
             .select('account_id, account:accounts(*)')
             .gte('termination_date', thirtyDaysAgo.toISOString());
         
@@ -181,7 +188,7 @@ export const reportService = {
         const exitAccounts = [
             ...(terminations?.map((t: any) => t.account) || []),
             ...(endingContracts?.map((c: any) => c.account) || [])
-        ];
+        ].filter(a => a && !activeIds.has(a.id));
         
         // Remove duplicates based on ID
         const uniqueExitAccounts = Array.from(new Map(exitAccounts.map((a: any) => [a.id, a])).values());

@@ -15,7 +15,7 @@ export const ChartContainer: React.FC<ChartContainerProps> = ({ title, children 
   <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
     <h3 className="text-lg font-semibold text-gray-800 mb-6">{title}</h3>
     <div className="h-[300px] w-full">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         {children as React.ReactElement}
       </ResponsiveContainer>
     </div>
