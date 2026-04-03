@@ -15,6 +15,7 @@ interface AdminSubmissionModuleProps {
   icon: LucideIcon;
 }
 
+
 const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, type, title, subtitle, icon: Icon }) => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
