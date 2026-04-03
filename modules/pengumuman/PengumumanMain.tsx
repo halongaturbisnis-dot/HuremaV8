@@ -155,16 +155,28 @@ const PengumumanMain: React.FC<PengumumanMainProps> = ({ user }) => {
           </table>
         </div>
         <div className="flex items-center justify-between px-4">
-          <p className="text-xs font-bold text-gray-500">
-            Menampilkan {totalCount > 0 ? startItem : 0} hingga {endItem} dari {totalCount} data
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+            MENAMPILKAN {totalCount > 0 ? startItem : 0} HINGGA {endItem} DARI {totalCount} DATA
           </p>
           {totalPages > 1 && (
-            <div className="flex justify-center gap-2">
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <button key={i} onClick={() => setPage(i + 1)} className={`px-3 py-1 rounded-lg text-xs font-bold ${page === i + 1 ? 'bg-[#006E62] text-white' : 'bg-gray-100 text-gray-600'}`}>
-                  {i + 1}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setPage(Math.max(1, page - 1))} 
+                disabled={page === 1}
+                className="px-3 py-1 rounded-lg text-xs font-bold bg-white border border-gray-200 text-gray-600 disabled:opacity-50"
+              >
+                &lt;
+              </button>
+              <button className="px-4 py-1 rounded-lg text-xs font-bold bg-[#006E62] text-white">
+                {page}
+              </button>
+              <button 
+                onClick={() => setPage(Math.min(totalPages, page + 1))} 
+                disabled={page === totalPages}
+                className="px-3 py-1 rounded-lg text-xs font-bold bg-white border border-gray-200 text-gray-600 disabled:opacity-50"
+              >
+                &gt;
+              </button>
             </div>
           )}
         </div>
@@ -174,40 +186,42 @@ const PengumumanMain: React.FC<PengumumanMainProps> = ({ user }) => {
 
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Pengumuman</h2>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pusat Informasi Perusahaan</p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
-            <input 
-              type="text"
-              placeholder="Cari pengumuman..."
-              value={tempSearchQuery}
-              onChange={(e) => setTempSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              className="pl-12 pr-6 py-3 bg-white border border-gray-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#006E62]/5 focus:border-[#006E62] transition-all text-sm font-medium w-64 shadow-sm"
-            />
-            <button onClick={handleSearch} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#006E62]">
-              <Search size={18} />
-            </button>
+      {!selectedAnnouncement && (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Pengumuman</h2>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pusat Informasi Perusahaan</p>
           </div>
-          {isAdmin && (
-            <button 
-              onClick={() => {
-                setEditingAnnouncement(undefined);
-                setIsFormOpen(true);
-              }}
-              className="bg-[#006E62] text-white px-6 py-3 rounded-2xl font-bold text-sm flex items-center gap-2 hover:bg-[#005a50] transition-all shadow-lg shadow-[#006E62]/20 active:scale-95"
-            >
-              <Plus size={18} /> BARU
-            </button>
-          )}
+          
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+              <input 
+                type="text"
+                placeholder="Cari pengumuman..."
+                value={tempSearchQuery}
+                onChange={(e) => setTempSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="pl-12 pr-6 py-3 bg-white border border-gray-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#006E62]/5 focus:border-[#006E62] transition-all text-sm font-medium w-64 shadow-sm"
+              />
+              <button onClick={handleSearch} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#006E62]">
+                <Search size={18} />
+              </button>
+            </div>
+            {isAdmin && (
+              <button 
+                onClick={() => {
+                  setEditingAnnouncement(undefined);
+                  setIsFormOpen(true);
+                }}
+                className="bg-[#006E62] text-white px-6 py-3 rounded-2xl font-bold text-sm flex items-center gap-2 hover:bg-[#005a50] transition-all shadow-lg shadow-[#006E62]/20 active:scale-95"
+              >
+                <Plus size={18} /> BARU
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {selectedAnnouncement ? (
         <AnnouncementDetail 

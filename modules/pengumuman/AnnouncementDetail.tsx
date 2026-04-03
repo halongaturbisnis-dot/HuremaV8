@@ -28,9 +28,9 @@ const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({ announcement, u
       </button>
 
       <div className="max-w-3xl mx-auto space-y-8">
-        <header className="space-y-4">
-          <h1 className="text-3xl font-black text-gray-800 tracking-tight">{announcement.title}</h1>
-          <div className="flex items-center gap-3">
+        <header className="space-y-4 flex flex-col items-center">
+          <h1 className="text-3xl font-black text-gray-800 tracking-tight text-center">{announcement.title}</h1>
+          <div className="flex items-center gap-3 justify-center">
             <div className="w-10 h-10 rounded-full bg-[#006E62]/10 text-[#006E62] flex items-center justify-center font-bold text-sm">
               {announcement.creator?.full_name?.charAt(0) || <User size={20} />}
             </div>
@@ -48,21 +48,24 @@ const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({ announcement, u
           <div className="pt-8 border-t border-gray-100 space-y-4">
             <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Lampiran</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {announcement.attachments.map((fileId, idx) => (
-                <a 
-                  key={idx}
-                  href={`https://drive.google.com/file/d/${fileId}/view`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-xl hover:border-[#006E62]/20 hover:bg-[#006E62]/5 transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <Paperclip size={16} className="text-gray-400 group-hover:text-[#006E62]" />
-                    <span className="text-xs font-bold text-gray-600 group-hover:text-[#006E62]">Dokumen_{idx + 1}</span>
-                  </div>
-                  <ExternalLink size={16} className="text-gray-300 group-hover:text-[#006E62]" />
-                </a>
-              ))}
+              {announcement.attachments.map((attachment, idx) => {
+                const fileId = attachment.split('|')[0];
+                return (
+                  <a 
+                    key={idx}
+                    href={`https://drive.google.com/file/d/${fileId}/view`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-xl hover:border-[#006E62]/20 hover:bg-[#006E62]/5 transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Paperclip size={16} className="text-gray-400 group-hover:text-[#006E62]" />
+                      <span className="text-xs font-bold text-gray-600 group-hover:text-[#006E62]">Dokumen_{idx + 1}</span>
+                    </div>
+                    <ExternalLink size={16} className="text-gray-300 group-hover:text-[#006E62]" />
+                  </a>
+                );
+              })}
             </div>
           </div>
         )}
