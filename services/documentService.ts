@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { DigitalDocument, DocumentInput } from '../types';
+import { DigitalDocument, DocumentInput, Account } from '../types';
 
 /**
  * Fungsi pembantu untuk membersihkan data sebelum dikirim ke Supabase.
@@ -16,7 +16,7 @@ const sanitizePayload = (payload: any) => {
 };
 
 export const documentService = {
-  async getAll() {
+  async getAllAdmin() {
     const { data, error } = await supabase
       .from('documents')
       .select(`*`)
@@ -24,6 +24,35 @@ export const documentService = {
     
     if (error) throw error;
     return data as DigitalDocument[];
+  },
+
+  async getFiltered(user: Account) {
+    const { data, error } = await supabase
+      .from('documents')
+      .select(`*`)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    const docs = data as DigitalDocument[];
+    
+    // Filter based on targeting
+    return docs.filter(doc => {
+      if (doc.target_type === 'All') return true;
+      if (doc.target_type === 'Location' && user.location_id) {
+        return doc.target_ids.includes(user.location_id);
+      }
+      if (doc.target_type === 'Department' && user.grade) {
+        return doc.target_ids.includes(user.grade);
+      }
+      if (doc.target_type === 'Position' && user.position) {
+        return doc.target_ids.includes(user.position);
+      }
+      if (doc.target_type === 'Individual') {
+        return doc.target_ids.includes(user.id);
+      }
+      return false;
+    });
   },
 
   async getUniqueDocTypes() {

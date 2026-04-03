@@ -56,6 +56,76 @@ export const announcementService = {
     })) as Announcement[];
   },
 
+  async getFiltered(user: Account, status: 'Active' | 'Upcoming' | 'Past', search?: string, page: number = 1, limit: number = 10) {
+    const now = new Date().toISOString();
+    let query = supabase
+      .from('announcements')
+      .select(`
+        *,
+        creator:accounts!created_by(full_name)
+      `, { count: 'exact' });
+
+    if (status === 'Active') {
+      query = query.lte('publish_start', now).gte('publish_end', now);
+    } else if (status === 'Upcoming') {
+      query = query.gt('publish_start', now);
+    } else if (status === 'Past') {
+      query = query.lt('publish_end', now);
+    }
+
+    if (search) {
+      query = query.ilike('title', `%${search}%`);
+    }
+
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    const { data, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) throw error;
+
+    // Filter based on targeting
+    const filtered = (data as any[]).filter(ann => {
+      if (ann.target_type === 'All') return true;
+      if (ann.target_type === 'Location' && user.location_id) {
+        return ann.target_ids.includes(user.location_id);
+      }
+      if (ann.target_type === 'Department' && user.grade) {
+        return ann.target_ids.includes(user.grade);
+      }
+      if (ann.target_type === 'Position' && user.position) {
+        return ann.target_ids.includes(user.position);
+      }
+      if (ann.target_type === 'Individual') {
+        return ann.target_ids.includes(user.id);
+      }
+      if (ann.target_type === 'Status' && user.employee_type) {
+        return ann.target_ids.includes(user.employee_type);
+      }
+      return false;
+    });
+
+    // Check read status for each
+    const { data: reads, error: readError } = await supabase
+      .from('announcement_reads')
+      .select('announcement_id')
+      .eq('user_id', user.id);
+
+    if (readError) throw readError;
+
+    const readIds = new Set(reads.map(r => r.announcement_id));
+
+    return {
+      data: filtered.map(ann => ({
+        ...ann,
+        is_read: readIds.has(ann.id)
+      })) as Announcement[],
+      count: count || filtered.length
+    };
+  },
+
   async getAnnouncementsAdmin(status: 'Active' | 'Upcoming' | 'Past', search?: string, page: number = 1, limit: number = 10) {
     const now = new Date().toISOString();
     let query = supabase

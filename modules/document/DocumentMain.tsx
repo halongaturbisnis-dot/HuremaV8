@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Search, FileText, ExternalLink, Trash2, FolderOpen, ChevronLeft, ChevronRight, Eye, Edit2 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { documentService } from '../../services/documentService';
-import { DigitalDocument, AuthUser } from '../../types';
+import { accountService } from '../../services/accountService';
+import { DigitalDocument, AuthUser, Account } from '../../types';
 import { googleDriveService } from '../../services/googleDriveService';
 import DocumentForm from './DocumentForm';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
@@ -24,14 +25,22 @@ const DocumentMain: React.FC<DocumentMainProps> = ({ user }) => {
   const isAdmin = user?.role === 'admin' || user?.is_hr_admin || user?.is_performance_admin || user?.is_finance_admin;
 
   useEffect(() => {
-    fetchDocuments();
-  }, []);
+    if (user) {
+      fetchDocuments();
+    }
+  }, [user]);
 
   const fetchDocuments = async () => {
     try {
       setIsLoading(true);
-      const data = await documentService.getAll();
-      setDocuments(data);
+      if (isAdmin) {
+        const data = await documentService.getAllAdmin();
+        setDocuments(data);
+      } else {
+        const account = await accountService.getById(user!.id);
+        const data = await documentService.getFiltered(account);
+        setDocuments(data);
+      }
     } catch (error) {
       Swal.fire('Gagal', 'Gagal memuat data dokumen', 'error');
     } finally {

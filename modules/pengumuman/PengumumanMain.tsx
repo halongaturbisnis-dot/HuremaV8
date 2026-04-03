@@ -39,11 +39,20 @@ const PengumumanMain: React.FC<PengumumanMainProps> = ({ user }) => {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const [active, upcoming, past] = await Promise.all([
-        announcementService.getAnnouncementsAdmin('Active', searchQuery, activePage, itemsPerPage),
-        announcementService.getAnnouncementsAdmin('Upcoming', searchQuery, upcomingPage, itemsPerPage),
-        announcementService.getAnnouncementsAdmin('Past', searchQuery, pastPage, itemsPerPage)
-      ]);
+      let active, upcoming, past;
+      if (isAdmin) {
+        [active, upcoming, past] = await Promise.all([
+          announcementService.getAnnouncementsAdmin('Active', searchQuery, activePage, itemsPerPage),
+          announcementService.getAnnouncementsAdmin('Upcoming', searchQuery, upcomingPage, itemsPerPage),
+          announcementService.getAnnouncementsAdmin('Past', searchQuery, pastPage, itemsPerPage)
+        ]);
+      } else {
+        [active, upcoming, past] = await Promise.all([
+          announcementService.getFiltered(user, 'Active', searchQuery, activePage, itemsPerPage),
+          announcementService.getFiltered(user, 'Upcoming', searchQuery, upcomingPage, itemsPerPage),
+          announcementService.getFiltered(user, 'Past', searchQuery, pastPage, itemsPerPage)
+        ]);
+      }
       setActiveAnnouncements(active.data);
       setActiveCount(active.count);
       setUpcomingAnnouncements(upcoming.data);
