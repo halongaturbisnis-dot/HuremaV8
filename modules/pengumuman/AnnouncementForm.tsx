@@ -26,7 +26,7 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [departments, setDepartments] = useState<string[]>([]);
+  const [grades, setGrades] = useState<string[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
   const [positions, setPositions] = useState<string[]>([]);
   const [statuses, setStatuses] = useState<string[]>(['Tetap', 'Kontrak', 'Magang', 'Harian']);
@@ -41,8 +41,8 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
       const accs = await accountService.getAll();
       setAccounts(accs.filter(a => !a.end_date || new Date(a.end_date) > new Date()));
       
-      const deps = Array.from(new Set(accs.map(a => a.department).filter(Boolean))) as string[];
-      setDepartments(deps);
+      const grds = Array.from(new Set(accs.map(a => a.grade).filter(Boolean))) as string[];
+      setGrades(grds);
       
       const locs = Array.from(new Set(accs.map(a => a.location?.name).filter(Boolean))) as string[];
       setLocations(locs);
@@ -231,7 +231,7 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
                   <div className="p-4 bg-gray-50 border border-gray-100 rounded-2xl max-h-[250px] overflow-y-auto scrollbar-thin space-y-2">
                     {(() => {
                       const filteredAccounts = accounts.filter(a => a.full_name.toLowerCase().includes(searchTerm.toLowerCase()));
-                      const filteredDepartments = departments.filter(d => d?.toLowerCase().includes(searchTerm.toLowerCase()));
+                      const filteredGrades = grades.filter(d => d?.toLowerCase().includes(searchTerm.toLowerCase()));
                       const filteredLocations = locations.filter(l => l?.toLowerCase().includes(searchTerm.toLowerCase()));
                       const filteredPositions = positions.filter(p => p?.toLowerCase().includes(searchTerm.toLowerCase()));
                       const filteredStatuses = statuses.filter(s => s?.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -248,14 +248,14 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
                           </button>
                         ));
                       } else if (targetType === 'Department') {
-                        return filteredDepartments.map(dep => (
+                        return filteredGrades.map(grd => (
                           <button 
-                            key={dep}
-                            onClick={() => toggleTargetId(dep)}
-                            className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(dep) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
+                            key={grd}
+                            onClick={() => toggleTargetId(grd)}
+                            className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${targetIds.includes(grd) ? 'bg-[#006E62]/10 border-[#006E62]/20 text-[#006E62]' : 'bg-white border-gray-100 text-gray-600 hover:border-[#006E62]/20'}`}
                           >
-                            <span className="text-xs font-bold uppercase">{dep || 'Tanpa Departemen'}</span>
-                            {targetIds.includes(dep) && <Check size={14} />}
+                            <span className="text-xs font-bold uppercase">{grd || 'Tanpa Departemen'}</span>
+                            {targetIds.includes(grd) && <Check size={14} />}
                           </button>
                         ));
                       } else if (targetType === 'Position') {
@@ -297,7 +297,7 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ announcement, userI
                               </div>
                               <div className="text-left">
                                 <p className="text-[10px] font-bold">{acc.full_name}</p>
-                                <p className="text-[8px] font-bold opacity-60 uppercase">{acc.department} • {acc.internal_nik}</p>
+                                <p className="text-[8px] font-bold opacity-60 uppercase">{acc.grade} • {acc.internal_nik}</p>
                               </div>
                             </div>
                             {targetIds.includes(acc.id) && <Check size={14} />}

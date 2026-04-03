@@ -25,8 +25,8 @@ export const announcementService = {
       if (ann.target_type === 'Location' && user.location_id) {
         return ann.target_ids.includes(user.location_id);
       }
-      if (ann.target_type === 'Department' && user.department) {
-        return ann.target_ids.includes(user.department);
+      if (ann.target_type === 'Department' && user.grade) {
+        return ann.target_ids.includes(user.grade);
       }
       if (ann.target_type === 'Position' && user.position) {
         return ann.target_ids.includes(user.position);
