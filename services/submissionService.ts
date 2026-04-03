@@ -39,6 +39,37 @@ export const submissionService = {
     return data as Submission[];
   },
 
+  async getByTypePaged(type: string, page: number = 1, limit: number = 50, status: string = 'ALL', search: string = '') {
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    let query = supabase
+      .from('account_submissions')
+      .select(`
+        *,
+        account:accounts!account_id(full_name, internal_nik)
+      `, { count: 'exact' })
+      .eq('type', type);
+
+    if (status !== 'ALL') {
+      query = query.eq('status', status);
+    }
+
+    if (search) {
+      query = query.or(`full_name.ilike.%${search}%,internal_nik.ilike.%${search}%`, { foreignTable: 'accounts' });
+    }
+
+    const { data, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) throw error;
+    return {
+      data: data as Submission[],
+      totalCount: count || 0
+    };
+  },
+
   async getSubmissionsByRange(startDate: string, endDate: string) {
     const { data, error } = await supabase
       .from('account_submissions')

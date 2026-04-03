@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { X, LayoutDashboard, Users, MapPin, CalendarClock, Files, Settings, Database, Fingerprint, Timer, ClipboardCheck, Plane, Calendar, ClipboardList, Heart, Target, CheckSquare, AlertTriangle, Video, Megaphone, Receipt, Trophy, BarChart3, Wallet, AlertCircle, Activity } from 'lucide-react';
+import { X, LayoutDashboard, Users, MapPin, CalendarClock, Coffee, Files, Settings, Database, Fingerprint, Timer, ClipboardCheck, Plane, Calendar, ClipboardList, Heart, Target, CheckSquare, AlertTriangle, Video, Megaphone, Receipt, Trophy, BarChart3, Wallet, AlertCircle, Activity } from 'lucide-react';
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Layout/Header';
 import MobileLayout from './components/Layout/MobileLayout';
@@ -402,7 +402,7 @@ const App: React.FC = () => {
                   type="Libur Mandiri" 
                   title="Manajemen Libur Mandiri" 
                   subtitle="Pusat Pengajuan Libur Mandiri Karyawan"
-                  icon={Plane}
+                  icon={Coffee}
                 />
               ) : (
                 <LeaveMain />
@@ -414,7 +414,7 @@ const App: React.FC = () => {
                   type="Cuti Tahunan" 
                   title="Manajemen Cuti Tahunan" 
                   subtitle="Pusat Pengajuan Cuti Tahunan Karyawan"
-                  icon={Calendar}
+                  icon={Plane}
                 />
               ) : (
                 <AnnualLeaveMain />
@@ -426,7 +426,7 @@ const App: React.FC = () => {
                   type="Izin" 
                   title="Manajemen Izin" 
                   subtitle="Pusat Pengajuan Izin Karyawan"
-                  icon={ClipboardList}
+                  icon={Calendar}
                 />
               ) : (
                 <PermissionMain />

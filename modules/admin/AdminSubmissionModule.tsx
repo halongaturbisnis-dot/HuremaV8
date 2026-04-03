@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Clock, CheckCircle2, XCircle, AlertCircle, Eye, Loader2, Calendar, User, ArrowRight, LucideIcon, Plus, Trash2, X, Paperclip, FileText } from 'lucide-react';
+import { Search, Filter, Clock, CheckCircle2, XCircle, AlertCircle, Eye, Loader2, Calendar, User, ArrowLeft, ArrowRight, LucideIcon, Plus, Trash2, X, Paperclip, FileText } from 'lucide-react';
 import { submissionService } from '../../services/submissionService';
 import { accountService } from '../../services/accountService';
 import { leaveService } from '../../services/leaveService';
@@ -22,8 +22,13 @@ interface AdminSubmissionModuleProps {
 const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, type, title, subtitle, icon: Icon }) => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInputValue, setSearchInputValue] = useState('');
+  const [activeSearchQuery, setActiveSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const itemsPerPage = 50;
+
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [showDetail, setShowDetail] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -54,11 +59,18 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
   };
 
   useEffect(() => {
-    fetchSubmissions();
+    // Reset when type changes
+    setSearchInputValue('');
+    setActiveSearchQuery('');
+    setCurrentPage(1);
     if (type === 'Libur Mandiri' || type === 'Izin' || type === 'Cuti Tahunan' || type === 'Cuti Melahirkan') {
       fetchActiveAccounts();
     }
   }, [type]);
+
+  useEffect(() => {
+    fetchSubmissions(currentPage, statusFilter, activeSearchQuery);
+  }, [type, currentPage, statusFilter, activeSearchQuery]);
 
   const fetchActiveAccounts = async () => {
     try {
@@ -69,11 +81,12 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
     }
   };
 
-  const fetchSubmissions = async () => {
+  const fetchSubmissions = async (page: number, status: string, search: string) => {
     try {
       setIsLoading(true);
-      const data = await submissionService.getByType(type);
+      const { data, totalCount } = await submissionService.getByTypePaged(type, page, itemsPerPage, status, search);
       setSubmissions(data);
+      setTotalCount(totalCount);
     } catch (error) {
       console.error(error);
     } finally {
@@ -81,13 +94,18 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
     }
   };
 
-  const filteredSubmissions = submissions.filter(sub => {
-    const matchesSearch = 
-      sub.account?.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sub.account?.internal_nik.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'ALL' || sub.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const handleStatusChange = (newStatus: string) => {
+    setStatusFilter(newStatus);
+    setSearchInputValue('');
+    setActiveSearchQuery('');
+    setCurrentPage(1);
+  };
+
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setActiveSearchQuery(searchInputValue);
+    setCurrentPage(1);
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -124,7 +142,7 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
         });
         setShowDetail(false);
         setSelectedSubmission(null);
-        fetchSubmissions();
+        fetchSubmissions(currentPage, statusFilter, activeSearchQuery);
       }
     } catch (error) {
       console.error(error);
@@ -232,7 +250,8 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
 
       setShowCreateModal(false);
       resetForm();
-      fetchSubmissions();
+      setCurrentPage(1);
+      fetchSubmissions(1, statusFilter, activeSearchQuery);
     } catch (error) {
       console.error(error);
       Swal.fire('Error', 'Gagal membuat pengajuan', 'error');
@@ -275,7 +294,7 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
           timer: 1500,
           showConfirmButton: false
         });
-        fetchSubmissions();
+        fetchSubmissions(currentPage, statusFilter, activeSearchQuery);
       }
     } catch (error) {
       console.error(error);
@@ -326,19 +345,33 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
               Tambah
             </button>
           )}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-            <input 
-              type="text"
-              placeholder="Cari nama atau NIK..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs focus:ring-2 focus:ring-[#006E62] outline-none w-full sm:w-64 transition-all"
-            />
-          </div>
+          <form 
+            onSubmit={handleSearch}
+            className="relative flex gap-2"
+          >
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              <input 
+                type="text"
+                placeholder="Cari nama atau NIK..."
+                value={searchInputValue}
+                onChange={(e) => setSearchInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSearch();
+                }}
+                className="pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs focus:ring-2 focus:ring-[#006E62] outline-none w-full sm:w-64 transition-all"
+              />
+            </div>
+            <button 
+              type="submit"
+              className="p-2.5 bg-[#006E62] text-white rounded-xl hover:bg-[#005a50] transition-all shadow-sm active:scale-95"
+            >
+              <Search size={16} />
+            </button>
+          </form>
           <select 
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => handleStatusChange(e.target.value)}
             className="px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-bold text-gray-600 outline-none focus:ring-2 focus:ring-[#006E62] transition-all"
           >
             <option value="ALL">SEMUA STATUS</option>
@@ -363,12 +396,12 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filteredSubmissions.length === 0 ? (
+              {submissions.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-gray-400 italic text-xs">Tidak ada data pengajuan yang ditemukan.</td>
                 </tr>
               ) : (
-                filteredSubmissions.map((sub) => (
+                submissions.map((sub) => (
                   <tr key={sub.id} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -423,6 +456,61 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination */}
+        <div className="bg-white px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            Menampilkan {totalCount === 0 ? 0 : Math.min((currentPage - 1) * itemsPerPage + 1, totalCount)} - {Math.min(currentPage * itemsPerPage, totalCount)} dari {totalCount} data
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="p-2 border border-gray-100 rounded-xl text-gray-400 hover:bg-gray-50 disabled:opacity-50 transition-all"
+            >
+              <ArrowLeft size={16} />
+            </button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(5, Math.ceil(totalCount / itemsPerPage)) }, (_, i) => {
+                const totalPages = Math.ceil(totalCount / itemsPerPage);
+                let pageNum = i + 1;
+                
+                // Logic to show pages around current page if many pages exist
+                if (totalPages > 5) {
+                  if (currentPage > 3) {
+                    pageNum = currentPage - 3 + i + 1;
+                    if (pageNum > totalPages) pageNum = totalPages - (4 - i);
+                  }
+                }
+
+                if (pageNum > totalPages) return null;
+
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-8 h-8 rounded-xl text-[10px] font-bold transition-all ${
+                      currentPage === pageNum 
+                        ? 'bg-[#006E62] text-white' 
+                        : 'text-gray-400 hover:bg-gray-50'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(Math.ceil(totalCount / itemsPerPage), prev + 1))}
+              disabled={currentPage === Math.ceil(totalCount / itemsPerPage) || totalCount === 0}
+              className="p-2 border border-gray-100 rounded-xl text-gray-400 hover:bg-gray-50 disabled:opacity-50 transition-all"
+            >
+              <ArrowRight size={16} />
+            </button>
+          </div>
         </div>
       </div>
 
