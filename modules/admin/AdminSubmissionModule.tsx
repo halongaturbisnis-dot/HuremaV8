@@ -25,6 +25,7 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [activeAccounts, setActiveAccounts] = useState<Account[]>([]);
   const [searchAccountTerm, setSearchAccountTerm] = useState('');
+  const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newSubmission, setNewSubmission] = useState({
     account_id: '',
@@ -138,6 +139,7 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
 
       setShowCreateModal(false);
       setSearchAccountTerm('');
+      setShowAccountDropdown(false);
       setNewSubmission({ account_id: '', start_date: '', end_date: '', description: '' });
       fetchSubmissions();
     } catch (error) {
@@ -349,40 +351,84 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
               <button onClick={() => {
                 setShowCreateModal(false);
                 setSearchAccountTerm('');
+                setShowAccountDropdown(false);
               }} className="p-2 hover:bg-gray-200/50 rounded-xl transition-colors text-gray-400">
                 <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleCreate} className="p-6 space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Cari & Pilih Pegawai (*)</label>
-                <div className="relative mb-2">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+              <div className="space-y-1.5 relative">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Pilih Pegawai (*)</label>
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <input 
                     type="text"
-                    placeholder="Ketik nama atau NIK..."
+                    placeholder="Cari nama atau NIK..."
                     value={searchAccountTerm}
-                    onChange={(e) => setSearchAccountTerm(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs focus:ring-2 focus:ring-[#006E62] outline-none transition-all"
+                    onFocus={() => setShowAccountDropdown(true)}
+                    onChange={(e) => {
+                      setSearchAccountTerm(e.target.value);
+                      setShowAccountDropdown(true);
+                      if (newSubmission.account_id) {
+                        setNewSubmission({ ...newSubmission, account_id: '' });
+                      }
+                    }}
+                    className="w-full pl-11 pr-10 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-xs focus:ring-2 focus:ring-[#006E62] outline-none transition-all font-medium"
                   />
-                </div>
-                <select
-                  required
-                  value={newSubmission.account_id}
-                  onChange={(e) => setNewSubmission({ ...newSubmission, account_id: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-xs focus:ring-2 focus:ring-[#006E62] outline-none transition-all font-medium"
-                >
-                  <option value="">-- Pilih Pegawai --</option>
-                  {filteredActiveAccounts.map(acc => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.full_name} ({acc.internal_nik})
-                    </option>
-                  ))}
-                  {filteredActiveAccounts.length === 0 && searchAccountTerm && (
-                    <option disabled>Tidak ada hasil ditemukan</option>
+                  {newSubmission.account_id && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                      <CheckCircle2 size={16} className="text-emerald-500" />
+                    </div>
                   )}
-                </select>
+                </div>
+
+                {/* Dropdown Search Results */}
+                {showAccountDropdown && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={() => setShowAccountDropdown(false)}
+                    />
+                    <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl z-20 max-h-60 overflow-y-auto animate-in slide-in-from-top-2 duration-200">
+                      {filteredActiveAccounts.length > 0 ? (
+                        <div className="p-2 space-y-1">
+                          {filteredActiveAccounts.map(acc => (
+                            <button
+                              key={acc.id}
+                              type="button"
+                              onClick={() => {
+                                setNewSubmission({ ...newSubmission, account_id: acc.id });
+                                setSearchAccountTerm(`${acc.full_name} (${acc.internal_nik})`);
+                                setShowAccountDropdown(false);
+                              }}
+                              className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center justify-between group ${
+                                newSubmission.account_id === acc.id 
+                                  ? 'bg-[#006E62] text-white' 
+                                  : 'hover:bg-gray-50 text-gray-700'
+                              }`}
+                            >
+                              <div>
+                                <p className={`text-xs font-bold ${newSubmission.account_id === acc.id ? 'text-white' : 'text-gray-800'}`}>
+                                  {acc.full_name}
+                                </p>
+                                <p className={`text-[10px] ${newSubmission.account_id === acc.id ? 'text-emerald-100' : 'text-gray-400'}`}>
+                                  {acc.internal_nik}
+                                </p>
+                              </div>
+                              {newSubmission.account_id === acc.id && <CheckCircle2 size={14} />}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-8 text-center">
+                          <AlertCircle size={24} className="mx-auto text-gray-300 mb-2" />
+                          <p className="text-xs text-gray-400 font-medium">Tidak ada hasil ditemukan</p>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -424,6 +470,7 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
                   onClick={() => {
                     setShowCreateModal(false);
                     setSearchAccountTerm('');
+                    setShowAccountDropdown(false);
                   }}
                   className="flex-1 px-6 py-3 border border-gray-100 text-gray-400 text-xs font-bold uppercase tracking-widest rounded-2xl hover:bg-gray-50 transition-all active:scale-95"
                 >
