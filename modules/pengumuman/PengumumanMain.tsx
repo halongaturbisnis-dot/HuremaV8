@@ -12,29 +12,44 @@ interface PengumumanMainProps {
 }
 
 const PengumumanMain: React.FC<PengumumanMainProps> = ({ user }) => {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [activeAnnouncements, setActiveAnnouncements] = useState<Announcement[]>([]);
+  const [upcomingAnnouncements, setUpcomingAnnouncements] = useState<Announcement[]>([]);
+  const [pastAnnouncements, setPastAnnouncements] = useState<Announcement[]>([]);
+  const [activeCount, setActiveCount] = useState(0);
+  const [upcomingCount, setUpcomingCount] = useState(0);
+  const [pastCount, setPastCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [tempSearchQuery, setTempSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'Active' | 'Manage'>('Active');
   
+  const [activePage, setActivePage] = useState(1);
+  const [upcomingPage, setUpcomingPage] = useState(1);
+  const [pastPage, setPastPage] = useState(1);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | undefined>(undefined);
-  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   const isAdmin = user?.role === 'admin' || user?.is_hr_admin || user?.is_performance_admin || user?.is_finance_admin;
 
   useEffect(() => {
-    fetchAnnouncements();
-  }, [user.id, user.department]);
+    fetchData();
+  }, [user.id, user.department, searchQuery, activePage, upcomingPage, pastPage]);
 
-  const fetchAnnouncements = async () => {
+  const fetchData = async () => {
     try {
       setIsLoading(true);
-      const data = await announcementService.getAllAnnouncementsAdmin();
-      setAnnouncements(data);
+      const [active, upcoming, past] = await Promise.all([
+        announcementService.getAnnouncementsAdmin('Active', searchQuery, activePage, itemsPerPage),
+        announcementService.getAnnouncementsAdmin('Upcoming', searchQuery, upcomingPage, itemsPerPage),
+        announcementService.getAnnouncementsAdmin('Past', searchQuery, pastPage, itemsPerPage)
+      ]);
+      setActiveAnnouncements(active.data);
+      setActiveCount(active.count);
+      setUpcomingAnnouncements(upcoming.data);
+      setUpcomingCount(upcoming.count);
+      setPastAnnouncements(past.data);
+      setPastCount(past.count);
     } catch (error) {
       console.error('Failed to fetch announcements:', error);
     } finally {
@@ -55,7 +70,7 @@ const PengumumanMain: React.FC<PengumumanMainProps> = ({ user }) => {
     if (result.isConfirmed) {
       try {
         await announcementService.deleteAnnouncement(id);
-        await fetchAnnouncements();
+        await fetchData();
         Swal.fire('Berhasil', 'Pengumuman telah dihapus.', 'success');
       } catch (error) {
         Swal.fire('Error', 'Gagal menghapus pengumuman.', 'error');
@@ -65,21 +80,97 @@ const PengumumanMain: React.FC<PengumumanMainProps> = ({ user }) => {
 
   const handleSearch = () => {
     setSearchQuery(tempSearchQuery);
-    setCurrentPage(1);
+    setActivePage(1);
+    setUpcomingPage(1);
+    setPastPage(1);
   };
 
-  const now = new Date();
-  const filteredAnnouncements = announcements.filter(ann => 
-    ann.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    ann.content.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const renderTable = (announcements: Announcement[], page: number, setPage: (p: number) => void, totalCount: number) => {
+    if (announcements.length === 0) {
+      return (
+        <div className="p-8 text-center bg-white rounded-[40px] border border-gray-100 shadow-sm">
+          <p className="text-sm font-bold text-gray-400">Tidak ada pengumuman</p>
+        </div>
+      );
+    }
 
-  const activeAnnouncements = filteredAnnouncements.filter(ann => new Date(ann.publish_start) <= now && new Date(ann.publish_end) >= now);
-  const upcomingAnnouncements = filteredAnnouncements.filter(ann => new Date(ann.publish_start) > now);
-  const pastAnnouncements = filteredAnnouncements.filter(ann => new Date(ann.publish_end) < now);
+    const totalPages = Math.ceil(totalCount / itemsPerPage);
 
-  const paginatedPast = pastAnnouncements.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  const totalPages = Math.ceil(pastAnnouncements.length / itemsPerPage);
+    return (
+      <div className="bg-white rounded-[40px] border border-gray-100 overflow-hidden shadow-sm">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-gray-50/50 border-b border-gray-100">
+              <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pengumuman</th>
+              <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Kategori</th>
+              <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target</th>
+              <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Periode Tayang</th>
+              <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {announcements.map(ann => (
+              <tr key={ann.id} onClick={() => setSelectedAnnouncement(ann)} className="hover:bg-gray-50/50 transition-colors cursor-pointer">
+                <td className="px-8 py-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-[#006E62]/10 text-[#006E62] flex items-center justify-center shrink-0">
+                      <Megaphone size={18} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-800">{ann.title}</p>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Oleh: {ann.creator?.full_name}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-8 py-5">
+                  <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg ${ann.category === 'Urgent' ? 'bg-rose-50 text-rose-600' : ann.category === 'Event' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+                    {ann.category}
+                  </span>
+                </td>
+                <td className="px-8 py-5">
+                  <p className="text-[10px] font-bold text-gray-600 uppercase tracking-tight">{ann.target_type}</p>
+                </td>
+                <td className="px-8 py-5">
+                  <div className="flex flex-col gap-1">
+                    <p className="text-[9px] font-bold text-gray-600 uppercase tracking-tight">Mulai: {new Date(ann.publish_start).toLocaleDateString('id-ID')}</p>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Selesai: {new Date(ann.publish_end).toLocaleDateString('id-ID')}</p>
+                  </div>
+                </td>
+                <td className="px-8 py-5 text-right">
+                  <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                    <button 
+                      onClick={() => {
+                        setEditingAnnouncement(ann);
+                        setIsFormOpen(true);
+                      }}
+                      className="p-2 text-[#006E62] hover:bg-[#006E62]/10 rounded-xl transition-all"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(ann.id)}
+                      className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {totalPages > 1 && (
+          <div className="p-4 flex justify-center gap-2">
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <button key={i} onClick={() => setPage(i + 1)} className={`px-3 py-1 rounded-lg text-xs font-bold ${page === i + 1 ? 'bg-[#006E62] text-white' : 'bg-gray-100 text-gray-600'}`}>
+                {i + 1}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-500">
@@ -128,98 +219,19 @@ const PengumumanMain: React.FC<PengumumanMainProps> = ({ user }) => {
           {/* Active */}
           <section>
             <h3 className="text-sm font-bold text-gray-800 uppercase tracking-widest mb-4">Pengumuman Aktif</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {activeAnnouncements.map(ann => (
-                <AnnouncementCard key={ann.id} announcement={ann} onClick={() => setSelectedAnnouncement(ann)} />
-              ))}
-            </div>
+            {renderTable(activeAnnouncements, activePage, setActivePage, activeCount)}
           </section>
 
           {/* Upcoming */}
           <section>
             <h3 className="text-sm font-bold text-gray-800 uppercase tracking-widest mb-4">Akan Datang</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {upcomingAnnouncements.map(ann => (
-                <AnnouncementCard key={ann.id} announcement={ann} onClick={() => setSelectedAnnouncement(ann)} />
-              ))}
-            </div>
+            {renderTable(upcomingAnnouncements, upcomingPage, setUpcomingPage, upcomingCount)}
           </section>
 
           {/* Past */}
           <section>
             <h3 className="text-sm font-bold text-gray-800 uppercase tracking-widest mb-4">Riwayat</h3>
-            <div className="bg-white rounded-[40px] border border-gray-100 overflow-hidden shadow-sm">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50/50 border-b border-gray-100">
-                    <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pengumuman</th>
-                    <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Kategori</th>
-                    <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target</th>
-                    <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Periode Tayang</th>
-                    <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {paginatedPast.map(ann => (
-                    <tr key={ann.id} onClick={() => setSelectedAnnouncement(ann)} className="hover:bg-gray-50/50 transition-colors cursor-pointer">
-                      <td className="px-8 py-5">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-[#006E62]/10 text-[#006E62] flex items-center justify-center shrink-0">
-                            <Megaphone size={18} />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-gray-800">{ann.title}</p>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Oleh: {ann.creator?.full_name}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-8 py-5">
-                        <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg ${ann.category === 'Urgent' ? 'bg-rose-50 text-rose-600' : ann.category === 'Event' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
-                          {ann.category}
-                        </span>
-                      </td>
-                      <td className="px-8 py-5">
-                        <p className="text-[10px] font-bold text-gray-600 uppercase tracking-tight">{ann.target_type}</p>
-                      </td>
-                      <td className="px-8 py-5">
-                        <div className="flex flex-col gap-1">
-                          <p className="text-[9px] font-bold text-gray-600 uppercase tracking-tight">Mulai: {new Date(ann.publish_start).toLocaleDateString('id-ID')}</p>
-                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Selesai: {new Date(ann.publish_end).toLocaleDateString('id-ID')}</p>
-                        </div>
-                      </td>
-                      <td className="px-8 py-5 text-right">
-                        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                          <button 
-                            onClick={() => {
-                              setEditingAnnouncement(ann);
-                              setIsFormOpen(true);
-                            }}
-                            className="p-2 text-[#006E62] hover:bg-[#006E62]/10 rounded-xl transition-all"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(ann.id)}
-                            className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {totalPages > 1 && (
-                <div className="p-4 flex justify-center gap-2">
-                  {Array.from({ length: totalPages }).map((_, i) => (
-                    <button key={i} onClick={() => setCurrentPage(i + 1)} className={`px-3 py-1 rounded-lg text-xs font-bold ${currentPage === i + 1 ? 'bg-[#006E62] text-white' : 'bg-gray-100 text-gray-600'}`}>
-                      {i + 1}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            {renderTable(pastAnnouncements, pastPage, setPastPage, pastCount)}
           </section>
         </div>
       )}
@@ -230,7 +242,7 @@ const PengumumanMain: React.FC<PengumumanMainProps> = ({ user }) => {
           userId={user.id}
           isAdmin={isAdmin}
           onClose={() => setSelectedAnnouncement(null)}
-          onRead={fetchAnnouncements}
+          onRead={fetchData}
         />
       )}
 
@@ -241,7 +253,7 @@ const PengumumanMain: React.FC<PengumumanMainProps> = ({ user }) => {
           onClose={() => setIsFormOpen(false)}
           onSave={() => {
             setIsFormOpen(false);
-            fetchAnnouncements();
+            fetchData();
           }}
         />
       )}

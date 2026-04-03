@@ -47,21 +47,42 @@ export const announcementService = {
     })) as Announcement[];
   },
 
-  async getAllAnnouncementsAdmin() {
-    const { data, error } = await supabase
+  async getAnnouncementsAdmin(status: 'Active' | 'Upcoming' | 'Past', search?: string, page: number = 1, limit: number = 10) {
+    const now = new Date().toISOString();
+    let query = supabase
       .from('announcements')
       .select(`
         *,
         creator:accounts!created_by(full_name)
-      `)
-      .order('created_at', { ascending: false });
+      `, { count: 'exact' });
+
+    if (status === 'Active') {
+      query = query.lte('publish_start', now).gte('publish_end', now);
+    } else if (status === 'Upcoming') {
+      query = query.gt('publish_start', now);
+    } else if (status === 'Past') {
+      query = query.lt('publish_end', now);
+    }
+
+    if (search) {
+      query = query.ilike('title', `%${search}%`);
+    }
+
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    const { data, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to);
 
     if (error) throw error;
 
-    // Get read counts
+    // Get read counts for the fetched announcements
+    const announcementIds = data.map(a => a.id);
     const { data: readCounts, error: countError } = await supabase
       .from('announcement_reads')
-      .select('announcement_id');
+      .select('announcement_id')
+      .in('announcement_id', announcementIds);
 
     if (countError) throw countError;
 
@@ -70,10 +91,13 @@ export const announcementService = {
       counts[r.announcement_id] = (counts[r.announcement_id] || 0) + 1;
     });
 
-    return data.map(ann => ({
-      ...ann,
-      read_count: counts[ann.id] || 0
-    })) as Announcement[];
+    return {
+      data: data.map(ann => ({
+        ...ann,
+        read_count: counts[ann.id] || 0
+      })) as Announcement[],
+      count: count || 0
+    };
   },
 
   async createAnnouncement(announcement: Omit<Announcement, 'id' | 'created_at' | 'updated_at' | 'creator'>) {

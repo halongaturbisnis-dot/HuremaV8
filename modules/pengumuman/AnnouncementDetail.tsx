@@ -32,17 +32,12 @@ const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({ announcement, u
       <div className="bg-white w-full max-w-3xl rounded-3xl overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300 max-h-[90vh]">
         <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0 bg-gray-50/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
               <Megaphone size={20} />
             </div>
             <div>
               <h3 className="text-lg font-bold text-gray-800 tracking-tight">{announcement.title}</h3>
-              <div className="flex items-center gap-3 mt-0.5">
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-1">
-                  <Calendar size={12} />
-                  {new Date(announcement.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                </span>
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">•</span>
+              <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-1">
                   <User size={12} />
                   {announcement.creator?.full_name}
@@ -64,7 +59,7 @@ const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({ announcement, u
 
           {announcement.attachments.length > 0 && (
             <div className="mt-8 space-y-3">
-              <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Lampiran Resmi</h4>
+              <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Lampiran</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {announcement.attachments.map((fileId, idx) => (
                   <a 
@@ -72,13 +67,13 @@ const AnnouncementDetail: React.FC<AnnouncementDetailProps> = ({ announcement, u
                     href={`https://drive.google.com/file/d/${fileId}/view`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl hover:border-amber-200 hover:bg-amber-50/30 transition-all group"
+                    className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl hover:border-emerald-200 hover:bg-emerald-50/30 transition-all group"
                   >
                     <div className="flex items-center gap-3">
-                      <Paperclip size={14} className="text-gray-400 group-hover:text-amber-600" />
-                      <span className="text-xs font-bold text-gray-600 group-hover:text-amber-600">Dokumen_{idx + 1}</span>
+                      <Paperclip size={14} className="text-gray-400 group-hover:text-emerald-600" />
+                      <span className="text-xs font-bold text-gray-600 group-hover:text-emerald-600">Dokumen_{idx + 1}</span>
                     </div>
-                    <ExternalLink size={14} className="text-gray-300 group-hover:text-amber-600" />
+                    <ExternalLink size={14} className="text-gray-300 group-hover:text-emerald-600" />
                   </a>
                 ))}
               </div>
