@@ -30,13 +30,14 @@ const NavItem: React.FC<NavItemProps> = ({
   <button
     type="button"
     onClick={() => setActiveTab(id)}
-    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 ${
+    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 group relative overflow-hidden ${
       activeTab === id 
         ? 'bg-[#006E62] text-white shadow-md' 
         : 'text-gray-600 hover:bg-gray-100'
     } ${indent && !isCollapsed ? 'ml-4 w-[calc(100%-1rem)]' : ''}`}
     title={isCollapsed ? label : ''}
   >
+    <span className="absolute bottom-0 left-0 h-0.5 bg-[#006E62] w-0 transition-all duration-300 group-hover:w-full"></span>
     <div className="relative shrink-0">
       <Icon size={20} />
       {( (badge !== undefined && badge > 0) || showNew ) && isCollapsed && (
@@ -137,10 +138,17 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
     }
   };
 
+  const isMasterActive = ['master_app', 'location', 'schedule', 'account', 'admin_settings'].includes(activeTab);
+  const isSubmissionActive = ['leave', 'overtime', 'permission', 'annual_leave', 'maternity_leave', 'admin_dispensation'].includes(activeTab);
+  const isPerformanceActive = ['kpi', 'key_activity', 'sales_report'].includes(activeTab);
+  const isFinanceActive = ['salary_scheme', 'salary_adjustment', 'payroll', 'reimbursement', 'early_salary', 'compensation'].includes(activeTab);
+  const isReportActive = ['employee_report', 'attendance_report', 'finance_report'].includes(activeTab);
+  const isPresenceActive = ['presence', 'overtime', 'dispensation'].includes(activeTab);
+
   return (
     <aside 
       className={`hidden md:flex flex-col border-r border-gray-100 bg-white sticky top-0 h-screen transition-all duration-300 z-30 ${
-        isCollapsed ? 'w-20' : 'w-64'
+        isCollapsed ? 'w-24' : 'w-64'
       }`}
     >
       <div className="flex items-center justify-between p-4 mb-4">
@@ -149,7 +157,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
             <img src={LOGO_ICON} alt="Logo" className="w-8 h-8 object-contain shrink-0" />
             <div className="flex flex-col overflow-hidden">
               <h1 className="text-xl font-bold tracking-tight text-[#006E62] truncate leading-tight">HUREMA</h1>
-              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider truncate">{Client_Name}</p>
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider leading-tight">{Client_Name}</p>
             </div>
           </div>
         )}
@@ -176,10 +184,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
             <button 
               type="button"
               onClick={() => setIsMasterOpen(!isMasterOpen)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 text-gray-600 hover:bg-gray-100`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 group relative overflow-hidden ${isMasterActive ? 'bg-[#006E62]/10 text-[#006E62]' : 'text-gray-600 hover:bg-gray-100'}`}
               title={isCollapsed ? 'Master' : ''}
             >
-              <MonitorCog size={20} className="shrink-0 text-gray-400" />
+              <span className="absolute bottom-0 left-0 h-0.5 bg-[#006E62] w-0 transition-all duration-300 group-hover:w-full"></span>
+              <MonitorCog size={20} className="shrink-0 text-gray-600" />
               {!isCollapsed && (
                 <div className="flex items-center justify-between flex-1 overflow-hidden">
                   <span className="font-medium text-sm truncate">Master</span>
@@ -261,10 +270,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
           <button 
             type="button"
             onClick={() => setIsSubmissionOpen(!isSubmissionOpen)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 text-gray-600 hover:bg-gray-100`}
+            className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 group relative overflow-hidden ${isSubmissionActive ? 'bg-[#006E62]/10 text-[#006E62]' : 'text-gray-600 hover:bg-gray-100'}`}
             title={isCollapsed ? 'Pengajuan' : ''}
           >
-            <ClipboardCheck size={20} className="shrink-0 text-gray-400" />
+            <span className="absolute bottom-0 left-0 h-0.5 bg-[#006E62] w-0 transition-all duration-300 group-hover:w-full"></span>
+            <ClipboardCheck size={20} className="shrink-0 text-gray-600" />
             {!isCollapsed && (
               <div className="flex items-center justify-between flex-1 overflow-hidden">
                 <span className="font-medium text-sm truncate">Pengajuan</span>
@@ -349,10 +359,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
             <button 
               type="button"
               onClick={() => setIsPerformanceOpen(!isPerformanceOpen)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 text-gray-600 hover:bg-gray-100`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 group relative overflow-hidden ${isPerformanceActive ? 'bg-[#006E62]/10 text-[#006E62]' : 'text-gray-600 hover:bg-gray-100'}`}
               title={isCollapsed ? 'Performa' : ''}
             >
-              <Toolbox size={20} className="shrink-0 text-gray-400" />
+              <span className="absolute bottom-0 left-0 h-0.5 bg-[#006E62] w-0 transition-all duration-300 group-hover:w-full"></span>
+              <Toolbox size={20} className="shrink-0 text-gray-600" />
               {!isCollapsed && (
                 <div className="flex items-center justify-between flex-1 overflow-hidden">
                   <span className="font-medium text-sm truncate">Performa</span>
@@ -401,11 +412,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
             <button 
               type="button"
               onClick={() => setIsFinanceOpen(!isFinanceOpen)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 text-gray-600 hover:bg-gray-100`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 group relative overflow-hidden ${isFinanceActive ? 'bg-[#006E62]/10 text-[#006E62]' : 'text-gray-600 hover:bg-gray-100'}`}
               title={isCollapsed ? 'Finansial' : ''}
             >
+              <span className="absolute bottom-0 left-0 h-0.5 bg-[#006E62] w-0 transition-all duration-300 group-hover:w-full"></span>
               <div className="relative shrink-0">
-                <DollarSign size={20} className="text-gray-400" />
+                <DollarSign size={20} className="text-gray-600" />
                 {unreadReimbursements > 0 && isCollapsed && (
                   <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
                 )}
@@ -550,10 +562,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
             <button 
               type="button"
               onClick={() => setIsReportOpen(!isReportOpen)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 text-gray-600 hover:bg-gray-100`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 group relative overflow-hidden ${isReportActive ? 'bg-[#006E62]/10 text-[#006E62]' : 'text-gray-600 hover:bg-gray-100'}`}
               title={isCollapsed ? 'Laporan' : ''}
             >
-              <BarChart3 size={20} className="shrink-0 text-gray-400" />
+              <span className="absolute bottom-0 left-0 h-0.5 bg-[#006E62] w-0 transition-all duration-300 group-hover:w-full"></span>
+              <BarChart3 size={20} className="shrink-0 text-gray-600" />
               {!isCollapsed && (
                 <div className="flex items-center justify-between flex-1 overflow-hidden">
                   <span className="font-medium text-sm truncate">Laporan</span>
@@ -608,11 +621,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
             <button 
               type="button"
               onClick={() => setIsPresenceOpen(!isPresenceOpen)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 text-gray-600 hover:bg-gray-100`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 group relative overflow-hidden ${isPresenceActive ? 'bg-[#006E62]/10 text-[#006E62]' : 'text-gray-600 hover:bg-gray-100'}`}
               title={isCollapsed ? 'Presensi' : ''}
             >
+              <span className="absolute bottom-0 left-0 h-0.5 bg-[#006E62] w-0 transition-all duration-300 group-hover:w-full"></span>
               <div className="relative shrink-0">
-                <Fingerprint size={20} className="text-gray-400" />
+                <Fingerprint size={20} className="text-gray-600" />
               </div>
               {!isCollapsed && (
                 <div className="flex items-center justify-between flex-1 overflow-hidden">
@@ -694,7 +708,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
         <button 
           type="button"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="w-full flex items-center justify-center p-2 text-gray-400 hover:bg-gray-100 rounded-md transition-all"
+          className="w-full flex items-center justify-center p-2 text-[#006E62] hover:bg-gray-100 rounded-md transition-all"
         >
           {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </button>
