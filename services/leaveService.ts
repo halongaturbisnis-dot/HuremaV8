@@ -40,7 +40,7 @@ export const leaveService = {
   /**
    * Membuat pengajuan cuti tahunan baru
    */
-  async createAnnual(input: AnnualLeaveRequestInput): Promise<AnnualLeaveRequest> {
+  async createAnnual(input: AnnualLeaveRequestInput, forceStatus?: 'approved' | 'pending', verifierId?: string): Promise<AnnualLeaveRequest> {
     // Validasi sesi kustom sebelum kirim
     const currentUser = authService.getCurrentUser();
     if (!currentUser) {
@@ -48,16 +48,16 @@ export const leaveService = {
       throw new Error('Sesi Anda telah berakhir. Silakan login kembali.');
     }
 
-    console.log('Creating annual leave with payload:', input);
+    const status = forceStatus || 'pending';
 
     const { data, error } = await supabase
       .from('account_annual_leaves')
       .insert({
         ...input,
-        status: 'pending',
-        current_negotiator_role: 'admin',
+        status,
+        current_negotiator_role: status === 'approved' ? 'user' : 'admin',
         negotiation_data: [{
-          role: 'user',
+          role: forceStatus ? 'admin' : 'user',
           start_date: input.start_date,
           end_date: input.end_date,
           reason: input.description,
@@ -74,20 +74,59 @@ export const leaveService = {
 
     // Sinkronisasi ke tabel submissions agar muncul di daftar verifikasi pusat
     try {
+      const submissionStatus = status === 'approved' ? 'Disetujui' : 'Pending';
       await supabase.from('account_submissions').insert([{
         account_id: input.account_id,
         type: 'Cuti Tahunan',
-        status: 'Pending',
+        status: submissionStatus,
         description: input.description,
+        verifier_id: status === 'approved' ? verifierId : null,
+        verified_at: status === 'approved' ? new Date().toISOString() : null,
         submission_data: {
           start_date: input.start_date,
           end_date: input.end_date,
           annual_leave_id: data.id
         }
       }]);
+
+      // Jika otomatis disetujui, potong kuota dengan logika FIFO
+      if (status === 'approved') {
+        const start = new Date(input.start_date);
+        const end = new Date(input.end_date);
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const duration = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+        const { data: account } = await supabase
+          .from('accounts')
+          .select('leave_quota, carry_over_quota')
+          .eq('id', input.account_id)
+          .single();
+
+        if (account) {
+          let remainingDuration = duration;
+          let newCarryOver = account.carry_over_quota || 0;
+          let newLeaveQuota = account.leave_quota || 0;
+
+          // Potong carry over dulu (FIFO)
+          if (newCarryOver > 0) {
+            const deductFromCarry = Math.min(newCarryOver, remainingDuration);
+            newCarryOver -= deductFromCarry;
+            remainingDuration -= deductFromCarry;
+          }
+
+          // Sisanya potong dari kuota tahun berjalan
+          if (remainingDuration > 0) {
+            newLeaveQuota = Math.max(0, newLeaveQuota - remainingDuration);
+          }
+
+          await supabase.from('accounts').update({
+            leave_quota: newLeaveQuota,
+            carry_over_quota: newCarryOver
+          }).eq('id', input.account_id);
+        }
+      }
     } catch (subError) {
-      console.warn('Failed to sync to submissions table:', subError);
-      // We don't throw here to avoid blocking the main leave creation
+      console.warn('Failed to sync to submissions table or update quota:', subError);
     }
 
     return data;

@@ -4,6 +4,7 @@ import { submissionService } from '../../services/submissionService';
 import { accountService } from '../../services/accountService';
 import { leaveService } from '../../services/leaveService';
 import { permissionService } from '../../services/permissionService';
+import { maternityLeaveService } from '../../services/maternityLeaveService';
 import { Submission, AuthUser, SubmissionStatus, Account } from '../../types';
 import Swal from 'sweetalert2';
 import SubmissionDetail from '../submission/SubmissionDetail';
@@ -39,7 +40,7 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
 
   useEffect(() => {
     fetchSubmissions();
-    if (type === 'Libur Mandiri' || type === 'Izin') {
+    if (type === 'Libur Mandiri' || type === 'Izin' || type === 'Cuti Tahunan' || type === 'Cuti Melahirkan') {
       fetchActiveAccounts();
     }
   }, [type]);
@@ -123,6 +124,31 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
       return;
     }
 
+    // Validasi Kuota untuk Cuti Tahunan dan Cuti Melahirkan
+    if (type === 'Cuti Tahunan' || type === 'Cuti Melahirkan') {
+      const start = new Date(newSubmission.start_date);
+      const end = new Date(newSubmission.end_date);
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      const duration = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      
+      const selectedAcc = activeAccounts.find(a => a.id === newSubmission.account_id);
+      if (selectedAcc) {
+        if (type === 'Cuti Tahunan') {
+          const totalQuota = (selectedAcc.leave_quota || 0) + (selectedAcc.carry_over_quota || 0);
+          if (duration > totalQuota) {
+            Swal.fire('Kuota Tidak Mencukupi', `Jumlah hari (${duration}) melebihi total kuota cuti (${totalQuota} hari).`, 'error');
+            return;
+          }
+        } else if (type === 'Cuti Melahirkan') {
+          const totalQuota = selectedAcc.maternity_leave_quota || 0;
+          if (duration > totalQuota) {
+            Swal.fire('Kuota Tidak Mencukupi', `Jumlah hari (${duration}) melebihi kuota cuti melahirkan (${totalQuota} hari).`, 'error');
+            return;
+          }
+        }
+      }
+    }
+
     try {
       setIsSubmitting(true);
       
@@ -137,6 +163,20 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
         await permissionService.create({
           account_id: newSubmission.account_id,
           permission_type: newSubmission.permission_type,
+          start_date: newSubmission.start_date,
+          end_date: newSubmission.end_date,
+          description: newSubmission.description || 'Dibuatkan oleh Admin'
+        }, 'approved', user.id);
+      } else if (type === 'Cuti Tahunan') {
+        await leaveService.createAnnual({
+          account_id: newSubmission.account_id,
+          start_date: newSubmission.start_date,
+          end_date: newSubmission.end_date,
+          description: newSubmission.description || 'Dibuatkan oleh Admin'
+        }, 'approved', user.id);
+      } else if (type === 'Cuti Melahirkan') {
+        await maternityLeaveService.create({
+          account_id: newSubmission.account_id,
           start_date: newSubmission.start_date,
           end_date: newSubmission.end_date,
           description: newSubmission.description || 'Dibuatkan oleh Admin'
@@ -189,6 +229,10 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
           await leaveService.delete(subData.leave_request_id);
         } else if (subType === 'Izin' && subData.permission_request_id) {
           await permissionService.delete(subData.permission_request_id);
+        } else if (subType === 'Cuti Tahunan' && subData.annual_leave_id) {
+          await leaveService.deleteAnnual(subData.annual_leave_id);
+        } else if (subType === 'Cuti Melahirkan' && subData.maternity_leave_id) {
+          await maternityLeaveService.delete(subData.maternity_leave_id);
         }
 
         await submissionService.delete(id);
@@ -208,10 +252,17 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
     }
   };
 
-  const filteredActiveAccounts = activeAccounts.filter(acc => 
-    acc.full_name.toLowerCase().includes(searchAccountTerm.toLowerCase()) ||
-    acc.internal_nik.toLowerCase().includes(searchAccountTerm.toLowerCase())
-  );
+  const filteredActiveAccounts = activeAccounts.filter(acc => {
+    const matchesSearch = acc.full_name.toLowerCase().includes(searchAccountTerm.toLowerCase()) ||
+                         acc.internal_nik.toLowerCase().includes(searchAccountTerm.toLowerCase());
+    
+    // Filter gender untuk Cuti Melahirkan
+    if (type === 'Cuti Melahirkan') {
+      return matchesSearch && acc.gender === 'Perempuan';
+    }
+    
+    return matchesSearch;
+  });
 
   if (isLoading) return (
     <div className="flex flex-col items-center justify-center py-20 text-gray-400">
@@ -235,7 +286,7 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
-          {(type === 'Libur Mandiri' || type === 'Izin') && (
+          {(type === 'Libur Mandiri' || type === 'Izin' || type === 'Cuti Tahunan' || type === 'Cuti Melahirkan') && (
             <button 
               onClick={() => setShowCreateModal(true)}
               className="flex items-center justify-center gap-2 bg-[#006E62] text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#005a50] transition-all shadow-sm active:scale-95"
@@ -325,7 +376,7 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
                           <Eye size={14} />
                           Detail
                         </button>
-                        {(type === 'Libur Mandiri' || type === 'Izin') && (
+                        {(type === 'Libur Mandiri' || type === 'Izin' || type === 'Cuti Tahunan' || type === 'Cuti Melahirkan') && (
                           <button 
                             onClick={() => handleDelete(sub.id, sub.type, sub.submission_data)}
                             className="flex items-center gap-2 bg-rose-50 border border-rose-100 text-rose-600 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-rose-100 hover:border-rose-200 transition-all shadow-sm active:scale-95"
@@ -450,6 +501,39 @@ const AdminSubmissionModule: React.FC<AdminSubmissionModuleProps> = ({ user, typ
                       )}
                     </div>
                   </>
+                )}
+
+                {/* Quota Info Display */}
+                {newSubmission.account_id && (type === 'Cuti Tahunan' || type === 'Cuti Melahirkan') && (
+                  <div className="mt-2 p-3 bg-blue-50 border border-blue-100 rounded-xl animate-in slide-in-from-top-1 duration-300">
+                    <div className="flex items-center gap-2 text-[#006E62] mb-1">
+                      <AlertCircle size={14} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Informasi Kuota</span>
+                    </div>
+                    {type === 'Cuti Tahunan' ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-white/50 p-2 rounded-lg">
+                          <p className="text-[9px] text-gray-400 font-bold uppercase">Tahunan</p>
+                          <p className="text-xs font-bold text-gray-700">
+                            {activeAccounts.find(a => a.id === newSubmission.account_id)?.leave_quota || 0} Hari
+                          </p>
+                        </div>
+                        <div className="bg-white/50 p-2 rounded-lg">
+                          <p className="text-[9px] text-gray-400 font-bold uppercase">Carry Over</p>
+                          <p className="text-xs font-bold text-gray-700">
+                            {activeAccounts.find(a => a.id === newSubmission.account_id)?.carry_over_quota || 0} Hari
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-white/50 p-2 rounded-lg">
+                        <p className="text-[9px] text-gray-400 font-bold uppercase">Sisa Kuota Melahirkan</p>
+                        <p className="text-xs font-bold text-gray-700">
+                          {activeAccounts.find(a => a.id === newSubmission.account_id)?.maternity_leave_quota || 0} Hari
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 

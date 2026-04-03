@@ -39,7 +39,7 @@ export const maternityLeaveService = {
   /**
    * Membuat pengajuan cuti melahirkan baru
    */
-  async create(input: MaternityLeaveRequestInput): Promise<MaternityLeaveRequest> {
+  async create(input: MaternityLeaveRequestInput, forceStatus?: 'approved' | 'pending', verifierId?: string): Promise<MaternityLeaveRequest> {
     // Validasi sesi kustom sebelum kirim
     const currentUser = authService.getCurrentUser();
     if (!currentUser) {
@@ -47,16 +47,16 @@ export const maternityLeaveService = {
       throw new Error('Sesi Anda telah berakhir. Silakan login kembali.');
     }
 
-    console.log('Creating maternity leave request with payload:', input);
+    const status = forceStatus || 'pending';
 
     const { data, error } = await supabase
       .from('account_maternity_leaves')
       .insert({
         ...input,
-        status: 'pending',
-        current_negotiator_role: 'admin',
+        status,
+        current_negotiator_role: status === 'approved' ? 'user' : 'admin',
         negotiation_data: [{
-          role: 'user',
+          role: forceStatus ? 'admin' : 'user',
           start_date: input.start_date,
           end_date: input.end_date,
           reason: input.description,
@@ -73,19 +73,43 @@ export const maternityLeaveService = {
 
     // Sinkronisasi ke tabel submissions agar muncul di daftar verifikasi pusat
     try {
+      const submissionStatus = status === 'approved' ? 'Disetujui' : 'Pending';
       await supabase.from('account_submissions').insert([{
         account_id: input.account_id,
         type: 'Cuti Melahirkan',
-        status: 'Pending',
+        status: submissionStatus,
         description: input.description,
+        verifier_id: status === 'approved' ? verifierId : null,
+        verified_at: status === 'approved' ? new Date().toISOString() : null,
         submission_data: {
           start_date: input.start_date,
           end_date: input.end_date,
           maternity_leave_id: data.id
         }
       }]);
+
+      // Jika otomatis disetujui, potong kuota melahirkan
+      if (status === 'approved') {
+        const start = new Date(input.start_date);
+        const end = new Date(input.end_date);
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const duration = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+        const { data: account } = await supabase
+          .from('accounts')
+          .select('maternity_leave_quota')
+          .eq('id', input.account_id)
+          .single();
+
+        if (account) {
+          const newQuota = Math.max(0, (account.maternity_leave_quota || 0) - duration);
+          await supabase.from('accounts').update({
+            maternity_leave_quota: newQuota
+          }).eq('id', input.account_id);
+        }
+      }
     } catch (subError) {
-      console.warn('Failed to sync to submissions table:', subError);
+      console.warn('Failed to sync to submissions table or update quota:', subError);
     }
 
     return data;

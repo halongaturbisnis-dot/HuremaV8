@@ -119,7 +119,7 @@ export const submissionService = {
             .eq('id', leave_request_id);
         }
       } else if (submission.type === 'Cuti Tahunan') {
-        const { annual_leave_id } = submission.submission_data;
+        const { annual_leave_id, start_date, end_date } = submission.submission_data;
         if (annual_leave_id) {
           // Sinkronisasi status ke tabel cuti tahunan
           const { data: current } = await supabase.from('account_annual_leaves').select('negotiation_data').eq('id', annual_leave_id).single();
@@ -137,6 +137,39 @@ export const submissionService = {
               updated_at: new Date().toISOString() 
             })
             .eq('id', annual_leave_id);
+
+          // Potong kuota dengan logika FIFO
+          const start = new Date(start_date);
+          const end = new Date(end_date);
+          const diffTime = Math.abs(end.getTime() - start.getTime());
+          const duration = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+          const { data: account } = await supabase
+            .from('accounts')
+            .select('leave_quota, carry_over_quota')
+            .eq('id', submission.account_id)
+            .single();
+
+          if (account) {
+            let remainingDuration = duration;
+            let newCarryOver = account.carry_over_quota || 0;
+            let newLeaveQuota = account.leave_quota || 0;
+
+            if (newCarryOver > 0) {
+              const deductFromCarry = Math.min(newCarryOver, remainingDuration);
+              newCarryOver -= deductFromCarry;
+              remainingDuration -= deductFromCarry;
+            }
+
+            if (remainingDuration > 0) {
+              newLeaveQuota = Math.max(0, newLeaveQuota - remainingDuration);
+            }
+
+            await supabase.from('accounts').update({
+              leave_quota: newLeaveQuota,
+              carry_over_quota: newCarryOver
+            }).eq('id', submission.account_id);
+          }
         }
       } else if (submission.type === 'Izin') {
         const { permission_request_id } = submission.submission_data;
@@ -159,7 +192,7 @@ export const submissionService = {
             .eq('id', permission_request_id);
         }
       } else if (submission.type === 'Cuti Melahirkan') {
-        const { maternity_leave_id } = submission.submission_data;
+        const { maternity_leave_id, start_date, end_date } = submission.submission_data;
         if (maternity_leave_id) {
           // Sinkronisasi status ke tabel cuti melahirkan
           const { data: current } = await supabase.from('account_maternity_leaves').select('negotiation_data').eq('id', maternity_leave_id).single();
@@ -177,6 +210,25 @@ export const submissionService = {
               updated_at: new Date().toISOString() 
             })
             .eq('id', maternity_leave_id);
+
+          // Potong kuota melahirkan
+          const start = new Date(start_date);
+          const end = new Date(end_date);
+          const diffTime = Math.abs(end.getTime() - start.getTime());
+          const duration = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+          const { data: account } = await supabase
+            .from('accounts')
+            .select('maternity_leave_quota')
+            .eq('id', submission.account_id)
+            .single();
+
+          if (account) {
+            const newQuota = Math.max(0, (account.maternity_leave_quota || 0) - duration);
+            await supabase.from('accounts').update({
+              maternity_leave_quota: newQuota
+            }).eq('id', submission.account_id);
+          }
         }
       }
       // Tambahkan logic otomatisasi lain di sini (misal: insert log lembur otomatis)
