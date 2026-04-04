@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Timer, Clock, MapPin, History, AlertCircle, Map as MapIcon, Camera, UserX, ShieldCheck, Info } from 'lucide-react';
+import { Timer, Clock, MapPin, History, AlertCircle, Map as MapIcon, Camera, UserX, ShieldCheck, Info, Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { overtimeService } from '../../services/overtimeService';
 import { presenceService } from '../../services/presenceService';
 import { accountService } from '../../services/accountService';
@@ -25,7 +26,11 @@ const OvertimeMain: React.FC = () => {
   const [isRegularActive, setIsRegularActive] = useState(false);
   const [serverTime, setServerTime] = useState<Date>(new Date());
   const [coords, setCoords] = useState<{lat: number, lng: number} | null>(null);
+  const [currentAddress, setCurrentAddress] = useState<string | null>(null);
+  const [isFetchingAddress, setIsFetchingAddress] = useState(false);
   const [distance, setDistance] = useState<number | null>(null);
+  const [landmarker, setLandmarker] = useState<any>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
   const watchId = useRef<number | null>(null);
 
   const currentUser = authService.getCurrentUser();
@@ -35,6 +40,7 @@ const OvertimeMain: React.FC = () => {
     if (!currentAccountId) return;
     
     fetchInitialData();
+    initializeAi();
     const timeInterval = setInterval(() => {
       setServerTime(prev => new Date(prev.getTime() + 1000));
     }, 1000);
@@ -70,6 +76,30 @@ const OvertimeMain: React.FC = () => {
     }
   };
 
+  const initializeAi = async () => {
+    if (landmarker || isAiLoading) return;
+    try {
+      setIsAiLoading(true);
+      const filesetResolver = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+      );
+      const lm = await FaceLandmarker.createFromOptions(filesetResolver, {
+        baseOptions: {
+          modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
+          delegate: "GPU"
+        },
+        outputFaceBlendshapes: true,
+        runningMode: "VIDEO",
+        numFaces: 1
+      });
+      setLandmarker(lm);
+    } catch (err) {
+      console.error("AI Background Init Error:", err);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
   const startWatchingLocation = () => {
     if (navigator.geolocation) {
       watchId.current = navigator.geolocation.watchPosition(
@@ -93,6 +123,23 @@ const OvertimeMain: React.FC = () => {
       setDistance(d);
     }
   }, [coords, account]);
+
+  useEffect(() => {
+    if (coords && !currentAddress && !isFetchingAddress) {
+      const fetchAddress = async () => {
+        try {
+          setIsFetchingAddress(true);
+          const addr = await presenceService.getReverseGeocode(coords.lat, coords.lng);
+          setCurrentAddress(addr);
+        } catch (error) {
+          console.error("Error fetching address:", error);
+        } finally {
+          setIsFetchingAddress(false);
+        }
+      };
+      fetchAddress();
+    }
+  }, [coords, currentAddress, isFetchingAddress]);
 
   const handleOvertime = async (photoBlob: Blob) => {
     if (isRegularActive) {
@@ -145,7 +192,7 @@ const OvertimeMain: React.FC = () => {
       const isCurrentlyCheckingOut = !!currentOT && !currentOT.check_out;
 
       const [address, photoId, otPolicy] = await Promise.all([
-        presenceService.getReverseGeocode(coords.lat, coords.lng),
+        currentAddress || presenceService.getReverseGeocode(coords.lat, coords.lng),
         googleDriveService.uploadFile(new File([photoBlob], `OT_${isCurrentlyCheckingOut ? 'OUT' : 'IN'}_${Date.now()}.jpg`)),
         settingsService.getSetting('ot_approval_policy', 'manual')
       ]);
@@ -287,6 +334,7 @@ const OvertimeMain: React.FC = () => {
                 onCapture={handleOvertime}
                 onClose={() => setIsCameraActive(false)}
                 isProcessing={isCapturing}
+                landmarker={landmarker}
               />
             ) : isRegularActive ? (
               <div className="bg-white rounded-2xl border border-gray-100 p-12 flex flex-col items-center justify-center shadow-sm text-center">
@@ -310,16 +358,16 @@ const OvertimeMain: React.FC = () => {
                     : 'Akses presensi lembur terkunci. Anda harus berada di area lokasi penempatan.'}
                 </p>
                 <button 
-                  disabled={isBlockedByLocation || isCapturing}
+                  disabled={isBlockedByLocation || isCapturing || !landmarker}
                   onClick={() => setIsCameraActive(true)}
                   className={`mt-10 flex items-center gap-3 px-12 py-4 rounded-2xl font-bold uppercase text-xs tracking-widest shadow-lg transition-all ${
-                    !isBlockedByLocation && !isCapturing 
+                    !isBlockedByLocation && !isCapturing && landmarker
                     ? 'bg-amber-600 text-white hover:bg-amber-700 hover:scale-105' 
                     : 'bg-gray-100 text-gray-300 cursor-not-allowed shadow-none'
                   }`}
                 >
-                  <Camera size={18} />
-                  {isCapturing ? 'MEMPROSES...' : 'MULAI VERIFIKASI WAJAH'}
+                  {isAiLoading ? <Loader2 className="animate-spin" size={18} /> : <Camera size={18} />}
+                  {isCapturing ? 'MEMPROSES...' : (isAiLoading ? 'MENYIAPKAN AI...' : 'MULAI VERIFIKASI WAJAH')}
                 </button>
               </div>
             ) : (
@@ -384,6 +432,21 @@ const OvertimeMain: React.FC = () => {
                       officeLng={account.location.longitude}
                       radius={account.location.radius}
                     />
+                    
+                    <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                      <div className="flex items-center gap-2 mb-1">
+                        <MapPin size={12} className="text-amber-600" />
+                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Alamat Geotag</span>
+                      </div>
+                      <p className="text-[10px] font-medium text-gray-700 leading-relaxed">
+                        {isFetchingAddress ? (
+                          <span className="flex items-center gap-2 italic text-gray-400">
+                            <Loader2 size={10} className="animate-spin" /> Mencari alamat...
+                          </span>
+                        ) : currentAddress || 'Alamat tidak ditemukan'}
+                      </p>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4 text-[10px] pt-2">
                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
                           <span className="text-gray-400 font-bold uppercase block mb-1">Jarak</span>
