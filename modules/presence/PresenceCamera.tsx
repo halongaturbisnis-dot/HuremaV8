@@ -63,13 +63,13 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
 
   const startCamera = async () => {
     try {
-      // Menggunakan resolusi 720p ideal dengan aspect ratio 9:16 untuk portrait mobile
+      // Menggunakan resolusi 720p ideal dengan aspect ratio 3:4 untuk portrait mobile yang lebih natural
       const s = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           facingMode: 'user', 
-          aspectRatio: { ideal: 9/16 },
+          aspectRatio: { ideal: 3/4 },
           width: { ideal: 720 }, 
-          height: { ideal: 1280 } 
+          height: { ideal: 960 } 
         } 
       });
       
@@ -157,35 +157,34 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
 
   const FaceSilhouette = ({ direction }: { direction: 'RIGHT' | 'LEFT' | 'READY' }) => {
     return (
-      <div className="relative w-48 h-48 flex items-center justify-center">
-        <svg viewBox="0 0 200 200" className={`w-full h-full transition-all duration-500 ${direction === 'READY' ? 'text-emerald-500' : 'text-[#006E62]'}`}>
-          {/* Outer Ring */}
-          <circle cx="100" cy="100" r="98" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" className={direction === 'READY' ? 'animate-none' : 'animate-[spin_10s_linear_infinite]'} />
-          
-          {/* Face Silhouette */}
-          <g className="transition-transform duration-700 ease-in-out" style={{ 
-            transform: direction === 'RIGHT' ? 'translateX(20px) rotateY(45deg)' : direction === 'LEFT' ? 'translateX(-20px) rotateY(-45deg)' : 'none',
-            transformOrigin: 'center'
-          }}>
-            <path 
-              d="M100,40 C70,40 50,65 50,100 C50,140 75,170 100,170 C125,170 150,140 150,100 C150,65 130,40 100,40 Z" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2" 
-            />
-            {/* Eyes */}
-            <circle cx="80" cy="90" r="3" fill="currentColor" opacity={direction === 'LEFT' ? 0.2 : 0.8} />
-            <circle cx="120" cy="90" r="3" fill="currentColor" opacity={direction === 'RIGHT' ? 0.2 : 0.8} />
-            {/* Nose */}
-            <path d="M100,95 L100,115 L95,115" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </g>
-        </svg>
-        
-        {/* Direction Indicator Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center">
+      <div className="relative w-48 h-56 flex flex-col items-center justify-center">
+        {/* Direction Indicator Overlay - Moved ABOVE the SVG */}
+        <div className="h-12 flex items-center justify-center mb-2">
           {direction === 'RIGHT' && <ArrowRight className="text-[#006E62] animate-ping" size={32} />}
           {direction === 'LEFT' && <ArrowLeft className="text-[#006E62] animate-ping" size={32} />}
           {direction === 'READY' && <ShieldCheck className="text-emerald-400 scale-125" size={40} />}
+        </div>
+
+        <div className="relative w-40 h-40">
+          <svg viewBox="0 0 200 200" className={`w-full h-full transition-all duration-500 ${direction === 'READY' ? 'text-emerald-500' : 'text-[#006E62]'}`}>
+            {/* Face Silhouette */}
+            <g className="transition-transform duration-700 ease-in-out" style={{ 
+              transform: direction === 'RIGHT' ? 'translateX(20px) rotateY(45deg)' : direction === 'LEFT' ? 'translateX(-20px) rotateY(-45deg)' : 'none',
+              transformOrigin: 'center'
+            }}>
+              <path 
+                d="M100,40 C70,40 50,65 50,100 C50,140 75,170 100,170 C125,170 150,140 150,100 C150,65 130,40 100,40 Z" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+              />
+              {/* Eyes */}
+              <circle cx="80" cy="90" r="3" fill="currentColor" opacity={direction === 'LEFT' ? 0.2 : 0.8} />
+              <circle cx="120" cy="90" r="3" fill="currentColor" opacity={direction === 'RIGHT' ? 0.2 : 0.8} />
+              {/* Nose */}
+              <path d="M100,95 L100,115 L95,115" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </g>
+          </svg>
         </div>
       </div>
     );
@@ -199,20 +198,9 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
           <p className="text-[10px] font-bold uppercase tracking-widest text-center px-6">Inisialisasi Keamanan AI...</p>
         </div>
       ) : (
-        <div className="relative flex-1 flex flex-col overflow-hidden">
-          <video 
-            ref={videoRef} 
-            autoPlay 
-            playsInline 
-            muted 
-            className="absolute inset-0 w-full h-full object-cover bg-black scale-x-[-1]"
-          />
-          
-          {/* Overlay Gradient */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60 pointer-events-none" />
-
-          {/* Top Navigation */}
-          <div className="relative z-50 flex items-center justify-between p-6 pointer-events-auto">
+        <div className="relative flex-1 flex flex-col bg-black">
+          {/* Top Space for Navigation */}
+          <div className="h-24 flex items-center justify-between px-6 z-50">
             <button 
               onClick={onClose}
               disabled={isProcessing}
@@ -223,31 +211,45 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
             <div className="bg-black/40 backdrop-blur-xl px-4 py-2 rounded-full border border-white/10">
               <p className="text-white text-[10px] font-black uppercase tracking-[0.2em]">Verifikasi Wajah</p>
             </div>
-            <div className="w-12" /> {/* Spacer */}
+            <div className="w-12" />
           </div>
 
-          {/* Center Content */}
-          <div className="flex-1 flex flex-col items-center justify-center relative z-40 pointer-events-none">
-            <div className="mb-8">
-              <FaceSilhouette direction={step} />
-            </div>
+          {/* 3:4 Video Container */}
+          <div className="relative w-full aspect-[3/4] bg-black overflow-hidden">
+            <video 
+              ref={videoRef} 
+              autoPlay 
+              playsInline 
+              muted 
+              className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+            />
+            
+            {/* Overlay Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40 pointer-events-none" />
 
-            <div className="bg-black/40 backdrop-blur-xl px-6 py-3 rounded-2xl border border-white/10 text-center animate-in fade-in zoom-in duration-500">
-              {step === 'RIGHT' && (
-                <p className="text-white text-[11px] font-bold uppercase tracking-[0.2em]">Tengok ke Kanan</p>
-              )}
-              {step === 'LEFT' && (
-                <p className="text-white text-[11px] font-bold uppercase tracking-[0.2em]">Tengok ke Kiri</p>
-              )}
-              {step === 'READY' && (
-                <p className="text-emerald-400 text-[11px] font-bold uppercase tracking-[0.2em]">Identitas Terverifikasi</p>
-              )}
+            {/* Center Content (Face Silhouette) */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-40 pointer-events-none">
+              <div className="mb-4">
+                <FaceSilhouette direction={step} />
+              </div>
+
+              <div className="bg-black/40 backdrop-blur-xl px-6 py-3 rounded-2xl border border-white/10 text-center animate-in fade-in zoom-in duration-500">
+                {step === 'RIGHT' && (
+                  <p className="text-white text-[11px] font-bold uppercase tracking-[0.2em]">Tengok ke Kanan</p>
+                )}
+                {step === 'LEFT' && (
+                  <p className="text-white text-[11px] font-bold uppercase tracking-[0.2em]">Tengok ke Kiri</p>
+                )}
+                {step === 'READY' && (
+                  <p className="text-emerald-400 text-[11px] font-bold uppercase tracking-[0.2em]">Identitas Terverifikasi</p>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Bottom Controls */}
-          <div className="relative z-50 p-8 pb-12 space-y-6 pointer-events-auto">
-            <div className="max-w-xs mx-auto">
+          {/* Bottom Space for Controls */}
+          <div className="flex-1 flex flex-col justify-center p-8 space-y-6 z-50">
+            <div className="max-w-xs mx-auto w-full">
               <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                 <div 
                   className={`h-full transition-all duration-700 ease-out shadow-[0_0_15px_rgba(0,110,98,0.5)] bg-[#006E62]`} 
