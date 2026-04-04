@@ -137,7 +137,7 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
   const menuItems = [
     { id: 'presence', label: 'Presensi Reguler', icon: Fingerprint, color: 'bg-emerald-500', onClick: () => setViewMode('presence_sub') },
     { id: 'overtime', label: 'Presensi Lembur', icon: Clock, color: 'bg-orange-500', onClick: () => setViewMode('overtime_sub') },
-    { id: 'off', label: 'Pengajuan Off', icon: Calendar, color: 'bg-blue-500', onClick: () => setViewMode('off_sub') },
+    { id: 'off', label: 'OFF KERJA', icon: Calendar, color: 'bg-blue-500', onClick: () => setViewMode('off_sub') },
     { id: 'kpi', label: 'KPI', icon: Target, color: 'bg-indigo-500', onClick: () => setActiveTab('kpi') },
     { id: 'key_activity', label: 'Key Activities', icon: CheckSquare, color: 'bg-rose-500', onClick: () => setActiveTab('key_activity') },
     { id: 'sales_report', label: 'Sales Report', icon: MapPin, color: 'bg-amber-500', onClick: () => setActiveTab('sales_report') },
@@ -270,7 +270,7 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
         <button onClick={() => setViewMode('main')} className="p-2 bg-gray-100 rounded-full text-gray-600">
           <ArrowLeft size={20} />
         </button>
-        <h2 className="text-lg font-bold text-gray-800">Pengajuan Off</h2>
+        <h2 className="text-lg font-bold text-gray-800">OFF KERJA</h2>
       </div>
       <div className="grid grid-cols-3 gap-4">
         {canRequestLeave && (
@@ -481,9 +481,9 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
         
         <div className="relative z-10 flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-200/80">Selamat Datang</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-white">Selamat Datang</p>
             <h1 className="text-2xl font-black tracking-tight leading-none">{account?.full_name?.split(' ')[0]}</h1>
-            <p className="text-[10px] font-bold text-emerald-100/70 mt-1">
+            <p className="text-[10px] font-bold text-white mt-1">
               {account?.position || 'Staff'} • {account?.grade || account?.department || 'Operasional'}
             </p>
             
@@ -495,8 +495,8 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
             )}
 
             <div className="flex items-center gap-1.5 mt-2 bg-white/10 w-fit px-2 py-1 rounded-full backdrop-blur-md">
-              <MapPin size={10} className="text-emerald-300" />
-              <span className="text-[9px] font-bold uppercase tracking-wider">{account?.location?.name || 'Lokasi Belum Diatur'}</span>
+              <MapPin size={10} className="text-white" />
+              <span className="text-[9px] font-bold uppercase tracking-wider text-white">{account?.location?.name || 'Lokasi Belum Diatur'}</span>
             </div>
           </div>
           <div className="flex flex-col items-center gap-2">
@@ -513,7 +513,7 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
                 </div>
               )}
             </div>
-            <span className="text-[9px] font-bold text-emerald-200/60 tracking-widest">{account?.internal_nik || '-'}</span>
+            <span className="text-[9px] font-bold text-white tracking-widest">{account?.internal_nik || '-'}</span>
           </div>
         </div>
       </div>
@@ -532,50 +532,48 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
               
               {/* Best Employee Section */}
               {bestEmployee && (
-                <div className="px-4 mt-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Best Employee</h3>
-                    <span className="text-[9px] font-bold text-[#006E62] uppercase tracking-wider">
-                      {new Date(0, bestEmployee.month - 1).toLocaleString('id-ID', { month: 'long' })} {bestEmployee.year}
-                    </span>
+                <div className="px-4 mt-6 space-y-4">
+                  <div className="text-center mb-2">
+                    <h3 className="text-[11px] font-black text-[#006E62] uppercase tracking-[0.2em]">
+                      BEST EMPLOYEE | {new Date(0, bestEmployee.month - 1).toLocaleString('id-ID', { month: 'long' })} {bestEmployee.year}
+                    </h3>
                   </div>
                   
-                  <div className="bg-white rounded-3xl border border-gray-100 p-4 flex items-center gap-4">
-                    <div className="relative">
-                      <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-emerald-50">
-                        {bestEmployee.accounts?.[0]?.photo_google_id ? (
-                          <img 
-                            src={googleDriveService.getFileUrl(bestEmployee.accounts[0].photo_google_id)} 
-                            alt="" 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-50 flex items-center justify-center text-gray-300">
-                            <User size={24} />
-                          </div>
-                        )}
+                  {bestEmployee.accounts?.map((acc) => (
+                    <div key={acc.id} className="bg-white rounded-3xl border border-gray-100 p-5 flex items-center gap-5 shadow-sm relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50/50 rounded-full -mr-12 -mt-12 blur-2xl"></div>
+                      
+                      <div className="relative">
+                        <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-emerald-100 shadow-inner">
+                          {acc.photo_google_id ? (
+                            <img 
+                              src={googleDriveService.getFileUrl(acc.photo_google_id)} 
+                              alt="" 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-50 flex items-center justify-center text-gray-300">
+                              <User size={32} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-[#006E62] rounded-xl flex items-center justify-center text-white shadow-lg border-2 border-white">
+                          <Trophy size={16} />
+                        </div>
                       </div>
-                      <div className="absolute -bottom-2 -right-2 w-7 h-7 bg-[#006E62] rounded-xl flex items-center justify-center text-white shadow-lg">
-                        <Trophy size={14} />
+                      
+                      <div className="flex-1 min-w-0 relative z-10">
+                        <h4 className="font-black text-gray-800 text-base tracking-tight truncate">{acc.full_name}</h4>
+                        <p className="text-[11px] font-bold text-[#006E62] uppercase tracking-wider truncate mb-2">{acc.position}</p>
+                        <div className="flex items-start gap-1.5 bg-emerald-50/50 p-2 rounded-xl border border-emerald-100/50">
+                          <Star size={12} className="text-amber-400 fill-amber-400 shrink-0 mt-0.5" />
+                          <p className="text-[10px] text-gray-600 font-medium italic leading-relaxed">
+                            "{bestEmployee.reason || 'Karyawan Teladan'}"
+                          </p>
+                        </div>
                       </div>
                     </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-gray-800 text-sm truncate">{bestEmployee.accounts?.[0]?.full_name}</h4>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter truncate">{bestEmployee.accounts?.[0]?.position}</p>
-                      <div className="mt-2 flex items-center gap-1">
-                        <Star size={10} className="text-amber-400 fill-amber-400" />
-                        <p className="text-[10px] text-gray-500 italic line-clamp-1">"{bestEmployee.reason || 'Karyawan Teladan'}"</p>
-                      </div>
-                    </div>
-                    
-                    <button 
-                      onClick={() => setActiveTab('employee_of_the_period')}
-                      className="p-2 bg-emerald-50 text-[#006E62] rounded-xl active:scale-90 transition-transform"
-                    >
-                      <ChevronRight size={20} />
-                    </button>
-                  </div>
+                  ))}
                 </div>
               )}
             </>
