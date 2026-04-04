@@ -1,8 +1,9 @@
 
-import React from 'react';
-import { Bell, Home, Fingerprint, UserCircle, Menu } from 'lucide-react';
-import { AuthUser } from '../../types';
+import React, { useState, useEffect } from 'react';
+import { Bell, Home, Fingerprint, UserCircle, Menu, User } from 'lucide-react';
+import { AuthUser, Attendance } from '../../types';
 import { googleDriveService } from '../../services/googleDriveService';
+import { presenceService } from '../../services/presenceService';
 
 interface MobileLayoutProps {
   children: React.ReactNode;
@@ -12,6 +13,26 @@ interface MobileLayoutProps {
 }
 
 const MobileLayout: React.FC<MobileLayoutProps> = ({ children, activeTab, setActiveTab, user }) => {
+  const [todayAttendance, setTodayAttendance] = useState<Attendance | null>(null);
+
+  useEffect(() => {
+    const fetchAttendance = async () => {
+      try {
+        const attendance = await presenceService.getTodayAttendance(user.id);
+        setTodayAttendance(attendance);
+      } catch (error) {
+        console.error('Error fetching attendance for bottom nav:', error);
+      }
+    };
+
+    fetchAttendance();
+    // Refresh every minute to keep status updated
+    const interval = setInterval(fetchAttendance, 60000);
+    return () => clearInterval(interval);
+  }, [user.id]);
+
+  const isCheckOut = !!todayAttendance && !todayAttendance.check_out;
+
   return (
     <div className="min-h-screen bg-white flex flex-col md:hidden">
       {/* Top Header */}
@@ -55,14 +76,17 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children, activeTab, setAct
           onClick={() => setActiveTab('presence')}
           className={`p-4 rounded-full transition-all duration-300 -mt-10 border-4 border-white ${activeTab === 'presence' ? 'bg-[#006E62] text-white shadow-xl scale-110' : 'bg-white text-[#006E62] shadow-lg'}`}
         >
-          <Fingerprint size={28} />
+          <div className="relative">
+            <Fingerprint size={28} />
+            <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${isCheckOut ? 'bg-orange-500' : 'bg-emerald-500'}`}></div>
+          </div>
         </button>
 
         <button 
-          onClick={() => setActiveTab('settings')}
-          className={`p-3 rounded-2xl transition-all duration-300 ${activeTab === 'settings' ? 'bg-[#006E62] text-white shadow-lg shadow-emerald-100 scale-110' : 'text-gray-400'}`}
+          onClick={() => setActiveTab('account')}
+          className={`p-3 rounded-2xl transition-all duration-300 ${activeTab === 'account' ? 'bg-[#006E62] text-white shadow-lg shadow-emerald-100 scale-110' : 'text-gray-400'}`}
         >
-          <UserCircle size={24} />
+          <User size={24} />
         </button>
       </nav>
     </div>

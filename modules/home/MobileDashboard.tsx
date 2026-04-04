@@ -1,222 +1,487 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Fingerprint, ShieldCheck, Timer, Plane, Calendar, Heart, 
-  ClipboardList, Target, CheckSquare, MapPin, Video, MessageSquare, 
-  AlertTriangle, Receipt, Wallet, UserCircle, Files, Database,
-  Users, CalendarClock, BarChart3, Settings, ArrowLeft, Activity,
-  Trophy, Megaphone, ClipboardCheck
+  Fingerprint, Clock, Calendar, ClipboardList, BarChart3, 
+  CheckSquare, FileText, Users, Wallet, CreditCard, 
+  MessageSquare, AlertTriangle, ShieldCheck, ChevronRight, 
+  ArrowLeft, User, MapPin, ExternalLink, Info, Plus,
+  Plane, Heart, FileCheck, History, LogIn, LogOut, Target, Video, Files, Database
 } from 'lucide-react';
-import { AuthUser, Attendance, Overtime } from '../../types';
+import { motion, AnimatePresence } from 'motion/react';
+import { authService } from '../../services/authService';
+import { accountService } from '../../services/accountService';
+import { scheduleService } from '../../services/scheduleService';
 import { presenceService } from '../../services/presenceService';
 import { overtimeService } from '../../services/overtimeService';
 import { googleDriveService } from '../../services/googleDriveService';
-import { accountService } from '../../services/accountService';
+import { AuthUser, Account, Schedule, Attendance, Overtime } from '../../types';
+import LoadingSpinner from '../../components/Common/LoadingSpinner';
+import Swal from 'sweetalert2';
 
 interface MobileDashboardProps {
   user: AuthUser;
-  setActiveTab: (tab: any) => void;
+  setActiveTab: (tab: string) => void;
 }
 
+type ViewMode = 'main' | 'presence_sub' | 'overtime_sub' | 'off_sub' | 'presence_history' | 'overtime_history' | 'admin';
+
 const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab }) => {
+  const [account, setAccount] = useState<Account | null>(null);
+  const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [todayAttendance, setTodayAttendance] = useState<Attendance | null>(null);
-  const [todayOvertime, setTodayOvertime] = useState<Overtime | null>(null);
-  const [serverTime, setServerTime] = useState<Date>(new Date());
-  const [accountDetail, setAccountDetail] = useState<any>(null);
+  const [attendanceHistory, setAttendanceHistory] = useState<Attendance[]>([]);
+  const [overtimeHistory, setOvertimeHistory] = useState<Overtime[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>('main');
+
+  const isAdmin = user?.role === 'admin' || user?.is_hr_admin || user?.is_performance_admin || user?.is_finance_admin;
 
   useEffect(() => {
-    const fetchData = async () => {
+    const loadData = async () => {
       try {
-        const [attendance, overtime, sTime, detail] = await Promise.all([
-          presenceService.getTodayAttendance(user.id),
-          overtimeService.getTodayOvertime(user.id),
-          presenceService.getServerTime(),
-          accountService.getById(user.id)
-        ]);
-        setTodayAttendance(attendance);
-        setTodayOvertime(overtime);
-        setServerTime(sTime);
-        setAccountDetail(detail);
+        setIsLoading(true);
+        if (user?.id) {
+          const [acc, attendance, history, otHistory] = await Promise.all([
+            accountService.getById(user.id),
+            presenceService.getTodayAttendance(user.id),
+            presenceService.getRecentHistory(user.id, 10),
+            overtimeService.getRecentHistory(user.id, 10)
+          ]);
+
+          setAccount(acc);
+          setTodayAttendance(attendance);
+          setAttendanceHistory(history);
+          setOvertimeHistory(otHistory);
+
+          if (acc?.schedule_id) {
+            const sched = await scheduleService.getById(acc.schedule_id);
+            setSchedule(sched);
+          }
+        }
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        console.error('Error loading mobile dashboard data:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
-
-    const timer = setInterval(() => {
-      setServerTime(prev => new Date(prev.getTime() + 1000));
-    }, 1000);
-
-    return () => clearInterval(timer);
+    loadData();
   }, [user.id]);
 
-  const formatDuration = (startTime: string) => {
-    const start = new Date(startTime);
-    const diffMs = serverTime.getTime() - start.getTime();
-    if (diffMs < 0) return "00:00:00";
-    const hours = Math.floor(diffMs / 3600000);
-    const minutes = Math.floor((diffMs % 3600000) / 60000);
-    const seconds = Math.floor((diffMs % 60000) / 1000);
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 11) return 'Selamat Pagi';
+    if (hour < 15) return 'Selamat Siang';
+    if (hour < 19) return 'Selamat Sore';
+    return 'Selamat Malam';
   };
 
-  const [viewMode, setViewMode] = useState<'user' | 'admin'>('user');
-  const isAdmin = user.role === 'admin' || user.is_hr_admin || user.is_performance_admin || user.is_finance_admin;
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('id-ID', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
 
-  const menuItems = isAdmin ? [
-    { id: 'kpi', label: 'Key Performance Indicator', icon: Target, color: 'bg-purple-50 text-purple-600' },
-    { id: 'key_activity', label: 'Key Activities', icon: CheckSquare, color: 'bg-teal-50 text-teal-600' },
-    { id: 'sales_report', label: 'Sales Report', icon: MapPin, color: 'bg-cyan-50 text-cyan-600' },
-    { id: 'rapat', label: 'Rapat', icon: Video, color: 'bg-slate-50 text-slate-600' },
-    { id: 'feedback', label: 'Feedback', icon: MessageSquare, color: 'bg-violet-50 text-violet-600' },
-    { id: 'lapor', label: 'Laporan Pelanggaran', icon: AlertTriangle, color: 'bg-red-50 text-red-600' },
-    { id: 'document', label: 'Dokumen Digital', icon: Files, color: 'bg-blue-50 text-blue-600' },
-    { id: 'master_menu', label: 'Dashboard Admin', icon: Database, color: 'bg-gray-100 text-gray-700' },
-  ] : [
-    { id: 'presence', label: 'Presensi Reguler', icon: Fingerprint, color: 'bg-emerald-50 text-[#006E62]' },
-    { id: 'dispensation', label: 'Dispensasi Presensi', icon: ShieldCheck, color: 'bg-blue-50 text-blue-600' },
-    { id: 'overtime', label: 'Presensi Lembur', icon: Timer, color: 'bg-orange-50 text-orange-600' },
-    { id: 'leave', label: 'Libur Mandiri', icon: Plane, color: 'bg-sky-50 text-sky-600' },
-    { id: 'annual_leave', label: 'Cuti Tahunan', icon: Calendar, color: 'bg-indigo-50 text-indigo-600' },
-    ...(user.gender === 'Perempuan' ? [{ id: 'maternity_leave', label: 'Cuti Melahirkan', icon: Heart, color: 'bg-rose-50 text-rose-600' }] : []),
-    { id: 'permission', label: 'Izin', icon: ClipboardList, color: 'bg-amber-50 text-amber-600' },
-    { id: 'kpi', label: 'Key Performance Indicator', icon: Target, color: 'bg-purple-50 text-purple-600' },
-    { id: 'key_activity', label: 'Key Activities', icon: CheckSquare, color: 'bg-teal-50 text-teal-600' },
-    { id: 'sales_report', label: 'Sales Report', icon: MapPin, color: 'bg-cyan-50 text-cyan-600' },
-    { id: 'rapat', label: 'Rapat', icon: Video, color: 'bg-slate-50 text-slate-600' },
-    { id: 'feedback', label: 'Feedback', icon: MessageSquare, color: 'bg-violet-50 text-violet-600' },
-    { id: 'lapor', label: 'Laporan Pelanggaran', icon: AlertTriangle, color: 'bg-red-50 text-red-600' },
-    { id: 'my_payslip', label: 'Slip Gaji Saya', icon: Receipt, color: 'bg-green-50 text-green-600' },
-    { id: 'early_salary', label: 'Ambil Gaji Awal', icon: Wallet, color: 'bg-yellow-50 text-yellow-600' },
-    { id: 'reimbursement', label: 'Reimburse', icon: Receipt, color: 'bg-pink-50 text-pink-600' },
-    { id: 'document', label: 'Dokumen Digital', icon: Files, color: 'bg-blue-50 text-blue-600' },
-    ...(isAdmin ? [{ id: 'master_menu', label: 'Dashboard Admin', icon: Database, color: 'bg-gray-100 text-gray-700' }] : []),
+  const formatTime = (dateStr: string | null) => {
+    if (!dateStr) return '--:--';
+    return new Date(dateStr).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+  };
+
+  const canRequestLeave = account?.schedule_type === 'Fleksibel' || account?.schedule_type === 'Shift Dinamis' || account?.schedule_type === 'Shift' || isAdmin;
+
+  const menuItems = [
+    { id: 'presence', label: 'Presensi Reguler', icon: Fingerprint, color: 'bg-emerald-500', onClick: () => setViewMode('presence_sub') },
+    { id: 'overtime', label: 'Presensi Lembur', icon: Clock, color: 'bg-orange-500', onClick: () => setViewMode('overtime_sub') },
+    { id: 'off', label: 'Pengajuan Off', icon: Calendar, color: 'bg-blue-500', onClick: () => setViewMode('off_sub') },
+    { id: 'kpi', label: 'KPI', icon: Target, color: 'bg-indigo-500', onClick: () => setActiveTab('kpi') },
+    { id: 'key_activity', label: 'Key Activities', icon: CheckSquare, color: 'bg-rose-500', onClick: () => setActiveTab('key_activity') },
+    { id: 'sales_report', label: 'Sales Report', icon: MapPin, color: 'bg-amber-500', onClick: () => setActiveTab('sales_report') },
+    { id: 'rapat', label: 'Rapat', icon: Video, color: 'bg-cyan-500', onClick: () => setActiveTab('rapat') },
+    { id: 'my_payslip', label: 'Slip Gaji', icon: Wallet, color: 'bg-emerald-600', onClick: () => setActiveTab('my_payslip') },
+    { id: 'early_salary', label: 'Ambil gaji awal', icon: CreditCard, color: 'bg-purple-500', onClick: () => setActiveTab('early_salary') },
+    { id: 'reimbursement', label: 'Reimburse', icon: FileCheck, color: 'bg-pink-500', onClick: () => setActiveTab('reimbursement') },
+    { id: 'feedback', label: 'Feedback', icon: MessageSquare, color: 'bg-blue-600', onClick: () => setActiveTab('feedback') },
+    { id: 'lapor', label: 'Lapor', icon: AlertTriangle, color: 'bg-red-500', onClick: () => setActiveTab('lapor') },
+    { id: 'document', label: 'Dokumen', icon: Files, color: 'bg-slate-600', onClick: () => setActiveTab('document') },
+    ...(isAdmin ? [{ id: 'admin', label: 'Menu Admin', icon: Database, color: 'bg-gray-800', onClick: () => setViewMode('admin') }] : [])
   ];
 
   const adminMenuItems = [
-    { id: 'daily_monitoring', label: 'Pemantauan Harian', icon: Activity, color: 'bg-rose-50 text-rose-600' },
-    { id: 'admin_dispensation', label: 'Dispensasi sisi admin', icon: ShieldCheck, color: 'bg-cyan-50 text-cyan-600' },
-    { id: 'attendance_report', label: 'Laporan Kehadiran', icon: BarChart3, color: 'bg-slate-50 text-slate-600' },
-    { id: 'leave', label: 'Libur Mandiri', icon: Plane, color: 'bg-blue-50 text-blue-600' },
-    { id: 'overtime', label: 'Presensi Lembur', icon: Timer, color: 'bg-orange-50 text-orange-600' },
-    { id: 'permission', label: 'Izin', icon: ClipboardList, color: 'bg-amber-50 text-amber-600' },
-    { id: 'annual_leave', label: 'Cuti Tahunan', icon: Calendar, color: 'bg-indigo-50 text-indigo-600' },
-    { id: 'reimbursement', label: 'Reimburse', icon: Receipt, color: 'bg-pink-50 text-pink-600' },
-    { id: 'early_salary', label: 'Ambil Gaji Awal', icon: Wallet, color: 'bg-yellow-50 text-yellow-600' },
-    { id: 'compensation', label: 'Kompensasi', icon: Receipt, color: 'bg-rose-50 text-rose-600' },
-    { id: 'finance_report', label: 'Laporan Finance', icon: Wallet, color: 'bg-green-50 text-green-600' },
-    { id: 'kpi', label: 'KPI', icon: Target, color: 'bg-purple-50 text-purple-600' },
-    { id: 'key_activity', label: 'Key Activities', icon: CheckSquare, color: 'bg-teal-50 text-teal-600' },
-    { id: 'sales_report', label: 'Sales report', icon: MapPin, color: 'bg-cyan-50 text-cyan-600' },
-    { id: 'feedback', label: 'Feedback Pegawai', icon: MessageSquare, color: 'bg-violet-50 text-violet-600' },
-    { id: 'lapor', label: 'Laporan Pelanggaran', icon: AlertTriangle, color: 'bg-red-50 text-red-600' },
-    { id: 'employee_of_the_period', label: 'Employee of The Month', icon: Trophy, color: 'bg-orange-50 text-orange-600' },
-    { id: 'pengumuman', label: 'Pengumuman', icon: Megaphone, color: 'bg-blue-50 text-blue-600' },
+    { id: 'accounts', label: 'Karyawan', icon: Users, color: 'bg-blue-600', onClick: () => setActiveTab('accounts') },
+    { id: 'schedules', label: 'Jadwal', icon: Calendar, color: 'bg-emerald-600', onClick: () => setActiveTab('schedules') },
+    { id: 'presence_admin', label: 'Presensi', icon: Fingerprint, color: 'bg-orange-600', onClick: () => setActiveTab('presence') },
+    { id: 'overtime_admin', label: 'Lembur', icon: Clock, color: 'bg-amber-600', onClick: () => setActiveTab('overtime') },
+    { id: 'leave_admin', label: 'Libur', icon: Plane, color: 'bg-indigo-600', onClick: () => setActiveTab('leave') },
+    { id: 'permission_admin', label: 'Izin', icon: FileText, color: 'bg-rose-600', onClick: () => setActiveTab('permission') },
+    { id: 'payroll_admin', label: 'Payroll', icon: Wallet, color: 'bg-emerald-700', onClick: () => setActiveTab('payroll') },
+    { id: 'kpi_admin', label: 'KPI', icon: Target, color: 'bg-indigo-700', onClick: () => setActiveTab('kpi') }
   ];
 
-  const activeWorkSession = todayAttendance?.check_in && !todayAttendance.check_out;
-  const activeOvertimeSession = todayOvertime?.check_in && !todayOvertime.check_out;
+  if (isLoading) return <LoadingSpinner />;
 
-  return (
-    <div className="space-y-6 pb-24">
-      {/* Banner Section */}
-      <div className="bg-[#006E62] rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#00FFE4]/10 rounded-full -ml-12 -mb-12 blur-xl"></div>
-        
-        <div className="relative z-10 flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 overflow-hidden flex items-center justify-center">
-            {user.photo_google_id ? (
-              <img 
-                src={googleDriveService.getFileUrl(user.photo_google_id)} 
-                alt={user.full_name} 
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <UserCircle size={40} className="text-white/70" />
-            )}
+  const renderMainGrid = () => (
+    <div className="grid grid-cols-3 gap-4 p-4">
+      {menuItems.map((item) => (
+        <button
+          key={item.id}
+          onClick={item.onClick}
+          className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
+        >
+          <div className={`w-14 h-14 ${item.color} rounded-2xl flex items-center justify-center text-white shadow-lg shadow-${item.color.split('-')[1]}-500/20 group-hover:scale-110 transition-transform`}>
+            <item.icon size={28} />
           </div>
-          <div className="flex-1">
-            <p className="text-white/70 text-xs font-medium uppercase tracking-wider">Selamat Datang,</p>
-            <h2 className="text-xl font-bold truncate">{user.full_name}</h2>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-sm font-bold uppercase">
-                {accountDetail?.position || '-'}
-              </span>
-              <span className="text-[10px] bg-[#00FFE4]/20 text-[#00FFE4] px-2 py-0.5 rounded-full backdrop-blur-sm font-bold uppercase">
-                {accountDetail?.grade || '-'}
-              </span>
+          <span className="text-[10px] font-bold text-gray-600 text-center leading-tight uppercase tracking-tighter">
+            {item.label}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+
+  const renderPresenceSub = () => (
+    <div className="p-4 space-y-6">
+      <div className="flex items-center gap-4 mb-2">
+        <button onClick={() => setViewMode('main')} className="p-2 bg-gray-100 rounded-full text-gray-600">
+          <ArrowLeft size={20} />
+        </button>
+        <h2 className="text-lg font-bold text-gray-800">Presensi Reguler</h2>
+      </div>
+      <div className="grid grid-cols-3 gap-4">
+        <button
+          onClick={() => setActiveTab('presence')}
+          className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
+        >
+          <div className={`w-14 h-14 ${todayAttendance && !todayAttendance.check_out ? 'bg-orange-500' : 'bg-emerald-500'} rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform`}>
+            {todayAttendance && !todayAttendance.check_out ? <LogOut size={28} /> : <LogIn size={28} />}
+          </div>
+          <span className="text-[10px] font-bold text-gray-600 text-center leading-tight uppercase tracking-tighter">
+            {todayAttendance && !todayAttendance.check_out ? 'Presensi Pulang' : 'Presensi Masuk'}
+          </span>
+        </button>
+        <button
+          onClick={() => setViewMode('presence_history')}
+          className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
+        >
+          <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform">
+            <History size={28} />
+          </div>
+          <span className="text-[10px] font-bold text-gray-600 text-center leading-tight uppercase tracking-tighter">
+            Riwayat Presensi
+          </span>
+        </button>
+        <button
+          onClick={() => setActiveTab('dispensation')}
+          className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
+        >
+          <div className="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform">
+            <ClipboardList size={28} />
+          </div>
+          <span className="text-[10px] font-bold text-gray-600 text-center leading-tight uppercase tracking-tighter">
+            Dispensasi Presensi
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderOvertimeSub = () => (
+    <div className="p-4 space-y-6">
+      <div className="flex items-center gap-4 mb-2">
+        <button onClick={() => setViewMode('main')} className="p-2 bg-gray-100 rounded-full text-gray-600">
+          <ArrowLeft size={20} />
+        </button>
+        <h2 className="text-lg font-bold text-gray-800">Presensi Lembur</h2>
+      </div>
+      <div className="grid grid-cols-3 gap-4">
+        <button
+          onClick={() => setActiveTab('overtime')}
+          className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
+        >
+          <div className="w-14 h-14 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform">
+            <Clock size={28} />
+          </div>
+          <span className="text-[10px] font-bold text-gray-600 text-center leading-tight uppercase tracking-tighter">
+            Presensi In/Out
+          </span>
+        </button>
+        <button
+          onClick={() => setViewMode('overtime_history')}
+          className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
+        >
+          <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform">
+            <History size={28} />
+          </div>
+          <span className="text-[10px] font-bold text-gray-600 text-center leading-tight uppercase tracking-tighter">
+            Riwayat Lembur
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderOffSub = () => (
+    <div className="p-4 space-y-6">
+      <div className="flex items-center gap-4 mb-2">
+        <button onClick={() => setViewMode('main')} className="p-2 bg-gray-100 rounded-full text-gray-600">
+          <ArrowLeft size={20} />
+        </button>
+        <h2 className="text-lg font-bold text-gray-800">Pengajuan Off</h2>
+      </div>
+      <div className="grid grid-cols-3 gap-4">
+        {canRequestLeave && (
+          <button
+            onClick={() => setActiveTab('leave')}
+            className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
+          >
+            <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform">
+              <Calendar size={28} />
             </div>
+            <span className="text-[10px] font-bold text-gray-600 text-center leading-tight uppercase tracking-tighter">
+              Libur Mandiri
+            </span>
+          </button>
+        )}
+        <button
+          onClick={() => setActiveTab('permission')}
+          className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
+        >
+          <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform">
+            <FileText size={28} />
           </div>
-        </div>
+          <span className="text-[10px] font-bold text-gray-600 text-center leading-tight uppercase tracking-tighter">
+            Izin
+          </span>
+        </button>
+        <button
+          onClick={() => setActiveTab('annual_leave')}
+          className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
+        >
+          <div className="w-14 h-14 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform">
+            <Plane size={28} />
+          </div>
+          <span className="text-[10px] font-bold text-gray-600 text-center leading-tight uppercase tracking-tighter">
+            Cuti
+          </span>
+        </button>
+        <button
+          onClick={() => setActiveTab('maternity_leave')}
+          className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
+        >
+          <div className="w-14 h-14 bg-rose-500 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform">
+            <Heart size={28} />
+          </div>
+          <span className="text-[10px] font-bold text-gray-600 text-center leading-tight uppercase tracking-tighter">
+            Cuti Melahirkan
+          </span>
+        </button>
+      </div>
+    </div>
+  );
 
-        {(activeWorkSession || activeOvertimeSession) && (
-          <div className="mt-6 pt-6 border-t border-white/10">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] text-white/60 font-bold uppercase tracking-widest">
-                  {activeOvertimeSession ? 'Durasi Lembur Berjalan' : 'Durasi Kerja Berjalan'}
-                </p>
-                <div className="text-3xl font-mono font-black tracking-tighter mt-1">
-                  {activeOvertimeSession 
-                    ? formatDuration(todayOvertime!.check_in!) 
-                    : formatDuration(todayAttendance!.check_in!)}
+  const renderPresenceHistory = () => (
+    <div className="p-4 space-y-4 pb-24">
+      <div className="flex items-center gap-4 mb-2">
+        <button onClick={() => setViewMode('presence_sub')} className="p-2 bg-gray-100 rounded-full text-gray-600">
+          <ArrowLeft size={20} />
+        </button>
+        <h2 className="text-lg font-bold text-gray-800">Riwayat Presensi</h2>
+      </div>
+      {attendanceHistory.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+          <Calendar size={48} strokeWidth={1} />
+          <p className="text-sm font-bold uppercase mt-4">Belum Ada Riwayat</p>
+        </div>
+      ) : (
+        attendanceHistory.map((log) => {
+          const isProblematic = log.status_in !== 'Tepat Waktu' || (log.check_out && log.status_out !== 'Tepat Waktu');
+          return (
+            <div key={log.id} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm border-l-4 border-l-[#006E62]">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex items-center gap-2">
+                  <Calendar size={12} className="text-gray-400" />
+                  <span className="text-xs font-bold text-gray-700">{formatDate(log.created_at!)}</span>
+                </div>
+                {isProblematic && (
+                  <button 
+                    onClick={() => setActiveTab('dispensation')}
+                    className="flex items-center gap-1 px-2 py-1 bg-rose-50 text-rose-600 rounded-lg text-[9px] font-bold uppercase tracking-wider"
+                  >
+                    <AlertTriangle size={10} /> Dispensasi
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-2 bg-emerald-50/50 rounded-xl border border-emerald-100">
+                  <p className="text-[8px] font-bold text-emerald-600 uppercase mb-1">Masuk</p>
+                  <p className="text-sm font-mono font-bold text-gray-800">{formatTime(log.check_in)}</p>
+                  <p className="text-[9px] font-bold text-[#006E62] uppercase">{log.status_in}</p>
+                </div>
+                <div className="p-2 bg-blue-50/50 rounded-xl border border-blue-100">
+                  <p className="text-[8px] font-bold text-blue-600 uppercase mb-1">Pulang</p>
+                  <p className="text-sm font-mono font-bold text-gray-800">{formatTime(log.check_out)}</p>
+                  <p className={`text-[9px] font-bold uppercase ${log.status_out === 'Pulang Cepat' ? 'text-rose-500' : 'text-blue-500'}`}>
+                    {log.status_out || '-'}
+                  </p>
                 </div>
               </div>
-              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center animate-pulse">
-                <Timer size={24} className="text-[#00FFE4]" />
-              </div>
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+
+  const renderOvertimeHistory = () => (
+    <div className="p-4 space-y-4 pb-24">
+      <div className="flex items-center gap-4 mb-2">
+        <button onClick={() => setViewMode('overtime_sub')} className="p-2 bg-gray-100 rounded-full text-gray-600">
+          <ArrowLeft size={20} />
+        </button>
+        <h2 className="text-lg font-bold text-gray-800">Riwayat Lembur</h2>
+      </div>
+      
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Menunggu Verifikasi</h3>
+          <div className="space-y-3">
+            {overtimeHistory.filter(ot => !ot.is_verified).length === 0 ? (
+              <p className="text-xs text-gray-400 italic text-center py-4">Tidak ada data</p>
+            ) : (
+              overtimeHistory.filter(ot => !ot.is_verified).map(ot => (
+                <div key={ot.id} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm border-l-4 border-l-orange-500">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs font-bold text-gray-700">{formatDate(ot.created_at!)}</span>
+                    <span className="px-2 py-0.5 bg-orange-50 text-orange-600 rounded text-[9px] font-bold uppercase">Pending</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <p className="text-[8px] font-bold text-gray-400 uppercase">Mulai</p>
+                      <p className="text-xs font-mono font-bold">{formatTime(ot.check_in)}</p>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-[8px] font-bold text-gray-400 uppercase">Selesai</p>
+                      <p className="text-xs font-mono font-bold">{formatTime(ot.check_out)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Selesai / Terverifikasi</h3>
+          <div className="space-y-3">
+            {overtimeHistory.filter(ot => ot.is_verified).length === 0 ? (
+              <p className="text-xs text-gray-400 italic text-center py-4">Tidak ada data</p>
+            ) : (
+              overtimeHistory.filter(ot => ot.is_verified).map(ot => (
+                <div key={ot.id} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm border-l-4 border-l-emerald-500">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs font-bold text-gray-700">{formatDate(ot.created_at!)}</span>
+                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[9px] font-bold uppercase">Verified</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <p className="text-[8px] font-bold text-gray-400 uppercase">Mulai</p>
+                      <p className="text-xs font-mono font-bold">{formatTime(ot.check_in)}</p>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-[8px] font-bold text-gray-400 uppercase">Selesai</p>
+                      <p className="text-xs font-mono font-bold">{formatTime(ot.check_out)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAdminMenu = () => (
+    <div className="p-4 space-y-6 pb-24">
+      <div className="flex items-center gap-4 mb-2">
+        <button onClick={() => setViewMode('main')} className="p-2 bg-gray-100 rounded-full text-gray-600">
+          <ArrowLeft size={20} />
+        </button>
+        <h2 className="text-lg font-bold text-gray-800">Menu Admin</h2>
+      </div>
+      <div className="grid grid-cols-3 gap-4">
+        {adminMenuItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={item.onClick}
+            className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
+          >
+            <div className={`w-14 h-14 ${item.color} rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform`}>
+              <item.icon size={28} />
+            </div>
+            <span className="text-[10px] font-bold text-gray-600 text-center leading-tight uppercase tracking-tighter">
+              {item.label}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Top Banner */}
+      <div className="bg-[#006E62] text-white px-6 py-8 rounded-b-[40px] shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12 blur-xl"></div>
+        
+        <div className="relative z-10 flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-200/80">{getGreeting()}</p>
+            <h1 className="text-2xl font-black tracking-tight leading-none">{account?.full_name?.split(' ')[0]}</h1>
+            <div className="flex items-center gap-1.5 mt-2 bg-white/10 w-fit px-2 py-1 rounded-full backdrop-blur-md">
+              <MapPin size={10} className="text-emerald-300" />
+              <span className="text-[9px] font-bold uppercase tracking-wider">{account?.location?.name || 'Lokasi Belum Diatur'}</span>
             </div>
           </div>
-        )}
-      </div>
-
-      {/* Grid Menu Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-            {viewMode === 'admin' ? 'Dashboard Admin' : 'Menu Layanan'}
-          </h3>
-          {viewMode === 'admin' && (
-            <button 
-              onClick={() => setViewMode('user')}
-              className="flex items-center gap-1 text-[10px] font-bold text-[#006E62] uppercase tracking-wider"
-            >
-              <ArrowLeft size={14} /> Kembali
-            </button>
-          )}
-        </div>
-
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
-          {(viewMode === 'admin' ? adminMenuItems : menuItems).map((item) => (
-            <button
-              key={item.id}
-              onClick={() => {
-                if (item.id === 'master_menu') {
-                  setViewMode('admin');
-                } else {
-                  setActiveTab(item.id);
-                }
-              }}
-              className="flex flex-col items-center gap-2 group"
-            >
-              <div className={`w-14 h-14 ${item.color} rounded-2xl flex items-center justify-center shadow-sm group-active:scale-95 transition-transform duration-200`}>
-                <item.icon size={24} />
+          <div className="w-16 h-16 rounded-2xl border-2 border-white/30 p-1 bg-white/10 backdrop-blur-md">
+            {account?.photo_google_id ? (
+              <img 
+                src={googleDriveService.getFileUrl(account.photo_google_id)} 
+                className="w-full h-full object-cover rounded-xl" 
+                alt="Profile" 
+              />
+            ) : (
+              <div className="w-full h-full bg-emerald-700 rounded-xl flex items-center justify-center font-black text-xl">
+                {account?.full_name?.charAt(0)}
               </div>
-              <span className="text-[10px] font-bold text-gray-600 text-center leading-tight px-1">
-                {item.label}
-              </span>
-            </button>
-          ))}
+            )}
+          </div>
         </div>
       </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={viewMode}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.2 }}
+        >
+          {viewMode === 'main' && renderMainGrid()}
+          {viewMode === 'presence_sub' && renderPresenceSub()}
+          {viewMode === 'overtime_sub' && renderOvertimeSub()}
+          {viewMode === 'off_sub' && renderOffSub()}
+          {viewMode === 'presence_history' && renderPresenceHistory()}
+          {viewMode === 'overtime_history' && renderOvertimeHistory()}
+          {viewMode === 'admin' && renderAdminMenu()}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 };
 
 export default MobileDashboard;
+

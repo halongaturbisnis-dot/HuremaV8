@@ -147,8 +147,8 @@ const App: React.FC = () => {
     </button>
   );
 
-  // Mobile Non-Admin Layout
-  if (isMobile && !isAdmin) {
+  // Mobile Layout (Admin & Non-Admin)
+  if (isMobile) {
     return (
       <MobileLayout activeTab={activeTab} setActiveTab={setActiveTab} user={user}>
         <Suspense fallback={
