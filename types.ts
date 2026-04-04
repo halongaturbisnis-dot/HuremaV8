@@ -68,6 +68,11 @@ export interface ScheduleRule {
   is_holiday: boolean;
 }
 
+export interface AdminScope {
+  mode: 'all' | 'limited';
+  location_ids: string[];
+}
+
 export interface AuthUser {
   id: string;
   full_name: string;
@@ -86,6 +91,10 @@ export interface AuthUser {
   is_hr_admin?: boolean;
   is_performance_admin?: boolean;
   is_finance_admin?: boolean;
+  // Admin Scopes
+  hr_scope?: AdminScope;
+  performance_scope?: AdminScope;
+  finance_scope?: AdminScope;
 }
 
 export interface Account {

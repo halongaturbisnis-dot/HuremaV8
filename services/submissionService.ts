@@ -43,16 +43,28 @@ export const submissionService = {
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    // Use !inner to force an inner join when searching on the joined table
-    // This prevents "ghost rows" where the submission is returned but the account is null
-    const selectStr = search 
-      ? `*, account:accounts!account_id!inner(full_name, internal_nik, photo_google_id), verifier:accounts!verifier_id(full_name, photo_google_id)`
-      : `*, account:accounts!account_id(full_name, internal_nik, photo_google_id), verifier:accounts!verifier_id(full_name, photo_google_id)`;
+    // Use !inner to force an inner join for location filtering and searching
+    const selectStr = `*, account:accounts!account_id!inner(full_name, internal_nik, photo_google_id, location_id), verifier:accounts!verifier_id(full_name, photo_google_id)`;
 
     let query = supabase
       .from('account_submissions')
       .select(selectStr, { count: 'exact' })
       .eq('type', type);
+
+    // Apply Admin Location Scope
+    const { authService } = await import('./authService');
+    const user = authService.getCurrentUser();
+    if (user && user.role !== 'admin') {
+      const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
+      const limitedScopes = scopes.filter(s => s?.mode === 'limited');
+      
+      if (limitedScopes.length > 0) {
+        const allAllowedIds = Array.from(new Set(limitedScopes.flatMap(s => s?.location_ids || [])));
+        if (allAllowedIds.length > 0) {
+          query = query.in('account.location_id', allAllowedIds);
+        }
+      }
+    }
 
     if (status !== 'ALL') {
       query = query.eq('status', status);
@@ -349,10 +361,27 @@ export const submissionService = {
   },
 
   async getPendingCounts() {
-    const { data, error } = await supabase
+    let query = supabase
       .from('account_submissions')
-      .select('type')
+      .select('type, account:accounts!account_id!inner(location_id)')
       .eq('status', 'Pending');
+    
+    // Apply Admin Location Scope
+    const { authService } = await import('./authService');
+    const user = authService.getCurrentUser();
+    if (user && user.role !== 'admin') {
+      const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
+      const limitedScopes = scopes.filter(s => s?.mode === 'limited');
+      
+      if (limitedScopes.length > 0) {
+        const allAllowedIds = Array.from(new Set(limitedScopes.flatMap(s => s?.location_ids || [])));
+        if (allAllowedIds.length > 0) {
+          query = query.in('account.location_id', allAllowedIds);
+        }
+      }
+    }
+
+    const { data, error } = await query;
     
     if (error) throw error;
     

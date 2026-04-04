@@ -67,12 +67,29 @@ export const overtimeService = {
   },
   
   async getOvertimeByRange(startDate: string, endDate: string) {
-    const { data, error } = await supabase
+    let query = supabase
       .from('overtimes')
-      .select('*')
+      .select('*, account:accounts!account_id!inner(location_id)')
       .gte('created_at', `${startDate}T00:00:00Z`)
       .lte('created_at', `${endDate}T23:59:59Z`)
       .order('created_at', { ascending: true });
+    
+    // Apply Admin Location Scope
+    const { authService } = await import('./authService');
+    const user = authService.getCurrentUser();
+    if (user && user.role !== 'admin') {
+      const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
+      const limitedScopes = scopes.filter(s => s?.mode === 'limited');
+      
+      if (limitedScopes.length > 0) {
+        const allAllowedIds = Array.from(new Set(limitedScopes.flatMap(s => s?.location_ids || [])));
+        if (allAllowedIds.length > 0) {
+          query = query.in('account.location_id', allAllowedIds);
+        }
+      }
+    }
+
+    const { data, error } = await query;
     
     if (error) throw error;
     return data as Overtime[];

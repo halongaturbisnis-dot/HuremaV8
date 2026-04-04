@@ -25,10 +25,26 @@ export const leaveService = {
    * Mendapatkan semua pengajuan cuti tahunan (Admin)
    */
   async getAllAnnual(): Promise<AnnualLeaveRequest[]> {
-    const { data, error } = await supabase
+    let query = supabase
       .from('account_annual_leaves')
-      .select('*, account:accounts(full_name, internal_nik)')
+      .select('*, account:accounts!account_id!inner(full_name, internal_nik, location_id)')
       .order('created_at', { ascending: false });
+    
+    // Apply Admin Location Scope
+    const user = authService.getCurrentUser();
+    if (user && user.role !== 'admin') {
+      const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
+      const limitedScopes = scopes.filter(s => s?.mode === 'limited');
+      
+      if (limitedScopes.length > 0) {
+        const allAllowedIds = Array.from(new Set(limitedScopes.flatMap(s => s?.location_ids || [])));
+        if (allAllowedIds.length > 0) {
+          query = query.in('account.location_id', allAllowedIds);
+        }
+      }
+    }
+
+    const { data, error } = await query;
     
     if (error) {
       console.error('Error fetching all annual leaves:', error);
@@ -284,10 +300,26 @@ export const leaveService = {
    * Mendapatkan semua pengajuan libur (untuk admin)
    */
   async getAll(): Promise<LeaveRequestExtended[]> {
-    const { data, error } = await supabase
+    let query = supabase
       .from('account_leave_requests')
-      .select('*, account:accounts(full_name, internal_nik)')
+      .select('*, account:accounts!account_id!inner(full_name, internal_nik, location_id)')
       .order('created_at', { ascending: false });
+    
+    // Apply Admin Location Scope
+    const user = authService.getCurrentUser();
+    if (user && user.role !== 'admin') {
+      const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
+      const limitedScopes = scopes.filter(s => s?.mode === 'limited');
+      
+      if (limitedScopes.length > 0) {
+        const allAllowedIds = Array.from(new Set(limitedScopes.flatMap(s => s?.location_ids || [])));
+        if (allAllowedIds.length > 0) {
+          query = query.in('account.location_id', allAllowedIds);
+        }
+      }
+    }
+
+    const { data, error } = await query;
     
     if (error) throw error;
     return data || [];

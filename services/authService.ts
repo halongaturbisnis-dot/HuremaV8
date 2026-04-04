@@ -36,13 +36,41 @@ export const authService = {
       settingsService.getSetting('admin_finance_ids', [])
     ]);
 
+    // Helper to determine if user is admin and get their scope
+    const getAdminData = (adminSetting: any, userId: string) => {
+      // Handle old array format
+      if (Array.isArray(adminSetting)) {
+        const isAdmin = adminSetting.includes(userId);
+        return {
+          isAdmin,
+          scope: isAdmin ? { mode: 'all', location_ids: [] } : undefined
+        };
+      }
+      // Handle new object format: { [userId]: { mode, location_ids } }
+      if (adminSetting && typeof adminSetting === 'object') {
+        const scope = adminSetting[userId];
+        return {
+          isAdmin: !!scope,
+          scope: scope || undefined
+        };
+      }
+      return { isAdmin: false, scope: undefined };
+    };
+
+    const hrData = getAdminData(hrAdmins, data.id);
+    const perfData = getAdminData(perfAdmins, data.id);
+    const finData = getAdminData(finAdmins, data.id);
+
     const user: AuthUser = {
       ...data,
       schedule: Array.isArray(data.schedule) ? data.schedule[0] : data.schedule,
       role,
-      is_hr_admin: hrAdmins.includes(data.id),
-      is_performance_admin: perfAdmins.includes(data.id),
-      is_finance_admin: finAdmins.includes(data.id)
+      is_hr_admin: hrData.isAdmin,
+      is_performance_admin: perfData.isAdmin,
+      is_finance_admin: finData.isAdmin,
+      hr_scope: hrData.scope,
+      performance_scope: perfData.scope,
+      finance_scope: finData.scope
     } as AuthUser;
     localStorage.setItem(SESSION_KEY, JSON.stringify(user));
     cachedUser = user;

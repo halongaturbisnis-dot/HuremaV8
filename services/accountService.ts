@@ -65,6 +65,21 @@ export const accountService = {
       `, { count: 'exact' })
       .not('access_code', 'ilike', '%SPADMIN%');
 
+    // Apply Admin Location Scope
+    const { authService } = await import('./authService');
+    const user = authService.getCurrentUser();
+    if (user && user.role !== 'admin') {
+      const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
+      const limitedScopes = scopes.filter(s => s?.mode === 'limited');
+      
+      if (limitedScopes.length > 0) {
+        const allAllowedIds = Array.from(new Set(limitedScopes.flatMap(s => s?.location_ids || [])));
+        if (allAllowedIds.length > 0) {
+          query = query.in('location_id', allAllowedIds);
+        }
+      }
+    }
+
     if (searchQuery) {
       query = query.or(`full_name.ilike.%${searchQuery}%,internal_nik.ilike.%${searchQuery}%,position.ilike.%${searchQuery}%`);
     }
