@@ -496,7 +496,7 @@ const OvertimeMain: React.FC = () => {
                   }`}
                 >
                   {isAiLoading ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
-                  {isCapturing ? 'MEMPROSES...' : (isAiLoading ? 'MENYIAPKAN AI...' : 'MULAI VERIFIKASI WAJAH')}
+                  {isCapturing ? 'MEMPROSES...' : (isAiLoading ? 'MENYIAPKAN...' : 'VERIFIKASI')}
                 </button>
               </div>
             ) : (
@@ -504,7 +504,7 @@ const OvertimeMain: React.FC = () => {
                 <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 mb-8 ring-8 ring-emerald-50/50">
                   <ShieldCheck size={56} />
                 </div>
-                <h3 className="text-3xl font-black text-gray-800 tracking-tight">Tugas Selesai!</h3>
+                <h3 className="text-3xl font-black text-gray-800 tracking-tight">Selesai!</h3>
                 <p className="text-sm text-gray-400 mt-3 max-w-xs font-medium">Terima kasih, Anda telah menyelesaikan presensi lembur untuk hari ini.</p>
               </div>
             )}

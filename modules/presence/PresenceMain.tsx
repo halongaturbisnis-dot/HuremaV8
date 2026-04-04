@@ -533,7 +533,7 @@ const PresenceMain: React.FC = () => {
                   }`}
                 >
                   {isAiLoading ? <Loader2 className="animate-spin" size={18} /> : <Camera size={18} />}
-                  {isCapturing ? 'MEMPROSES...' : (isAiLoading ? 'MENYIAPKAN AI...' : 'VERIFIKASI')}
+                  {isCapturing ? 'MEMPROSES...' : (isAiLoading ? 'MENYIAPKAN...' : 'VERIFIKASI')}
                 </button>
               </div>
             ) : (
@@ -541,7 +541,7 @@ const PresenceMain: React.FC = () => {
                 <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center text-[#006E62] mb-6 animate-pulse">
                   <ShieldCheck size={48} />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-800">Tugas Selesai!</h3>
+                <h3 className="text-2xl font-bold text-gray-800">Selesai!</h3>
                 <p className="text-sm text-gray-500 mt-2 max-w-xs">Terima kasih, Anda telah menyelesaikan presensi masuk dan pulang untuk hari ini.</p>
               </div>
             )}
