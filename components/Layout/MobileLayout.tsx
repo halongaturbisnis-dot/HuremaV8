@@ -4,6 +4,7 @@ import { Bell, Home, Fingerprint, UserCircle, Menu, User } from 'lucide-react';
 import { AuthUser, Attendance } from '../../types';
 import { googleDriveService } from '../../services/googleDriveService';
 import { presenceService } from '../../services/presenceService';
+import { LOGO_ICON } from '../../assets';
 
 interface MobileLayoutProps {
   children: React.ReactNode;
@@ -36,12 +37,13 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children, activeTab, setAct
   return (
     <div className="min-h-screen bg-white flex flex-col md:hidden">
       {/* Top Header */}
-      <header className="h-16 flex items-center justify-between px-4 bg-white fixed top-0 left-0 right-0 z-50 border-b border-gray-50">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#006E62] rounded-lg flex items-center justify-center text-white font-bold italic text-sm shadow-sm">H</div>
+      <header className="h-16 flex items-center px-4 bg-white fixed top-0 left-0 right-0 z-50 border-b border-gray-50">
+        <div className="flex items-center gap-2 flex-shrink-0 flex-nowrap">
+          <img src={LOGO_ICON} alt="Logo" className="w-8 h-8 object-contain" />
+          <span className="text-xl font-bold tracking-tight text-[#006E62] leading-none whitespace-nowrap">HUREMA</span>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 ml-auto">
           <span className="text-xs font-semibold text-gray-700 truncate max-w-[120px]">{user.full_name}</span>
           <div className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center text-gray-400 font-bold shadow-sm">
             {user.photo_google_id ? (
