@@ -158,7 +158,7 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
   const FaceSilhouette = ({ direction }: { direction: 'RIGHT' | 'LEFT' | 'READY' }) => {
     return (
       <div className="relative w-48 h-48 flex items-center justify-center">
-        <svg viewBox="0 0 200 200" className={`w-full h-full transition-all duration-500 ${direction === 'READY' ? 'text-emerald-500' : 'text-white/20'}`}>
+        <svg viewBox="0 0 200 200" className={`w-full h-full transition-all duration-500 ${direction === 'READY' ? 'text-emerald-500' : 'text-[#006E62]'}`}>
           {/* Outer Ring */}
           <circle cx="100" cy="100" r="98" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" className={direction === 'READY' ? 'animate-none' : 'animate-[spin_10s_linear_infinite]'} />
           
@@ -205,7 +205,7 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
             autoPlay 
             playsInline 
             muted 
-            className="absolute inset-0 w-full h-full object-contain bg-black scale-x-[-1]"
+            className="absolute inset-0 w-full h-full object-cover bg-black scale-x-[-1]"
           />
           
           {/* Overlay Gradient */}

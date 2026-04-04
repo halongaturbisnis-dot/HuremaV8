@@ -377,7 +377,7 @@ const PresenceMain: React.FC = () => {
               />
             ) : photoPreviewUrl ? (
               <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col items-center shadow-sm animate-in zoom-in duration-300">
-                <div className="relative w-full aspect-[3/4] max-w-sm rounded-2xl overflow-hidden shadow-2xl mb-6 ring-1 ring-gray-100">
+                <div className="relative w-full aspect-[9/16] max-w-sm rounded-2xl overflow-hidden shadow-2xl mb-6 ring-1 ring-gray-100">
                   <img src={photoPreviewUrl} alt="Preview" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                   <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
