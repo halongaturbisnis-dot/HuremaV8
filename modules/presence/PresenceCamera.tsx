@@ -158,7 +158,7 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
     <div className="w-full max-w-md mx-auto animate-in fade-in zoom-in duration-500">
       {!isAiLoaded ? (
         <div className="aspect-[9/16] w-full bg-slate-950 rounded-3xl flex flex-col items-center justify-center text-white/50 gap-4 border border-white/5">
-          <Loader2 className="animate-spin text-[#00FFE4]" size={40} />
+          <Loader2 className="animate-spin text-[#006E62]" size={40} />
           <p className="text-[10px] font-bold uppercase tracking-widest text-center px-6">Inisialisasi Keamanan AI...</p>
         </div>
       ) : (
@@ -184,16 +184,16 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
             <div className="mt-8 bg-black/60 backdrop-blur-xl px-6 py-4 rounded-2xl border border-white/10 text-center animate-in fade-in zoom-in duration-500 w-fit">
               {step === 'RIGHT' && (
                 <div className="flex flex-col items-center gap-2">
-                  <div className="w-10 h-10 bg-[#00FFE4]/20 rounded-full flex items-center justify-center">
-                    <ArrowRight className="text-[#00FFE4] animate-bounce" size={24} />
+                  <div className="w-10 h-10 bg-[#006E62]/20 rounded-full flex items-center justify-center">
+                    <ArrowRight className="text-[#006E62] animate-bounce" size={24} />
                   </div>
                   <p className="text-white text-[10px] font-bold uppercase tracking-widest">Tengok ke Kanan</p>
                 </div>
               )}
               {step === 'LEFT' && (
                 <div className="flex flex-col items-center gap-2">
-                  <div className="w-10 h-10 bg-[#00FFE4]/20 rounded-full flex items-center justify-center">
-                    <ArrowLeft className="text-[#00FFE4] animate-bounce" size={24} />
+                  <div className="w-10 h-10 bg-[#006E62]/20 rounded-full flex items-center justify-center">
+                    <ArrowLeft className="text-[#006E62] animate-bounce" size={24} />
                   </div>
                   <p className="text-white text-[10px] font-bold uppercase tracking-widest">Tengok ke Kiri</p>
                 </div>
@@ -218,7 +218,7 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
               <div className="px-4">
                 <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
                   <div 
-                    className={`h-full transition-all duration-700 ease-out shadow-[0_0_15px_rgba(0,255,228,0.5)] bg-[#00FFE4]`} 
+                    className={`h-full transition-all duration-700 ease-out shadow-[0_0_15px_rgba(0,110,98,0.5)] bg-[#006E62]`} 
                     style={{ width: step === 'RIGHT' ? '33%' : step === 'LEFT' ? '66%' : '100%' }}
                   />
                 </div>
@@ -240,7 +240,7 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
                   disabled={step !== 'READY' || isProcessing}
                   className={`flex items-center gap-2 px-10 py-4 rounded-full font-extrabold uppercase text-[10px] tracking-[0.2em] shadow-2xl transition-all ${
                     step === 'READY'
-                    ? 'bg-[#00FFE4] text-[#006E62] hover:scale-105 active:scale-95 shadow-[#00FFE4]/20' 
+                    ? 'bg-[#006E62] text-white hover:scale-105 active:scale-95 shadow-[#006E62]/20' 
                     : 'bg-white/5 text-white/20 cursor-not-allowed border border-white/5'
                   }`}
                 >

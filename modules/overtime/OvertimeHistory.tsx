@@ -47,13 +47,13 @@ const OvertimeHistory: React.FC<OvertimeHistoryProps> = ({ logs, isLoading }) =>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="p-3 bg-amber-50/50 rounded-lg border border-amber-100 space-y-1">
                   <p className="text-[8px] font-bold text-amber-600 uppercase tracking-tighter">Check In OT</p>
-                  <span className="text-lg font-mono font-bold text-gray-800">{formatTime(log.check_in)}</span>
+                  <span className="text-lg font-sans font-bold text-gray-800">{formatTime(log.check_in)}</span>
                   {log.in_address && <p className="text-[8px] text-gray-400 truncate flex items-center gap-1"><MapPin size={8} /> {log.in_address}</p>}
                 </div>
 
                 <div className="p-3 bg-amber-50/50 rounded-lg border border-amber-100 space-y-1">
                   <p className="text-[8px] font-bold text-amber-600 uppercase tracking-tighter">Check Out OT</p>
-                  <span className="text-lg font-mono font-bold text-gray-800">{formatTime(log.check_out)}</span>
+                  <span className="text-lg font-sans font-bold text-gray-800">{formatTime(log.check_out)}</span>
                   {log.out_address && <p className="text-[8px] text-gray-400 truncate flex items-center gap-1"><MapPin size={8} /> {log.out_address}</p>}
                 </div>
 

@@ -322,7 +322,7 @@ const PresenceMain: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+      <div className="hidden md:flex bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex-col md:flex-row justify-between items-center gap-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-[#006E62]/10 rounded-xl flex items-center justify-center text-[#006E62]">
             <Fingerprint size={28} />
@@ -349,8 +349,8 @@ const PresenceMain: React.FC = () => {
       </div>
 
       {activeTab === 'capture' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-in fade-in duration-500">
-          <div className="lg:col-span-7">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8 items-start animate-in fade-in duration-500">
+          <div className="lg:col-span-7 order-3 lg:order-1 w-full">
             {isCameraActive ? (
               <PresenceCamera 
                 onCapture={handleAttendance}
@@ -445,82 +445,12 @@ const PresenceMain: React.FC = () => {
             )}
           </div>
 
-          <div className="lg:col-span-5 space-y-6">
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm overflow-hidden relative">
-               <div className="absolute top-0 right-0 p-4 opacity-5">
-                  <Clock size={120} />
-               </div>
-               <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-2">
-                    <Clock size={16} className="text-[#006E62]" />
-                    <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-500">Waktu Terverifikasi</h4>
-                  </div>
-                  <span className="text-[10px] font-bold text-[#00FFE4] bg-[#006E62]/5 px-2 py-0.5 rounded uppercase tracking-tighter">
-                    {displaySchedule?.name || (account.schedule_type === 'Fleksibel' ? 'Fleksibel' : 'Reguler')}
-                  </span>
-               </div>
-               <div className="text-center py-4 relative z-10">
-                  <div className="text-5xl font-mono font-bold text-gray-800 tracking-tighter">
-                    {serverTime.toLocaleTimeString('id-ID', { hour12: false })}
-                  </div>
-                  <div className="text-[11px] font-bold text-[#00FFE4] uppercase tracking-widest mt-2">
-                    {serverTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
-                  </div>
-
-                  {todayAttendance?.check_in && !todayAttendance.check_out && (
-                    <div className="mt-8 p-3 bg-[#006E62]/5 rounded-2xl border border-emerald-100/50 animate-in fade-in zoom-in duration-700">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Durasi Kerja Berjalan</p>
-                      <div className="text-2xl font-mono font-black text-[#006E62] tracking-widest">
-                        {getLiveWorkDuration()}
-                      </div>
-                    </div>
-                  )}
-               </div>
-
-               {account.schedule_type !== 'Fleksibel' && (
-                 <div className="mt-8 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100/50 space-y-3">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-[#006E62] uppercase tracking-wider mb-2">
-                      <CalendarClock size={14} /> {account.schedule_type === 'Shift Dinamis' ? 'Shift Terpilih' : 'Jadwal Hari Ini'}
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                       <div>
-                          <p className="text-[9px] text-gray-400 font-bold uppercase">Jam Masuk</p>
-                          <p className="text-xs font-bold text-gray-700">{scheduleRule?.check_in_time ? scheduleRule.check_in_time.slice(0, 5) : '--:--'}</p>
-                       </div>
-                       <div>
-                          <p className="text-[9px] text-gray-400 font-bold uppercase">Jam Pulang</p>
-                          <p className="text-xs font-bold text-gray-700">{scheduleRule?.check_out_time ? scheduleRule.check_out_time.slice(0, 5) : '--:--'}</p>
-                       </div>
-                    </div>
-                    <div className="pt-2 border-t border-emerald-100/50">
-                      <p className="text-[9px] text-gray-400 font-bold uppercase">Toleransi</p>
-                      <p className="text-[10px] font-medium text-[#006E62]">
-                        Masuk: {displaySchedule?.tolerance_checkin_minutes || 0}m • Pulang: {displaySchedule?.tolerance_minutes || 0}m
-                      </p>
-                    </div>
-                 </div>
-               )}
-
-               <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-50">
-                  <div className="text-center">
-                    <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Status Masuk</p>
-                    <p className={`text-xs font-bold ${todayAttendance?.status_in === 'Terlambat' ? 'text-rose-500' : 'text-[#006E62]'}`}>
-                      {todayAttendance?.check_in ? todayAttendance.status_in : '--:--'}
-                    </p>
-                  </div>
-                  <div className="text-center border-l border-gray-50">
-                    <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Status Pulang</p>
-                    <p className={`text-xs font-bold ${todayAttendance?.status_out === 'Pulang Cepat' ? 'text-rose-500' : 'text-blue-500'}`}>
-                      {todayAttendance?.check_out ? todayAttendance.status_out : '--:--'}
-                    </p>
-                  </div>
-               </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+          <div className="lg:col-span-5 order-1 lg:order-2 space-y-6 w-full flex flex-col">
+            {/* Status Geotag Card - Order 1 on Mobile */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm order-1 lg:order-2">
                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <MapPin size={16} className="text-[#00FFE4]" />
+                    <MapPin size={16} className="text-[#006E62]" />
                     <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-500">Status Geotag</h4>
                   </div>
                   <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-bold uppercase ${!isLimited ? 'bg-blue-50 text-blue-600' : (isWithinRadius ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600')}`}>
@@ -561,6 +491,79 @@ const PresenceMain: React.FC = () => {
                     <p className="text-[10px] font-bold uppercase tracking-widest mt-4">Mengunci Sinyal GPS...</p>
                  </div>
                )}
+            </div>
+
+            {/* Waktu Terverifikasi Card - Order 2 on Mobile */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm overflow-hidden relative order-2 lg:order-1">
+               <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <Clock size={16} className="text-[#006E62]" />
+                    <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-500">Waktu Terverifikasi</h4>
+                  </div>
+               </div>
+               <div className="text-center py-4 relative z-10">
+                  <div className="text-5xl font-sans font-bold text-gray-800 tracking-tighter">
+                    {serverTime.toLocaleTimeString('id-ID', { hour12: false })}
+                  </div>
+                  <div className="text-[11px] font-bold text-[#006E62] uppercase tracking-widest mt-2">
+                    {serverTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </div>
+
+                  {todayAttendance?.check_in && !todayAttendance.check_out && (
+                    <div className="mt-8 p-3 bg-[#006E62]/5 rounded-2xl border border-emerald-100/50 animate-in fade-in zoom-in duration-700">
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Durasi Kerja Berjalan</p>
+                      <div className="text-2xl font-sans font-black text-[#006E62] tracking-widest">
+                        {getLiveWorkDuration()}
+                      </div>
+                    </div>
+                  )}
+               </div>
+
+               {account.schedule_type !== 'Fleksibel' && (
+                 <div className="mt-8 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100/50 space-y-3">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-[#006E62] uppercase tracking-wider mb-2">
+                      <CalendarClock size={14} /> {account.schedule_type === 'Shift Dinamis' ? 'Shift Terpilih' : 'Jadwal Hari Ini'}
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                       <div>
+                          <p className="text-[9px] text-gray-400 font-bold uppercase">Jam Masuk</p>
+                          <p className="text-xs font-bold text-gray-700">{scheduleRule?.check_in_time ? scheduleRule.check_in_time.slice(0, 5) : '--:--'}</p>
+                       </div>
+                       <div>
+                          <p className="text-[9px] text-gray-400 font-bold uppercase">Jam Pulang</p>
+                          <p className="text-xs font-bold text-gray-700">{scheduleRule?.check_out_time ? scheduleRule.check_out_time.slice(0, 5) : '--:--'}</p>
+                       </div>
+                    </div>
+                    <div className="pt-2 border-t border-emerald-100/50">
+                      <p className="text-[9px] text-gray-400 font-bold uppercase">Toleransi</p>
+                      <p className="text-[10px] font-medium text-[#006E62]">
+                        Masuk: {displaySchedule?.tolerance_checkin_minutes || 0}m • Pulang: {displaySchedule?.tolerance_minutes || 0}m
+                      </p>
+                    </div>
+                 </div>
+               )}
+
+               <div className="mt-6 pt-6 border-t border-gray-50">
+                  <div className="flex justify-center mb-4">
+                    <span className="text-[10px] font-bold text-[#006E62] bg-[#006E62]/5 px-2 py-0.5 rounded uppercase tracking-tighter">
+                      {displaySchedule?.name || (account.schedule_type === 'Fleksibel' ? 'Fleksibel' : 'Reguler')}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Status Masuk</p>
+                      <p className={`text-xs font-bold ${todayAttendance?.status_in === 'Terlambat' ? 'text-rose-500' : 'text-[#006E62]'}`}>
+                        {todayAttendance?.check_in ? `${new Date(todayAttendance.check_in).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(':', '.')} • ${todayAttendance.status_in}` : '--:--'}
+                      </p>
+                    </div>
+                    <div className="text-center border-l border-gray-50">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Status Pulang</p>
+                      <p className={`text-xs font-bold ${todayAttendance?.status_out === 'Pulang Cepat' ? 'text-rose-500' : 'text-blue-500'}`}>
+                        {todayAttendance?.check_out ? todayAttendance.status_out : '--:--'}
+                      </p>
+                    </div>
+                  </div>
+               </div>
             </div>
           </div>
         </div>

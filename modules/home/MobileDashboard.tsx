@@ -359,12 +359,12 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-2 bg-emerald-50/50 rounded-xl border border-emerald-100">
                   <p className="text-[8px] font-bold text-emerald-600 uppercase mb-1">Masuk</p>
-                  <p className="text-sm font-mono font-bold text-gray-800">{formatTime(log.check_in)}</p>
+                  <p className="text-sm font-sans font-bold text-gray-800">{formatTime(log.check_in)}</p>
                   <p className="text-[9px] font-bold text-[#006E62] uppercase">{log.status_in}</p>
                 </div>
                 <div className="p-2 bg-blue-50/50 rounded-xl border border-blue-100">
                   <p className="text-[8px] font-bold text-blue-600 uppercase mb-1">Pulang</p>
-                  <p className="text-sm font-mono font-bold text-gray-800">{formatTime(log.check_out)}</p>
+                  <p className="text-sm font-sans font-bold text-gray-800">{formatTime(log.check_out)}</p>
                   <p className={`text-[9px] font-bold uppercase ${log.status_out === 'Pulang Cepat' ? 'text-rose-500' : 'text-blue-500'}`}>
                     {log.status_out || '-'}
                   </p>
@@ -402,11 +402,11 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
                       <p className="text-[8px] font-bold text-gray-400 uppercase">Mulai</p>
-                      <p className="text-xs font-mono font-bold">{formatTime(ot.check_in)}</p>
+                      <p className="text-xs font-sans font-bold">{formatTime(ot.check_in)}</p>
                     </div>
                     <div className="flex-1">
                       <p className="text-[8px] font-bold text-gray-400 uppercase">Selesai</p>
-                      <p className="text-xs font-mono font-bold">{formatTime(ot.check_out)}</p>
+                      <p className="text-xs font-sans font-bold">{formatTime(ot.check_out)}</p>
                     </div>
                   </div>
                 </div>
@@ -430,11 +430,11 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
                       <p className="text-[8px] font-bold text-gray-400 uppercase">Mulai</p>
-                      <p className="text-xs font-mono font-bold">{formatTime(ot.check_in)}</p>
+                      <p className="text-xs font-sans font-bold">{formatTime(ot.check_in)}</p>
                     </div>
                     <div className="flex-1">
                       <p className="text-[8px] font-bold text-gray-400 uppercase">Selesai</p>
-                      <p className="text-xs font-mono font-bold">{formatTime(ot.check_out)}</p>
+                      <p className="text-xs font-sans font-bold">{formatTime(ot.check_out)}</p>
                     </div>
                   </div>
                 </div>
@@ -527,7 +527,7 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
           {elapsedTime && activeSessionType && (
             <div className="flex flex-col items-center animate-in fade-in slide-in-from-bottom-2 duration-500">
               <div className="bg-red-600 px-6 py-2 rounded-full shadow-xl shadow-red-900/40 border border-red-400/30">
-                <span className="text-lg font-black font-mono text-white tracking-widest leading-none">{elapsedTime}</span>
+                <span className="text-lg font-black font-sans text-white tracking-widest leading-none">{elapsedTime}</span>
               </div>
               <span className="text-[10px] font-black text-white mt-2 tracking-[0.4em] uppercase opacity-90">{activeSessionType}</span>
             </div>

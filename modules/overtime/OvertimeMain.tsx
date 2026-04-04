@@ -340,7 +340,7 @@ const OvertimeMain: React.FC = () => {
                   <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-500">Waktu Terverifikasi</h4>
                </div>
                <div className="text-center py-4">
-                  <div className="text-5xl font-mono font-bold text-gray-800 tracking-tighter">
+                  <div className="text-5xl font-sans font-bold text-gray-800 tracking-tighter">
                     {serverTime.toLocaleTimeString('id-ID', { hour12: false })}
                   </div>
                   <div className="text-[11px] font-bold text-amber-500 uppercase tracking-widest mt-2">
@@ -350,7 +350,7 @@ const OvertimeMain: React.FC = () => {
                   {todayOT?.check_in && !todayOT.check_out && (
                     <div className="mt-8 p-3 bg-amber-50 rounded-2xl border border-amber-100 animate-pulse">
                       <p className="text-[9px] font-black text-amber-600 uppercase tracking-[0.2em] mb-1">Durasi Lembur Berjalan</p>
-                      <div className="text-2xl font-mono font-black text-amber-700 tracking-widest">
+                      <div className="text-2xl font-sans font-black text-amber-700 tracking-widest">
                         {getOTDurationLive()}
                       </div>
                     </div>
