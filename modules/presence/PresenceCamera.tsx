@@ -16,8 +16,19 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
   
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [step, setStep] = useState<'RIGHT' | 'LEFT' | 'UP' | 'DOWN' | 'MOUTH' | 'READY'>('RIGHT');
+  const [hasCaptured, setHasCaptured] = useState(false);
   const isComponentMounted = useRef(true);
   const lastVideoTimeRef = useRef(-1);
+
+  useEffect(() => {
+    if (step === 'READY' && !hasCaptured && !isProcessing) {
+      const timer = setTimeout(() => {
+        handleCapture();
+        setHasCaptured(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [step, hasCaptured, isProcessing]);
 
   useEffect(() => {
     isComponentMounted.current = true;
@@ -103,12 +114,12 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
               const blendshapes = results.faceBlendshapes[0]?.categories;
               if (blendshapes && isNeutralY) {
                 const jawOpen = blendshapes.find((c: any) => (c.categoryName === 'jawOpen' || c.label === 'jawOpen'))?.score || 0;
-                if (jawOpen > 0.45) return 'UP';
+                if (jawOpen > 0.45) return 'DOWN';
               }
             }
 
-            if (prev === 'UP' && noseRelativeY < 0.35) return 'DOWN';
-            if (prev === 'DOWN' && noseRelativeY > 0.65) return 'READY';
+            if (prev === 'DOWN' && noseRelativeY > 0.65) return 'UP';
+            if (prev === 'UP' && noseRelativeY < 0.35) return 'READY';
             
             return prev;
           });
@@ -322,7 +333,10 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
                 <p className="text-white text-[11px] font-bold uppercase tracking-[0.2em]">Menunduk ke Bawah</p>
               )}
               {step === 'READY' && (
-                <p className="text-emerald-400 text-[11px] font-bold uppercase tracking-[0.2em]">Identitas Terverifikasi</p>
+                <div className="flex flex-col gap-1">
+                  <p className="text-emerald-400 text-[11px] font-bold uppercase tracking-[0.2em]">Identitas Terverifikasi</p>
+                  <p className="text-white/60 text-[9px] font-medium uppercase tracking-[0.1em] animate-pulse">Mengambil Foto...</p>
+                </div>
               )}
             </div>
           </div>
@@ -332,24 +346,13 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
             <button 
               onClick={() => { 
                 setStep('RIGHT');
+                setHasCaptured(false);
                 lastVideoTimeRef.current = -1;
               }}
               disabled={isProcessing}
               className="p-4 text-white/70 hover:text-white bg-black/40 backdrop-blur-xl rounded-full border border-white/10 transition-all hover:bg-white/20 disabled:opacity-30"
             >
               <RefreshCw size={24} />
-            </button>
-            <button 
-              onClick={handleCapture}
-              disabled={step !== 'READY' || isProcessing}
-              className={`flex items-center gap-3 px-8 py-4 rounded-full font-black uppercase text-[10px] tracking-[0.2em] shadow-2xl transition-all ${
-                step === 'READY'
-                ? 'bg-[#006E62] text-white hover:scale-105 active:scale-95 shadow-[#006E62]/40' 
-                : 'bg-black/40 text-white/20 cursor-not-allowed border border-white/10'
-              }`}
-            >
-              <Camera size={20} />
-              {isProcessing ? 'PROSES...' : 'AMBIL FOTO'}
             </button>
           </div>
         </div>
@@ -364,8 +367,8 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
                   width: step === 'RIGHT' ? '20%' : 
                          step === 'LEFT' ? '40%' : 
                          step === 'MOUTH' ? '60%' : 
-                         step === 'UP' ? '80%' : 
-                         step === 'DOWN' ? '90%' : '100%' 
+                         step === 'DOWN' ? '80%' : 
+                         step === 'UP' ? '90%' : '100%' 
                 }}
               />
             </div>
