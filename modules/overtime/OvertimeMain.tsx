@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Timer, Clock, MapPin, History, AlertCircle, Map as MapIcon, Camera, UserX, ShieldCheck, Info, Loader2 } from 'lucide-react';
+import { Timer, Clock, MapPin, History, AlertCircle, Map as MapIcon, Camera, UserX, ShieldCheck, Info, Loader2, RefreshCw, Check } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { overtimeService } from '../../services/overtimeService';
@@ -33,6 +33,7 @@ const OvertimeMain: React.FC = () => {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  const [otReason, setOtReason] = useState('');
   const watchId = useRef<number | null>(null);
 
   const currentUser = authService.getCurrentUser();
@@ -154,30 +155,15 @@ const OvertimeMain: React.FC = () => {
     setCapturedPhoto(null);
     if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
     setPhotoPreviewUrl(null);
+    setOtReason('');
   };
 
   const handleSubmitOvertime = async () => {
     if (!capturedPhoto || !account || !coords) return;
 
-    // Alasan Lembur Mandatory Prompt
-    const isCheckOut = !!todayOT && !todayOT.check_out;
-    const { value: otReason, isConfirmed } = await Swal.fire({
-      title: 'Konfirmasi Lembur',
-      input: 'textarea',
-      inputLabel: `Sebutkan alasan/kegiatan lembur (${isCheckOut ? 'Check-Out' : 'Check-In'}):`,
-      inputPlaceholder: 'Contoh: Menyelesaikan laporan bulanan...',
-      showCancelButton: true,
-      confirmButtonColor: '#d97706',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: 'Kirim Presensi',
-      cancelButtonText: 'Batal',
-      inputValidator: (value) => {
-        if (!value) return 'Alasan lembur wajib diisi!';
-        return null;
-      }
-    });
-
-    if (!isConfirmed || !otReason) return;
+    if (!otReason.trim()) {
+      return Swal.fire('Alasan Wajib', 'Sebutkan alasan/kegiatan lembur Anda.', 'warning');
+    }
 
     try {
       setIsCapturing(true);
@@ -324,9 +310,110 @@ const OvertimeMain: React.FC = () => {
       </div>
 
       {activeTab === 'capture' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-in fade-in duration-700">
-          {/* Left Column: Camera / Preview / Status */}
-          <div className="lg:col-span-7 space-y-6">
+        <div className="flex flex-col gap-8 animate-in fade-in duration-700">
+          {/* 1. Geotag Card (Top) */}
+          <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+             <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
+                    <MapPin size={18} />
+                  </div>
+                  <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400">Status Geotag</h4>
+                </div>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${!isLimited ? 'bg-blue-50 text-blue-600' : (isWithinRadius ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600')}`}>
+                  <div className={`w-2 h-2 rounded-full ${!isLimited ? 'bg-blue-500' : (isWithinRadius ? 'bg-emerald-500' : 'bg-rose-500')}`}></div>
+                  {!isLimited ? 'Bebas Lokasi' : (isWithinRadius ? 'Area Kerja' : 'Diluar Area')}
+                </div>
+             </div>
+             
+             {account?.location && coords ? (
+               <div className="space-y-6">
+                  <PresenceMap 
+                    userLat={coords.lat} 
+                    userLng={coords.lng} 
+                    officeLat={account.location.latitude} 
+                    officeLng={account.location.longitude}
+                    radius={account.location.radius}
+                  />
+                  
+                  <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MapPin size={14} className="text-amber-600" />
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Alamat Geotag</span>
+                    </div>
+                    <p className="text-[11px] font-bold text-gray-700 leading-relaxed">
+                      {isFetchingAddress ? (
+                        <span className="flex items-center gap-2 italic text-gray-400">
+                          <Loader2 size={12} className="animate-spin" /> Mencari alamat...
+                        </span>
+                      ) : currentAddress || 'Alamat tidak ditemukan'}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] block mb-1.5">Jarak</span>
+                        <span className="text-sm font-black text-gray-800">{distance !== null ? `${Math.round(distance)}m` : '...'}</span>
+                     </div>
+                     <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] block mb-1.5">Maks Radius</span>
+                        <span className="text-sm font-black text-amber-600">{account.location.radius}m</span>
+                     </div>
+                  </div>
+                  
+                  {isBlockedByLocation && (
+                    <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex gap-4 items-start animate-pulse">
+                       <AlertCircle size={20} className="text-rose-500 shrink-0 mt-0.5" />
+                       <p className="text-[10px] text-rose-600 font-black leading-tight uppercase tracking-widest">Presensi Lembur dikunci. Anda berada diluar zona yang diizinkan.</p>
+                    </div>
+                  )}
+               </div>
+             ) : (
+               <div className="flex flex-col items-center justify-center py-20 text-gray-300">
+                  <MapIcon size={48} className="animate-bounce" />
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-6">Mengunci Sinyal GPS...</p>
+               </div>
+             )}
+          </div>
+
+          {/* 2. Time Card (Middle) */}
+          <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+             <div className="text-center py-6">
+                <div className="text-6xl font-sans font-black text-gray-800 tracking-tighter">
+                  {serverTime.toLocaleTimeString('id-ID', { hour12: false })}
+                </div>
+                <div className="text-[11px] font-black text-amber-500 uppercase tracking-[0.2em] mt-4">
+                  {serverTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+                </div>
+
+                {todayOT?.check_in && !todayOT.check_out && (
+                  <div className="mt-10 p-5 bg-amber-50 rounded-3xl border border-amber-100/50 animate-pulse">
+                    <p className="text-[9px] font-black text-amber-600 uppercase tracking-[0.2em] mb-2">Durasi Lembur Berjalan</p>
+                    <div className="text-3xl font-sans font-black text-amber-700 tracking-widest">
+                      {getOTDurationLive()}
+                    </div>
+                  </div>
+                )}
+             </div>
+
+             <div className="mt-8 pt-8 border-t border-gray-50 grid grid-cols-2 gap-4">
+               <div className="text-center">
+                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Status Masuk</p>
+                 <p className="text-sm font-black text-amber-600">
+                   {todayOT?.check_in ? new Date(todayOT.check_in).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                 </p>
+               </div>
+               <div className="text-center">
+                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Status Pulang</p>
+                 <p className="text-sm font-black text-amber-600">
+                   {todayOT?.check_out ? new Date(todayOT.check_out).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                 </p>
+               </div>
+             </div>
+          </div>
+
+          {/* 3. Action Card (Bottom) */}
+          <div className="space-y-6">
             {isCameraActive ? (
               <PresenceCamera 
                 onCapture={handleCaptureComplete}
@@ -345,6 +432,19 @@ const OvertimeMain: React.FC = () => {
                   <div className="absolute top-4 right-4 bg-emerald-500 text-white px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg">
                     <ShieldCheck size={14} /> Identitas Terverifikasi
                   </div>
+                </div>
+
+                {/* Alasan Lembur Input directly in UI */}
+                <div className="mt-8 w-full max-w-sm space-y-3">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block ml-1">
+                    Alasan / Kegiatan Lembur
+                  </label>
+                  <textarea
+                    value={otReason}
+                    onChange={(e) => setOtReason(e.target.value)}
+                    placeholder="Sebutkan kegiatan lembur Anda..."
+                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all resize-none h-24"
+                  />
                 </div>
                 
                 <div className="mt-8 flex gap-4 w-full max-w-sm">
@@ -404,110 +504,10 @@ const OvertimeMain: React.FC = () => {
                 <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 mb-8 ring-8 ring-emerald-50/50">
                   <ShieldCheck size={56} />
                 </div>
-                <h3 className="text-3xl font-black text-gray-800 tracking-tight">Lembur Selesai!</h3>
-                <p className="text-sm text-gray-400 mt-3 max-w-xs font-medium">Data lembur hari ini telah tersimpan dengan aman di sistem.</p>
+                <h3 className="text-3xl font-black text-gray-800 tracking-tight">Tugas Selesai!</h3>
+                <p className="text-sm text-gray-400 mt-3 max-w-xs font-medium">Terima kasih, Anda telah menyelesaikan presensi lembur untuk hari ini.</p>
               </div>
             )}
-          </div>
-
-          {/* Right Column: Info Cards */}
-          <div className="lg:col-span-5 space-y-6">
-            {/* Time Card */}
-            <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-               <div className="flex items-center gap-3 mb-8">
-                  <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
-                    <Clock size={18} />
-                  </div>
-                  <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400">Waktu Terverifikasi</h4>
-               </div>
-               <div className="text-center py-6">
-                  <div className="text-6xl font-sans font-black text-gray-800 tracking-tighter">
-                    {serverTime.toLocaleTimeString('id-ID', { hour12: false })}
-                  </div>
-                  <div className="text-[11px] font-black text-amber-500 uppercase tracking-[0.2em] mt-4">
-                    {serverTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
-                  </div>
-
-                  {todayOT?.check_in && !todayOT.check_out && (
-                    <div className="mt-10 p-5 bg-amber-50 rounded-3xl border border-amber-100/50 animate-pulse">
-                      <p className="text-[9px] font-black text-amber-600 uppercase tracking-[0.2em] mb-2">Durasi Lembur Berjalan</p>
-                      <div className="text-3xl font-sans font-black text-amber-700 tracking-widest">
-                        {getOTDurationLive()}
-                      </div>
-                    </div>
-                  )}
-               </div>
-
-               <div className="mt-10 p-5 bg-gray-50 rounded-2xl border border-gray-100 flex gap-4 items-start">
-                  <Info size={18} className="text-blue-500 shrink-0 mt-0.5" />
-                  <p className="text-[10px] text-gray-500 leading-relaxed font-bold italic">Sistem lembur tidak mengacu pada jadwal kerja reguler. Durasi dihitung murni dari waktu kehadiran awal hingga selesai.</p>
-               </div>
-            </div>
-
-            {/* Geotag Card */}
-            <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-               <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
-                      <MapPin size={18} />
-                    </div>
-                    <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400">Status Geotag</h4>
-                  </div>
-                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${!isLimited ? 'bg-blue-50 text-blue-600' : (isWithinRadius ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600')}`}>
-                    <div className={`w-2 h-2 rounded-full ${!isLimited ? 'bg-blue-500' : (isWithinRadius ? 'bg-emerald-500' : 'bg-rose-500')}`}></div>
-                    {!isLimited ? 'Bebas Lokasi' : (isWithinRadius ? 'Area Kerja' : 'Diluar Area')}
-                  </div>
-               </div>
-               
-               {account?.location && coords ? (
-                 <div className="space-y-6">
-                    <PresenceMap 
-                      userLat={coords.lat} 
-                      userLng={coords.lng} 
-                      officeLat={account.location.latitude} 
-                      officeLng={account.location.longitude}
-                      radius={account.location.radius}
-                    />
-                    
-                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                      <div className="flex items-center gap-2 mb-2">
-                        <MapPin size={14} className="text-amber-600" />
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Alamat Geotag</span>
-                      </div>
-                      <p className="text-[11px] font-bold text-gray-700 leading-relaxed">
-                        {isFetchingAddress ? (
-                          <span className="flex items-center gap-2 italic text-gray-400">
-                            <Loader2 size={12} className="animate-spin" /> Mencari alamat...
-                          </span>
-                        ) : currentAddress || 'Alamat tidak ditemukan'}
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                       <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                          <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] block mb-1.5">Jarak</span>
-                          <span className="text-sm font-black text-gray-800">{distance !== null ? `${Math.round(distance)}m` : '...'}</span>
-                       </div>
-                       <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                          <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] block mb-1.5">Status OT</span>
-                          <span className="text-sm font-black text-amber-600">Terbatas</span>
-                       </div>
-                    </div>
-                    
-                    {isBlockedByLocation && (
-                      <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex gap-4 items-start animate-pulse">
-                         <AlertCircle size={20} className="text-rose-500 shrink-0 mt-0.5" />
-                         <p className="text-[10px] text-rose-600 font-black leading-tight uppercase tracking-widest">Presensi Lembur dikunci. Anda berada diluar zona yang diizinkan.</p>
-                      </div>
-                    )}
-                 </div>
-               ) : (
-                 <div className="flex flex-col items-center justify-center py-20 text-gray-300">
-                    <MapIcon size={48} className="animate-bounce" />
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-6">Mengunci Sinyal GPS...</p>
-                 </div>
-               )}
-            </div>
           </div>
         </div>
       ) : (
