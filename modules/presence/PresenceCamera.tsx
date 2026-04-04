@@ -127,8 +127,8 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
   const FaceSilhouette = ({ direction }: { direction: 'RIGHT' | 'LEFT' | 'READY' }) => {
     return (
       <div className="relative w-48 h-56 flex flex-col items-center justify-center">
-        {/* Direction Indicator Overlay - Moved ABOVE the SVG with sliding animation */}
-        <div className="h-12 w-full flex items-center justify-center mb-2 relative overflow-hidden">
+        {/* Direction Indicator Overlay - Bright color and shadow */}
+        <div className="h-12 w-full flex items-center justify-center mb-2 relative overflow-hidden drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]">
           <AnimatePresence mode="wait">
             {direction === 'RIGHT' && (
               <motion.div
@@ -136,7 +136,7 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: [ -20, 20, -20 ], opacity: 1 }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                className="text-[#006E62]"
+                className="text-emerald-400"
               >
                 <ArrowRight size={32} />
               </motion.div>
@@ -147,7 +147,7 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
                 initial={{ x: 20, opacity: 0 }}
                 animate={{ x: [ 20, -20, 20 ], opacity: 1 }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                className="text-[#006E62]"
+                className="text-emerald-400"
               >
                 <ArrowLeft size={32} />
               </motion.div>
@@ -165,8 +165,8 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
           </AnimatePresence>
         </div>
 
-        <div className="relative w-40 h-40">
-          <svg viewBox="0 0 200 200" className={`w-full h-full transition-all duration-500 ${direction === 'READY' ? 'text-emerald-500' : 'text-[#006E62]'}`}>
+        <div className="relative w-40 h-40 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+          <svg viewBox="0 0 200 200" className="w-full h-full transition-all duration-500 text-emerald-400">
             {/* Face Silhouette - Thicker stroke */}
             <g className="transition-transform duration-700 ease-in-out" style={{ 
               transform: direction === 'RIGHT' ? 'translateX(20px) rotateY(45deg)' : direction === 'LEFT' ? 'translateX(-20px) rotateY(-45deg)' : 'none',
