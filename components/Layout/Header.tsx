@@ -2,6 +2,7 @@ import React from 'react';
 import { Menu, UserCircle } from 'lucide-react';
 import { AuthUser } from '../../types';
 import { googleDriveService } from '../../services/googleDriveService';
+import { LOGO_ICON } from '../../assets';
 
 interface HeaderProps {
   activeTab: string;
@@ -13,8 +14,8 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onMenuClick, user }) => {
   return (
     <header className="h-16 border-b border-gray-100 flex items-center justify-between px-4 md:px-8 bg-white sticky top-0 z-30">
       <div className="flex items-center gap-2">
-        <button className="md:hidden p-2 hover:bg-gray-100 rounded" onClick={onMenuClick}>
-          <Menu size={20} />
+        <button className="md:hidden p-1 hover:bg-gray-100 rounded flex items-center justify-center" onClick={onMenuClick}>
+          <img src={LOGO_ICON} alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
         </button>
         <h1 className="text-xl font-bold tracking-tight text-[#006E62] leading-tight md:hidden">HUREMA</h1>
       </div>

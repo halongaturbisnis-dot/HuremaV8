@@ -472,6 +472,10 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
     </div>
   );
 
+  const activeSessionType = (todayAttendance && !todayAttendance.check_out) 
+    ? 'REGULER' 
+    : (overtimeHistory.find(ot => !ot.check_out) ? 'LEMBUR' : null);
+
   return (
     <div className="min-h-screen bg-white pb-20">
       {/* Top Banner */}
@@ -479,42 +483,48 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12 blur-xl"></div>
         
-        <div className="relative z-10 flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-white">Selamat Datang</p>
-            <h1 className="text-2xl font-black tracking-tight leading-none">{account?.full_name?.split(' ')[0]}</h1>
-            <p className="text-[10px] font-bold text-white mt-1">
-              {account?.position || 'Staff'} • {account?.grade || account?.department || 'Operasional'}
-            </p>
-            
-            {elapsedTime && (
-              <div className="flex items-center gap-1.5 mt-2">
-                <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
-                <span className="text-[10px] font-bold font-mono text-red-400 tracking-wider">{elapsedTime}</span>
+        <div className="relative z-10 flex flex-col gap-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/90">Selamat Datang</p>
+              <h1 className="text-3xl font-black tracking-tight leading-none">{account?.full_name?.split(' ')[0]}</h1>
+              <p className="text-[11px] font-bold text-white mt-1">
+                {account?.position || 'Staff'} • {account?.grade || account?.department || 'Operasional'}
+              </p>
+              
+              <div className="flex items-center gap-1.5 mt-3 bg-white/10 w-fit px-3 py-1.5 rounded-full backdrop-blur-md">
+                <MapPin size={12} className="text-white" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-white">{account?.location?.name || 'Lokasi Belum Diatur'}</span>
               </div>
-            )}
+            </div>
 
-            <div className="flex items-center gap-1.5 mt-2 bg-white/10 w-fit px-2 py-1 rounded-full backdrop-blur-md">
-              <MapPin size={10} className="text-white" />
-              <span className="text-[9px] font-bold uppercase tracking-wider text-white">{account?.location?.name || 'Lokasi Belum Diatur'}</span>
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-24 h-24 rounded-3xl border-4 border-white/20 p-1.5 bg-white/10 backdrop-blur-md shadow-2xl">
+                {account?.photo_google_id ? (
+                  <img 
+                    src={googleDriveService.getFileUrl(account.photo_google_id)} 
+                    className="w-full h-full object-cover rounded-2xl" 
+                    alt="Profile" 
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-emerald-700 rounded-2xl flex items-center justify-center font-black text-2xl">
+                    {account?.full_name?.charAt(0)}
+                  </div>
+                )}
+              </div>
+              <span className="text-[10px] font-bold text-white/80 tracking-widest">{account?.internal_nik || '-'}</span>
             </div>
           </div>
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-16 h-16 rounded-2xl border-2 border-white/30 p-1 bg-white/10 backdrop-blur-md">
-              {account?.photo_google_id ? (
-                <img 
-                  src={googleDriveService.getFileUrl(account.photo_google_id)} 
-                  className="w-full h-full object-cover rounded-xl" 
-                  alt="Profile" 
-                />
-              ) : (
-                <div className="w-full h-full bg-emerald-700 rounded-xl flex items-center justify-center font-black text-xl">
-                  {account?.full_name?.charAt(0)}
-                </div>
-              )}
+
+          {elapsedTime && activeSessionType && (
+            <div className="flex flex-col items-center animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="bg-red-600 px-6 py-2 rounded-full shadow-xl shadow-red-900/40 border border-red-400/30">
+                <span className="text-lg font-black font-mono text-white tracking-widest leading-none">{elapsedTime}</span>
+              </div>
+              <span className="text-[10px] font-black text-white mt-2 tracking-[0.4em] uppercase opacity-90">{activeSessionType}</span>
             </div>
-            <span className="text-[9px] font-bold text-white tracking-widest">{account?.internal_nik || '-'}</span>
-          </div>
+          )}
         </div>
       </div>
 
