@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ClipboardList, Search, Filter, Clock, CheckCircle2, XCircle, AlertCircle, Eye, Loader2, Calendar, User, ArrowRight } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { dispensationService } from '../../services/dispensationService';
+import { googleDriveService } from '../../services/googleDriveService';
 import { DispensationRequest, AuthUser } from '../../types';
 import Swal from 'sweetalert2';
 import DispensationDetail from './components/DispensationDetail';
@@ -107,7 +108,7 @@ const AdminDispensationMain: React.FC<AdminDispensationMainProps> = ({ user }) =
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pegawai</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">KARYAWAN</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tanggal</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Masalah</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
@@ -124,8 +125,27 @@ const AdminDispensationMain: React.FC<AdminDispensationMainProps> = ({ user }) =
                   <tr key={req.id} className={`hover:bg-gray-50/50 transition-colors group ${!req.is_read ? 'bg-blue-50/30' : ''}`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
-                          <User size={16} />
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-100 shrink-0 shadow-sm">
+                          {req.account?.photo_google_id ? (
+                            <img 
+                              src={googleDriveService.getFileUrl(req.account.photo_google_id)} 
+                              alt={req.account.full_name}
+                              className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const parent = e.currentTarget.parentElement;
+                                if (parent) {
+                                  const placeholder = document.createElement('div');
+                                  placeholder.className = 'text-gray-400 flex items-center justify-center w-full h-full';
+                                  placeholder.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+                                  parent.appendChild(placeholder);
+                                }
+                              }}
+                            />
+                          ) : (
+                            <User size={20} className="text-gray-400" />
+                          )}
                         </div>
                         <div>
                           <p className="text-xs font-bold text-gray-800 flex items-center gap-2">

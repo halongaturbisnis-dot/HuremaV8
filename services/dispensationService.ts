@@ -3,10 +3,26 @@ import { DispensationRequest, DispensationRequestInput } from '../types';
 
 export const dispensationService = {
   async getAll() {
-    const { data, error } = await supabase
+    let query = supabase
       .from('dispensation_requests')
-      .select('*, account:accounts(full_name, internal_nik)')
-      .order('created_at', { ascending: false });
+      .select('*, account:accounts!inner(full_name, internal_nik, photo_google_id, location_id)');
+
+    // Apply Admin Location Scope
+    const { authService } = await import('./authService');
+    const user = authService.getCurrentUser();
+    if (user && user.role !== 'admin') {
+      const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
+      const limitedScopes = scopes.filter(s => s?.mode === 'limited');
+      
+      if (limitedScopes.length > 0) {
+        const allAllowedIds = Array.from(new Set(limitedScopes.flatMap(s => s?.location_ids || [])));
+        if (allAllowedIds.length > 0) {
+          query = query.in('account.location_id', allAllowedIds);
+        }
+      }
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
     if (error) throw error;
     return data as DispensationRequest[];
   },

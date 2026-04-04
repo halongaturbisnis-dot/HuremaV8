@@ -3,7 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, Receipt, FileText, Download, CheckCircle2, Clock, History, AlertCircle } from 'lucide-react';
 import { financeService } from '../../services/financeService';
 import { authService } from '../../services/authService';
+import { googleDriveService } from '../../services/googleDriveService';
 import { Compensation, CompensationStatus } from '../../types';
+import { User } from 'lucide-react';
 import CompensationDetail from './CompensationDetail';
 import Swal from 'sweetalert2';
 
@@ -110,7 +112,7 @@ const CompensationMain: React.FC = () => {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-50 text-gray-500 text-[10px] uppercase tracking-widest font-bold">
-                <th className="px-6 py-4">Pegawai</th>
+                <th className="px-6 py-4">KARYAWAN</th>
                 <th className="px-6 py-4">Tipe & Tanggal Exit</th>
                 <th className="px-6 py-4">Jenis & Nominal</th>
                 <th className="px-6 py-4">Status</th>
@@ -140,13 +142,39 @@ const CompensationMain: React.FC = () => {
                 compensations.map((c) => (
                   <tr key={c.id} className="hover:bg-gray-50 transition-colors group">
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="font-semibold text-gray-900">{c.account?.full_name}</div>
-                        {!c.is_read && c.status === 'Pending' && (
-                          <span className="px-1.5 py-0.5 bg-red-500 text-white text-[8px] font-black rounded uppercase tracking-tighter animate-pulse">NEW</span>
-                        )}
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-100 shrink-0 shadow-sm">
+                          {c.account?.photo_google_id ? (
+                            <img 
+                              src={googleDriveService.getFileUrl(c.account.photo_google_id)} 
+                              alt={c.account.full_name}
+                              className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const parent = e.currentTarget.parentElement;
+                                if (parent) {
+                                  const placeholder = document.createElement('div');
+                                  placeholder.className = 'text-gray-400 flex items-center justify-center w-full h-full';
+                                  placeholder.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+                                  parent.appendChild(placeholder);
+                                }
+                              }}
+                            />
+                          ) : (
+                            <User size={20} className="text-gray-400" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <div className="font-semibold text-gray-900">{c.account?.full_name}</div>
+                            {!c.is_read && c.status === 'Pending' && (
+                              <span className="px-1.5 py-0.5 bg-red-500 text-white text-[8px] font-black rounded uppercase tracking-tighter animate-pulse">NEW</span>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500">{c.account?.internal_nik}</div>
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500">{c.account?.internal_nik}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className={`text-xs font-bold uppercase tracking-wider mb-1 ${c.termination_type === 'Pemecatan / PHK' ? 'text-red-600' : 'text-orange-600'}`}>

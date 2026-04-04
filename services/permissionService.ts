@@ -24,10 +24,26 @@ export const permissionService = {
    * Mendapatkan semua pengajuan izin (Admin)
    */
   async getAll(): Promise<PermissionRequest[]> {
-    const { data, error } = await supabase
+    let query = supabase
       .from('account_permission_requests')
-      .select('*, account:accounts(full_name, internal_nik)')
+      .select('*, account:accounts!account_id!inner(full_name, internal_nik, location_id, photo_google_id)')
       .order('created_at', { ascending: false });
+    
+    // Apply Admin Location Scope
+    const user = authService.getCurrentUser();
+    if (user && user.role !== 'admin') {
+      const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
+      const limitedScopes = scopes.filter(s => s?.mode === 'limited');
+      
+      if (limitedScopes.length > 0) {
+        const allAllowedIds = Array.from(new Set(limitedScopes.flatMap(s => s?.location_ids || [])));
+        if (allAllowedIds.length > 0) {
+          query = query.in('account.location_id', allAllowedIds);
+        }
+      }
+    }
+
+    const { data, error } = await query;
     
     if (error) {
       console.error('Error fetching all permission requests:', error);

@@ -27,7 +27,7 @@ export const leaveService = {
   async getAllAnnual(): Promise<AnnualLeaveRequest[]> {
     let query = supabase
       .from('account_annual_leaves')
-      .select('*, account:accounts!account_id!inner(full_name, internal_nik, location_id)')
+      .select('*, account:accounts!account_id!inner(full_name, internal_nik, location_id, photo_google_id)')
       .order('created_at', { ascending: false });
     
     // Apply Admin Location Scope
@@ -302,7 +302,7 @@ export const leaveService = {
   async getAll(): Promise<LeaveRequestExtended[]> {
     let query = supabase
       .from('account_leave_requests')
-      .select('*, account:accounts!account_id!inner(full_name, internal_nik, location_id)')
+      .select('*, account:accounts!account_id!inner(full_name, internal_nik, location_id, photo_google_id)')
       .order('created_at', { ascending: false });
     
     // Apply Admin Location Scope

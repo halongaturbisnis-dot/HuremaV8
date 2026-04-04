@@ -8,9 +8,24 @@ export const financeService = {
       .from('finance_early_salary_requests')
       .select(`
         *,
-        account:accounts!finance_early_salary_requests_account_id_fkey(full_name, internal_nik)
+        account:accounts!finance_early_salary_requests_account_id_fkey!inner(full_name, internal_nik, photo_google_id, location_id)
       `)
       .order('created_at', { ascending: false });
+
+    // Apply Admin Location Scope
+    const { authService } = await import('./authService');
+    const user = authService.getCurrentUser();
+    if (user && user.role !== 'admin') {
+      const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
+      const limitedScopes = scopes.filter(s => s?.mode === 'limited');
+      
+      if (limitedScopes.length > 0) {
+        const allAllowedIds = Array.from(new Set(limitedScopes.flatMap(s => s?.location_ids || [])));
+        if (allAllowedIds.length > 0) {
+          query = query.in('account.location_id', allAllowedIds);
+        }
+      }
+    }
 
     if (filters?.account_id) query = query.eq('account_id', filters.account_id);
     if (filters?.month) query = query.eq('month', filters.month);
@@ -168,9 +183,24 @@ export const financeService = {
       .from('finance_reimbursements')
       .select(`
         *,
-        account:accounts!finance_reimbursements_account_id_fkey(full_name, internal_nik)
+        account:accounts!finance_reimbursements_account_id_fkey!inner(full_name, internal_nik, photo_google_id, location_id)
       `)
       .order('created_at', { ascending: false });
+
+    // Apply Admin Location Scope
+    const { authService } = await import('./authService');
+    const user = authService.getCurrentUser();
+    if (user && user.role !== 'admin') {
+      const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
+      const limitedScopes = scopes.filter(s => s?.mode === 'limited');
+      
+      if (limitedScopes.length > 0) {
+        const allAllowedIds = Array.from(new Set(limitedScopes.flatMap(s => s?.location_ids || [])));
+        if (allAllowedIds.length > 0) {
+          query = query.in('account.location_id', allAllowedIds);
+        }
+      }
+    }
 
     if (filters?.account_id) {
       query = query.eq('account_id', filters.account_id);
@@ -457,9 +487,24 @@ export const financeService = {
       .from('account_compensation_logs')
       .select(`
         *,
-        account:accounts(full_name, internal_nik)
+        account:accounts!inner(full_name, internal_nik, photo_google_id, location_id)
       `)
       .order('created_at', { ascending: false });
+
+    // Apply Admin Location Scope
+    const { authService } = await import('./authService');
+    const user = authService.getCurrentUser();
+    if (user && user.role !== 'admin') {
+      const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
+      const limitedScopes = scopes.filter(s => s?.mode === 'limited');
+      
+      if (limitedScopes.length > 0) {
+        const allAllowedIds = Array.from(new Set(limitedScopes.flatMap(s => s?.location_ids || [])));
+        if (allAllowedIds.length > 0) {
+          query = query.in('account.location_id', allAllowedIds);
+        }
+      }
+    }
 
     if (filters?.status) query = query.eq('status', filters.status);
     if (filters?.account_id) query = query.eq('account_id', filters.account_id);

@@ -69,7 +69,7 @@ export const overtimeService = {
   async getOvertimeByRange(startDate: string, endDate: string) {
     let query = supabase
       .from('overtimes')
-      .select('*, account:accounts!account_id!inner(location_id)')
+      .select('*, account:accounts!account_id!inner(location_id, photo_google_id)')
       .gte('created_at', `${startDate}T00:00:00Z`)
       .lte('created_at', `${endDate}T23:59:59Z`)
       .order('created_at', { ascending: true });

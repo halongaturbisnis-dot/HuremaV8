@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Receipt, ArrowLeft, CheckCircle2, XCircle, Clock, FileText, Download, Wallet } from 'lucide-react';
+import { Plus, Search, Filter, Receipt, ArrowLeft, CheckCircle2, XCircle, Clock, FileText, Download, Wallet, User } from 'lucide-react';
 import { financeService } from '../../services/financeService';
 import { authService } from '../../services/authService';
+import { googleDriveService } from '../../services/googleDriveService';
 import { EarlySalaryRequest, EarlySalaryStatus } from '../../types';
 import EarlySalaryForm from './EarlySalaryForm';
 import EarlySalaryDetail from './EarlySalaryDetail';
@@ -153,7 +154,7 @@ const EarlySalaryModule: React.FC = () => {
             <thead>
               <tr className="bg-gray-50 text-gray-500 text-[10px] uppercase tracking-widest font-bold">
                 <th className="px-6 py-4">Periode</th>
-                {isAdmin && <th className="px-6 py-4">Pegawai</th>}
+                {isAdmin && <th className="px-6 py-4">KARYAWAN</th>}
                 <th className="px-6 py-4">Alasan</th>
                 <th className="px-6 py-4">Nominal</th>
                 <th className="px-6 py-4">Status</th>
@@ -192,8 +193,34 @@ const EarlySalaryModule: React.FC = () => {
                     </td>
                     {isAdmin && (
                       <td className="px-6 py-4">
-                        <div className="font-semibold text-gray-900">{r.account?.full_name}</div>
-                        <div className="text-xs text-gray-500">{r.account?.internal_nik}</div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-100 shrink-0 shadow-sm">
+                            {r.account?.photo_google_id ? (
+                              <img 
+                                src={googleDriveService.getFileUrl(r.account.photo_google_id)} 
+                                alt={r.account.full_name}
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  const parent = e.currentTarget.parentElement;
+                                  if (parent) {
+                                    const placeholder = document.createElement('div');
+                                    placeholder.className = 'text-gray-400 flex items-center justify-center w-full h-full';
+                                    placeholder.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+                                    parent.appendChild(placeholder);
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <User size={20} className="text-gray-400" />
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900">{r.account?.full_name}</div>
+                            <div className="text-xs text-gray-500">{r.account?.internal_nik}</div>
+                          </div>
+                        </div>
                       </td>
                     )}
                     <td className="px-6 py-4">
