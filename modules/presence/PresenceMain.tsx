@@ -27,6 +27,8 @@ const PresenceMain: React.FC = () => {
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
   const [activeHoliday, setActiveHoliday] = useState<any>(null);
+  const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   
   // State khusus Shift Dinamis
   const [dynamicShifts, setDynamicShifts] = useState<Schedule[]>([]);
@@ -51,8 +53,9 @@ const PresenceMain: React.FC = () => {
     return () => {
       clearInterval(timeInterval);
       if (watchId.current !== null) navigator.geolocation.clearWatch(watchId.current);
+      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
     };
-  }, [currentAccountId]);
+  }, [currentAccountId, photoPreviewUrl]);
 
   const fetchInitialData = async () => {
     if (!currentAccountId) return;
@@ -129,7 +132,21 @@ const PresenceMain: React.FC = () => {
     }
   }, [coords, account]);
 
-  const handleAttendance = async (photoBlob: Blob) => {
+  const handleCaptureComplete = (photoBlob: Blob) => {
+    setCapturedPhoto(photoBlob);
+    setPhotoPreviewUrl(URL.createObjectURL(photoBlob));
+    setIsCameraActive(false);
+  };
+
+  const resetCapture = () => {
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    setCapturedPhoto(null);
+    setPhotoPreviewUrl(null);
+  };
+
+  const handleAttendance = async () => {
+    if (!capturedPhoto) return;
+    const photoBlob = capturedPhoto;
     const todayDay = serverTime.getDay();
     
     // Resolve Target Schedule (Statis vs Dinamis vs Fleksibel)
@@ -271,6 +288,7 @@ const PresenceMain: React.FC = () => {
       });
       
       // Refresh data tampilan
+      resetCapture();
       await fetchInitialData();
     } catch (error: any) {
       console.error("Attendance Process Error:", error);
@@ -353,10 +371,46 @@ const PresenceMain: React.FC = () => {
           <div className="lg:col-span-7 order-3 lg:order-1 w-full">
             {isCameraActive ? (
               <PresenceCamera 
-                onCapture={handleAttendance}
+                onCapture={handleCaptureComplete}
                 onClose={() => setIsCameraActive(false)}
                 isProcessing={isCapturing}
               />
+            ) : photoPreviewUrl ? (
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col items-center shadow-sm animate-in zoom-in duration-300">
+                <div className="relative w-full aspect-[3/4] max-w-sm rounded-2xl overflow-hidden shadow-2xl mb-6 ring-1 ring-gray-100">
+                  <img src={photoPreviewUrl} alt="Preview" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-white">
+                      <ShieldCheck size={16} className="text-emerald-400" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest">Identitas Terverifikasi</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="w-full max-w-sm space-y-3">
+                  <button 
+                    disabled={isCapturing}
+                    onClick={handleAttendance}
+                    className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold uppercase text-xs tracking-widest shadow-lg transition-all ${
+                      isCheckOut 
+                      ? 'bg-rose-500 text-white hover:bg-rose-600' 
+                      : 'bg-[#006E62] text-white hover:bg-[#005a50]'
+                    } hover:scale-[1.02] active:scale-95 disabled:opacity-50`}
+                  >
+                    {isCheckOut ? <AlertCircle size={18} /> : <Fingerprint size={18} />}
+                    {isCapturing ? 'MEMPROSES...' : (isCheckOut ? 'KONFIRMASI PULANG' : 'KONFIRMASI MASUK')}
+                  </button>
+                  
+                  <button 
+                    disabled={isCapturing}
+                    onClick={resetCapture}
+                    className="w-full py-3 text-gray-400 font-bold text-[10px] uppercase tracking-widest hover:text-gray-600 transition-colors"
+                  >
+                    Ambil Ulang Foto
+                  </button>
+                </div>
+              </div>
             ) : isHolidayToday ? (
               <div className="bg-white rounded-2xl border border-gray-100 p-12 flex flex-col items-center justify-center shadow-sm text-center">
                 <div className="w-24 h-24 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mb-8 shadow-xl">
