@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 /* Added ShieldCheck to lucide-react imports */
-import { Fingerprint, Clock, MapPin, History, AlertCircle, Map as MapIcon, Camera, Search, UserX, CalendarClock, MessageSquare, ShieldCheck, Umbrella, RefreshCw, Check } from 'lucide-react';
+import { Fingerprint, Clock, MapPin, History, AlertCircle, Map as MapIcon, Camera, Search, UserX, CalendarClock, MessageSquare, ShieldCheck, Umbrella, RefreshCw, Check, Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { presenceService } from '../../services/presenceService';
 import { accountService } from '../../services/accountService';
 import { scheduleService } from '../../services/scheduleService';
@@ -34,6 +35,8 @@ const PresenceMain: React.FC = () => {
   const [dynamicShifts, setDynamicShifts] = useState<Schedule[]>([]);
   const [selectedShift, setSelectedShift] = useState<Schedule | null>(null);
   const [isFetchingShifts, setIsFetchingShifts] = useState(false);
+  const [landmarker, setLandmarker] = useState<any>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
   const watchId = useRef<number | null>(null);
 
@@ -44,6 +47,7 @@ const PresenceMain: React.FC = () => {
     if (!currentAccountId) return;
     
     fetchInitialData();
+    initializeAi();
     const timeInterval = setInterval(() => {
       setServerTime(prev => new Date(prev.getTime() + 1000));
     }, 1000);
@@ -90,6 +94,30 @@ const PresenceMain: React.FC = () => {
       console.error(error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const initializeAi = async () => {
+    if (landmarker || isAiLoading) return;
+    try {
+      setIsAiLoading(true);
+      const filesetResolver = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+      );
+      const lm = await FaceLandmarker.createFromOptions(filesetResolver, {
+        baseOptions: {
+          modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
+          delegate: "GPU"
+        },
+        outputFaceBlendshapes: true,
+        runningMode: "VIDEO",
+        numFaces: 1
+      });
+      setLandmarker(lm);
+    } catch (err) {
+      console.error("AI Background Init Error:", err);
+    } finally {
+      setIsAiLoading(false);
     }
   };
 
@@ -374,6 +402,7 @@ const PresenceMain: React.FC = () => {
                 onCapture={handleCaptureComplete}
                 onClose={() => setIsCameraActive(false)}
                 isProcessing={isCapturing}
+                landmarker={landmarker}
               />
             ) : photoPreviewUrl ? (
               <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col items-center shadow-sm animate-in zoom-in duration-300">
@@ -476,16 +505,16 @@ const PresenceMain: React.FC = () => {
                 </p>
                 
                 <button 
-                  disabled={isBlockedByLocation || isCapturing || (account.schedule_type === 'Shift Dinamis' && !todayAttendance && !selectedShift)}
+                  disabled={isBlockedByLocation || isCapturing || !landmarker || (account.schedule_type === 'Shift Dinamis' && !todayAttendance && !selectedShift)}
                   onClick={() => setIsCameraActive(true)}
                   className={`mt-8 flex items-center gap-3 px-12 py-4 rounded-2xl font-bold uppercase text-xs tracking-widest shadow-lg transition-all ${
-                    !isBlockedByLocation && !isCapturing && (account.schedule_type !== 'Shift Dinamis' || !!todayAttendance || !!selectedShift)
+                    !isBlockedByLocation && !isCapturing && landmarker && (account.schedule_type !== 'Shift Dinamis' || !!todayAttendance || !!selectedShift)
                     ? 'bg-[#006E62] text-white hover:bg-[#005a50] hover:scale-105 active:scale-95' 
                     : 'bg-gray-100 text-gray-300 cursor-not-allowed shadow-none'
                   }`}
                 >
-                  <Camera size={18} />
-                  {isCapturing ? 'MEMPROSES...' : 'MULAI VERIFIKASI WAJAH'}
+                  {isAiLoading ? <Loader2 className="animate-spin" size={18} /> : <Camera size={18} />}
+                  {isCapturing ? 'MEMPROSES...' : (isAiLoading ? 'MENYIAPKAN AI...' : 'VERIFIKASI')}
                 </button>
               </div>
             ) : (
