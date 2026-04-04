@@ -349,7 +349,7 @@ const PresenceMain: React.FC = () => {
       </div>
 
       {activeTab === 'capture' ? (
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8 items-start animate-in fade-in duration-500">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 lg:gap-8 items-start animate-in fade-in duration-500">
           <div className="lg:col-span-7 order-3 lg:order-1 w-full">
             {isCameraActive ? (
               <PresenceCamera 
@@ -445,10 +445,10 @@ const PresenceMain: React.FC = () => {
             )}
           </div>
 
-          <div className="lg:col-span-5 order-1 lg:order-2 space-y-6 w-full flex flex-col">
+          <div className="lg:col-span-5 order-1 lg:order-2 space-y-4 lg:space-y-6 w-full flex flex-col">
             {/* Status Geotag Card - Order 1 on Mobile */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm order-1 lg:order-2">
-               <div className="flex items-center justify-between mb-4">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 lg:p-6 shadow-sm order-1 lg:order-2">
+               <div className="hidden lg:flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <MapPin size={16} className="text-[#006E62]" />
                     <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-500">Status Geotag</h4>
@@ -494,8 +494,8 @@ const PresenceMain: React.FC = () => {
             </div>
 
             {/* Waktu Terverifikasi Card - Order 2 on Mobile */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm overflow-hidden relative order-2 lg:order-1">
-               <div className="flex items-center justify-between mb-6">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 lg:p-5 shadow-sm overflow-hidden relative order-2 lg:order-1">
+               <div className="hidden lg:flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">
                     <Clock size={16} className="text-[#006E62]" />
                     <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-500">Waktu Terverifikasi</h4>
@@ -503,7 +503,7 @@ const PresenceMain: React.FC = () => {
                </div>
                <div className="text-center py-4 relative z-10">
                   <div className="text-5xl font-sans font-bold text-gray-800 tracking-tighter">
-                    {serverTime.toLocaleTimeString('id-ID', { hour12: false })}
+                    {serverTime.toLocaleTimeString('id-ID', { hour12: false }).replace(/\./g, ':')}
                   </div>
                   <div className="text-[11px] font-bold text-[#006E62] uppercase tracking-widest mt-2">
                     {serverTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
@@ -520,7 +520,7 @@ const PresenceMain: React.FC = () => {
                </div>
 
                {account.schedule_type !== 'Fleksibel' && (
-                 <div className="mt-8 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100/50 space-y-3">
+                 <div className="mt-4 lg:mt-8 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100/50 space-y-3">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-[#006E62] uppercase tracking-wider mb-2">
                       <CalendarClock size={14} /> {account.schedule_type === 'Shift Dinamis' ? 'Shift Terpilih' : 'Jadwal Hari Ini'}
                     </div>
@@ -543,7 +543,7 @@ const PresenceMain: React.FC = () => {
                  </div>
                )}
 
-               <div className="mt-6 pt-6 border-t border-gray-50">
+               <div className="mt-4 pt-4 lg:mt-6 lg:pt-6 border-t border-gray-50">
                   <div className="flex justify-center mb-4">
                     <span className="text-[10px] font-bold text-[#006E62] bg-[#006E62]/5 px-2 py-0.5 rounded uppercase tracking-tighter">
                       {displaySchedule?.name || (account.schedule_type === 'Fleksibel' ? 'Fleksibel' : 'Reguler')}
@@ -553,7 +553,7 @@ const PresenceMain: React.FC = () => {
                     <div className="text-center">
                       <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Status Masuk</p>
                       <p className={`text-xs font-bold ${todayAttendance?.status_in === 'Terlambat' ? 'text-rose-500' : 'text-[#006E62]'}`}>
-                        {todayAttendance?.check_in ? `${new Date(todayAttendance.check_in).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(':', '.')} • ${todayAttendance.status_in}` : '--:--'}
+                        {todayAttendance?.check_in ? `${new Date(todayAttendance.check_in).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(/\./g, ':')} • ${todayAttendance.status_in}` : '--:--'}
                       </p>
                     </div>
                     <div className="text-center border-l border-gray-50">

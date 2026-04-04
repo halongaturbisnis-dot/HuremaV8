@@ -17,7 +17,7 @@ const PresenceMap: React.FC<PresenceMapProps> = ({ userLat, userLng, officeLat, 
 
   useEffect(() => {
     if (!mapRef.current) {
-      mapRef.current = L.map(containerId, { zoomControl: false }).setView([officeLat, officeLng], 16);
+      mapRef.current = L.map(containerId, { zoomControl: false, attributionControl: false }).setView([officeLat, officeLng], 16);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapRef.current);
       
       // Office Circle
