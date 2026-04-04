@@ -278,7 +278,7 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
                   exit={{ opacity: 0, y: -5 }}
                   className="bg-emerald-500/20 backdrop-blur-xl px-3 py-1 rounded-lg border border-emerald-500/30"
                 >
-                  <p className="text-emerald-400 text-[8px] font-bold uppercase tracking-[0.1em]">Wajah Tegak & Lurus ke Depan</p>
+                  <p className="text-emerald-400 text-[8px] font-bold uppercase tracking-[0.1em]">Wajah Tegak Di Tengah & Lurus ke Depan</p>
                 </motion.div>
               )}
             </AnimatePresence>
