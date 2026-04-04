@@ -95,17 +95,21 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
 
           setStep(prev => {
             if (prev === 'RIGHT' && noseRelativeX < 0.35) return 'LEFT';
-            if (prev === 'LEFT' && noseRelativeX > 0.65) return 'UP';
-            if (prev === 'UP' && noseRelativeY < 0.35) return 'DOWN';
-            if (prev === 'DOWN' && noseRelativeY > 0.65) return 'MOUTH';
+            if (prev === 'LEFT' && noseRelativeX > 0.65) return 'MOUTH';
             
             if (prev === 'MOUTH') {
+              // Pastikan wajah dalam posisi netral (tidak mendongak/menunduk) sebelum cek mulut
+              const isNeutralY = noseRelativeY > 0.4 && noseRelativeY < 0.6;
               const blendshapes = results.faceBlendshapes[0]?.categories;
-              if (blendshapes) {
+              if (blendshapes && isNeutralY) {
                 const jawOpen = blendshapes.find((c: any) => (c.categoryName === 'jawOpen' || c.label === 'jawOpen'))?.score || 0;
-                if (jawOpen > 0.35) return 'READY';
+                if (jawOpen > 0.45) return 'UP';
               }
             }
+
+            if (prev === 'UP' && noseRelativeY < 0.35) return 'DOWN';
+            if (prev === 'DOWN' && noseRelativeY > 0.65) return 'READY';
+            
             return prev;
           });
         }
@@ -294,14 +298,14 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
               {step === 'LEFT' && (
                 <p className="text-white text-[11px] font-bold uppercase tracking-[0.2em]">Tengok ke Kiri</p>
               )}
+              {step === 'MOUTH' && (
+                <p className="text-white text-[11px] font-bold uppercase tracking-[0.2em]">Buka Mulut Anda</p>
+              )}
               {step === 'UP' && (
                 <p className="text-white text-[11px] font-bold uppercase tracking-[0.2em]">Dangak ke Atas</p>
               )}
               {step === 'DOWN' && (
                 <p className="text-white text-[11px] font-bold uppercase tracking-[0.2em]">Menunduk ke Bawah</p>
-              )}
-              {step === 'MOUTH' && (
-                <p className="text-white text-[11px] font-bold uppercase tracking-[0.2em]">Buka Mulut Anda</p>
               )}
               {step === 'READY' && (
                 <p className="text-emerald-400 text-[11px] font-bold uppercase tracking-[0.2em]">Identitas Terverifikasi</p>
@@ -345,9 +349,9 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
                 style={{ 
                   width: step === 'RIGHT' ? '20%' : 
                          step === 'LEFT' ? '40%' : 
-                         step === 'UP' ? '60%' : 
-                         step === 'DOWN' ? '80%' : 
-                         step === 'MOUTH' ? '90%' : '100%' 
+                         step === 'MOUTH' ? '60%' : 
+                         step === 'UP' ? '80%' : 
+                         step === 'DOWN' ? '90%' : '100%' 
                 }}
               />
             </div>
