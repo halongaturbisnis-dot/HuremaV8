@@ -31,6 +31,8 @@ const OvertimeMain: React.FC = () => {
   const [distance, setDistance] = useState<number | null>(null);
   const [landmarker, setLandmarker] = useState<any>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   const watchId = useRef<number | null>(null);
 
   const currentUser = authService.getCurrentUser();
@@ -50,8 +52,9 @@ const OvertimeMain: React.FC = () => {
     return () => {
       clearInterval(timeInterval);
       if (watchId.current !== null) navigator.geolocation.clearWatch(watchId.current);
+      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
     };
-  }, [currentAccountId]);
+  }, [currentAccountId, photoPreviewUrl]);
 
   const fetchInitialData = async () => {
     if (!currentAccountId) return;
@@ -141,31 +144,23 @@ const OvertimeMain: React.FC = () => {
     }
   }, [coords, currentAddress, isFetchingAddress]);
 
-  const handleOvertime = async (photoBlob: Blob) => {
-    if (isRegularActive) {
-      return Swal.fire('Akses Ditolak', 'Anda tidak dapat memulai lembur saat sesi kerja reguler sedang aktif. Harap Check-Out reguler terlebih dahulu.', 'warning');
-    }
+  const handleCaptureComplete = (photoBlob: Blob) => {
+    setCapturedPhoto(photoBlob);
+    setPhotoPreviewUrl(URL.createObjectURL(photoBlob));
+    setIsCameraActive(false);
+  };
 
-    if (!account) return;
+  const resetCapture = () => {
+    setCapturedPhoto(null);
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    setPhotoPreviewUrl(null);
+  };
 
-    if (!coords || distance === null) {
-      return Swal.fire('Lokasi Belum Siap', 'Sinyal GPS sedang dioptimalkan...', 'warning');
-    }
-
-    // Geofencing Check
-    const isCheckOut = !!todayOT && !todayOT.check_out;
-    // FIX: Ensure strict boolean check
-    const isLimited = isCheckOut 
-      ? account.is_presence_limited_ot_out === true 
-      : account.is_presence_limited_ot_in === true;
-    const locationRadius = account.location?.radius || 100;
-
-    if (isLimited && distance > locationRadius) {
-       setIsCameraActive(false);
-       return Swal.fire('Diluar Radius', `Anda berada diluar radius penempatan untuk lembur.`, 'error');
-    }
+  const handleSubmitOvertime = async () => {
+    if (!capturedPhoto || !account || !coords) return;
 
     // Alasan Lembur Mandatory Prompt
+    const isCheckOut = !!todayOT && !todayOT.check_out;
     const { value: otReason, isConfirmed } = await Swal.fire({
       title: 'Konfirmasi Lembur',
       input: 'textarea',
@@ -182,18 +177,17 @@ const OvertimeMain: React.FC = () => {
       }
     });
 
-    if (!isConfirmed) return;
+    if (!isConfirmed || !otReason) return;
 
     try {
       setIsCapturing(true);
       
-      // Capture current state to avoid race conditions
       const currentOT = todayOT;
       const isCurrentlyCheckingOut = !!currentOT && !currentOT.check_out;
 
       const [address, photoId, otPolicy] = await Promise.all([
         currentAddress || presenceService.getReverseGeocode(coords.lat, coords.lng),
-        googleDriveService.uploadFile(new File([photoBlob], `OT_${isCurrentlyCheckingOut ? 'OUT' : 'IN'}_${Date.now()}.jpg`)),
+        googleDriveService.uploadFile(new File([capturedPhoto], `OT_${isCurrentlyCheckingOut ? 'OUT' : 'IN'}_${Date.now()}.jpg`)),
         settingsService.getSetting('ot_approval_policy', 'manual')
       ]);
 
@@ -234,7 +228,6 @@ const OvertimeMain: React.FC = () => {
           reason: otReason
         });
 
-        // WORKFLOW INTEGRATION: Masuk ke Pengajuan jika policy MANUAL
         if (otPolicy === 'manual') {
           await submissionService.create({
             account_id: account.id,
@@ -253,7 +246,7 @@ const OvertimeMain: React.FC = () => {
         }
       }
 
-      setIsCameraActive(false); 
+      resetCapture();
       
       let successMsg = `Presensi Lembur dicatat.`;
       if (isCurrentlyCheckingOut && otPolicy === 'manual') {
@@ -299,60 +292,96 @@ const OvertimeMain: React.FC = () => {
   const isBlockedByLocation = isLimited && !isWithinRadius;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
-            <Timer size={28} />
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Desktop Header - Hidden on Mobile */}
+      <div className="hidden md:flex bg-white rounded-3xl border border-gray-100 p-8 shadow-sm justify-between items-center gap-8">
+        <div className="flex items-center gap-6">
+          <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 shadow-inner">
+            <Timer size={32} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-800 tracking-tight">Presensi Lembur</h2>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{account?.full_name} • Modul OT</p>
+            <h2 className="text-2xl font-black text-gray-800 tracking-tight">Presensi Lembur</h2>
+            <p className="text-xs text-gray-400 font-bold uppercase tracking-[0.2em] mt-1">
+              {account.full_name} • {account.internal_nik}
+            </p>
           </div>
         </div>
-        <div className="flex gap-2 p-1 bg-gray-50 rounded-xl border border-gray-100">
+        
+        <div className="flex gap-2 p-1.5 bg-gray-50 rounded-2xl border border-gray-100">
           <button 
             onClick={() => setActiveTab('capture')}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold uppercase transition-all ${activeTab === 'capture' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`flex items-center gap-2.5 px-8 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'capture' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <Camera size={16} /> Capturing
+            <Camera size={18} /> Capturing
           </button>
           <button 
             onClick={() => setActiveTab('history')}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold uppercase transition-all ${activeTab === 'history' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`flex items-center gap-2.5 px-8 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <History size={16} /> Log OT
+            <History size={18} /> Log OT
           </button>
         </div>
       </div>
 
       {activeTab === 'capture' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-in fade-in duration-500">
-          <div className="lg:col-span-7">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-in fade-in duration-700">
+          {/* Left Column: Camera / Preview / Status */}
+          <div className="lg:col-span-7 space-y-6">
             {isCameraActive ? (
               <PresenceCamera 
-                onCapture={handleOvertime}
+                onCapture={handleCaptureComplete}
                 onClose={() => setIsCameraActive(false)}
                 isProcessing={isCapturing}
                 landmarker={landmarker}
               />
-            ) : isRegularActive ? (
-              <div className="bg-white rounded-2xl border border-gray-100 p-12 flex flex-col items-center justify-center shadow-sm text-center">
-                <div className="w-24 h-24 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mb-8 shadow-xl">
-                   <AlertCircle size={48} />
+            ) : capturedPhoto ? (
+              <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm flex flex-col items-center animate-in zoom-in duration-500">
+                <div className="relative w-full aspect-[3/4] max-w-sm bg-black rounded-2xl overflow-hidden shadow-2xl ring-4 ring-amber-50">
+                  <img 
+                    src={photoPreviewUrl!} 
+                    alt="Preview" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-4 right-4 bg-emerald-500 text-white px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg">
+                    <ShieldCheck size={14} /> Identitas Terverifikasi
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-800">Sesi Reguler Aktif</h3>
-                <p className="text-sm text-gray-400 mt-4 max-w-xs leading-relaxed">Sistem mendeteksi Anda masih berada dalam jam kerja reguler (Belum Check-Out). Lembur hanya bisa dimulai di luar jam sesi kerja reguler.</p>
+                
+                <div className="mt-8 flex gap-4 w-full max-w-sm">
+                  <button 
+                    onClick={resetCapture}
+                    disabled={isCapturing}
+                    className="flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest border-2 border-gray-100 text-gray-400 hover:bg-gray-50 transition-all"
+                  >
+                    <RefreshCw size={18} /> Ulangi
+                  </button>
+                  <button 
+                    onClick={handleSubmitOvertime}
+                    disabled={isCapturing}
+                    className="flex-[2] flex items-center justify-center gap-3 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest bg-amber-600 text-white hover:bg-amber-700 shadow-lg shadow-amber-200 transition-all disabled:opacity-50"
+                  >
+                    {isCapturing ? <Loader2 className="animate-spin" size={18} /> : <Check size={18} />}
+                    {isCapturing ? 'MEMPROSES...' : 'KONFIRMASI PRESENSI'}
+                  </button>
+                </div>
+              </div>
+            ) : isRegularActive ? (
+              <div className="bg-white rounded-3xl border border-gray-100 p-16 flex flex-col items-center justify-center shadow-sm text-center">
+                <div className="w-28 h-28 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mb-10 shadow-xl ring-8 ring-rose-50/50">
+                   <AlertCircle size={56} />
+                </div>
+                <h3 className="text-3xl font-black text-gray-800 tracking-tight">Sesi Reguler Aktif</h3>
+                <p className="text-sm text-gray-400 mt-4 max-w-xs leading-relaxed font-medium">Sistem mendeteksi Anda masih berada dalam jam kerja reguler (Belum Check-Out). Lembur hanya bisa dimulai di luar jam sesi kerja reguler.</p>
               </div>
             ) : (!todayOT || !todayOT.check_out) ? (
-              <div className="bg-white rounded-2xl border border-gray-100 p-12 flex flex-col items-center justify-center shadow-sm text-center">
-                <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-8 shadow-xl transition-all duration-500 ${!isBlockedByLocation ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-500'}`}>
-                   <Timer size={48} />
+              <div className="bg-white rounded-3xl border border-gray-100 p-16 flex flex-col items-center justify-center shadow-sm text-center">
+                <div className={`w-28 h-28 rounded-full flex items-center justify-center mb-10 shadow-xl transition-all duration-700 ring-8 ${!isBlockedByLocation ? 'bg-amber-50 text-amber-600 ring-amber-50/50' : 'bg-rose-50 text-rose-500 ring-rose-50/50'}`}>
+                   <Timer size={56} />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-800">
+                <h3 className="text-3xl font-black text-gray-800 tracking-tight">
                    {!!todayOT && !todayOT.check_out ? 'Selesaikan Lembur?' : 'Mulai Lembur Sekarang?'}
                 </h3>
-                <p className="text-sm text-gray-400 mt-2 max-w-xs">
+                <p className="text-sm text-gray-400 mt-3 max-w-xs font-medium">
                   {!isBlockedByLocation 
                     ? 'Verifikasi identitas diperlukan untuk mencatat waktu tambahan kerja Anda hari ini.'
                     : 'Akses presensi lembur terkunci. Anda harus berada di area lokasi penempatan.'}
@@ -360,71 +389,78 @@ const OvertimeMain: React.FC = () => {
                 <button 
                   disabled={isBlockedByLocation || isCapturing || !landmarker}
                   onClick={() => setIsCameraActive(true)}
-                  className={`mt-10 flex items-center gap-3 px-12 py-4 rounded-2xl font-bold uppercase text-xs tracking-widest shadow-lg transition-all ${
+                  className={`mt-12 flex items-center gap-4 px-16 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-xl transition-all ${
                     !isBlockedByLocation && !isCapturing && landmarker
-                    ? 'bg-amber-600 text-white hover:bg-amber-700 hover:scale-105' 
+                    ? 'bg-amber-600 text-white hover:bg-amber-700 hover:scale-105 shadow-amber-200' 
                     : 'bg-gray-100 text-gray-300 cursor-not-allowed shadow-none'
                   }`}
                 >
-                  {isAiLoading ? <Loader2 className="animate-spin" size={18} /> : <Camera size={18} />}
+                  {isAiLoading ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
                   {isCapturing ? 'MEMPROSES...' : (isAiLoading ? 'MENYIAPKAN AI...' : 'MULAI VERIFIKASI WAJAH')}
                 </button>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-gray-100 p-20 flex flex-col items-center justify-center shadow-sm text-center">
-                <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center text-[#006E62] mb-6">
-                  <ShieldCheck size={48} />
+              <div className="bg-white rounded-3xl border border-gray-100 p-24 flex flex-col items-center justify-center shadow-sm text-center animate-in zoom-in duration-700">
+                <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 mb-8 ring-8 ring-emerald-50/50">
+                  <ShieldCheck size={56} />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-800">Lembur Selesai!</h3>
-                <p className="text-sm text-gray-500 mt-2 max-w-xs">Data lembur hari ini telah tersimpan dengan aman.</p>
+                <h3 className="text-3xl font-black text-gray-800 tracking-tight">Lembur Selesai!</h3>
+                <p className="text-sm text-gray-400 mt-3 max-w-xs font-medium">Data lembur hari ini telah tersimpan dengan aman di sistem.</p>
               </div>
             )}
           </div>
 
+          {/* Right Column: Info Cards */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-               <div className="flex items-center gap-2 mb-6">
-                  <Clock size={16} className="text-amber-600" />
-                  <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-500">Waktu Terverifikasi</h4>
+            {/* Time Card */}
+            <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+               <div className="flex items-center gap-3 mb-8">
+                  <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
+                    <Clock size={18} />
+                  </div>
+                  <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400">Waktu Terverifikasi</h4>
                </div>
-               <div className="text-center py-4">
-                  <div className="text-5xl font-sans font-bold text-gray-800 tracking-tighter">
+               <div className="text-center py-6">
+                  <div className="text-6xl font-sans font-black text-gray-800 tracking-tighter">
                     {serverTime.toLocaleTimeString('id-ID', { hour12: false })}
                   </div>
-                  <div className="text-[11px] font-bold text-amber-500 uppercase tracking-widest mt-2">
+                  <div className="text-[11px] font-black text-amber-500 uppercase tracking-[0.2em] mt-4">
                     {serverTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
                   </div>
 
                   {todayOT?.check_in && !todayOT.check_out && (
-                    <div className="mt-8 p-3 bg-amber-50 rounded-2xl border border-amber-100 animate-pulse">
-                      <p className="text-[9px] font-black text-amber-600 uppercase tracking-[0.2em] mb-1">Durasi Lembur Berjalan</p>
-                      <div className="text-2xl font-sans font-black text-amber-700 tracking-widest">
+                    <div className="mt-10 p-5 bg-amber-50 rounded-3xl border border-amber-100/50 animate-pulse">
+                      <p className="text-[9px] font-black text-amber-600 uppercase tracking-[0.2em] mb-2">Durasi Lembur Berjalan</p>
+                      <div className="text-3xl font-sans font-black text-amber-700 tracking-widest">
                         {getOTDurationLive()}
                       </div>
                     </div>
                   )}
                </div>
 
-               <div className="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-100 flex gap-3 items-start">
-                  <Info size={16} className="text-blue-500 shrink-0 mt-0.5" />
-                  <p className="text-[10px] text-gray-500 leading-relaxed font-medium italic">Sistem lembur tidak mengacu pada jadwal kerja reguler. Durasi dihitung murni dari waktu kehadiran awal hingga selesai.</p>
+               <div className="mt-10 p-5 bg-gray-50 rounded-2xl border border-gray-100 flex gap-4 items-start">
+                  <Info size={18} className="text-blue-500 shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-gray-500 leading-relaxed font-bold italic">Sistem lembur tidak mengacu pada jadwal kerja reguler. Durasi dihitung murni dari waktu kehadiran awal hingga selesai.</p>
                </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-               <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <MapPin size={16} className="text-amber-500" />
-                    <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-500">Status Geotag</h4>
+            {/* Geotag Card */}
+            <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+               <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
+                      <MapPin size={18} />
+                    </div>
+                    <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400">Status Geotag</h4>
                   </div>
-                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-bold uppercase ${!isLimited ? 'bg-blue-50 text-blue-600' : (isWithinRadius ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600')}`}>
-                    <div className={`w-1.5 h-1.5 rounded-full ${!isLimited ? 'bg-blue-500' : (isWithinRadius ? 'bg-emerald-500' : 'bg-rose-500')}`}></div>
+                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${!isLimited ? 'bg-blue-50 text-blue-600' : (isWithinRadius ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600')}`}>
+                    <div className={`w-2 h-2 rounded-full ${!isLimited ? 'bg-blue-500' : (isWithinRadius ? 'bg-emerald-500' : 'bg-rose-500')}`}></div>
                     {!isLimited ? 'Bebas Lokasi' : (isWithinRadius ? 'Area Kerja' : 'Diluar Area')}
                   </div>
                </div>
                
                {account?.location && coords ? (
-                 <div className="space-y-4">
+                 <div className="space-y-6">
                     <PresenceMap 
                       userLat={coords.lat} 
                       userLng={coords.lng} 
@@ -433,48 +469,49 @@ const OvertimeMain: React.FC = () => {
                       radius={account.location.radius}
                     />
                     
-                    <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                      <div className="flex items-center gap-2 mb-1">
-                        <MapPin size={12} className="text-amber-600" />
-                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Alamat Geotag</span>
+                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MapPin size={14} className="text-amber-600" />
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Alamat Geotag</span>
                       </div>
-                      <p className="text-[10px] font-medium text-gray-700 leading-relaxed">
+                      <p className="text-[11px] font-bold text-gray-700 leading-relaxed">
                         {isFetchingAddress ? (
                           <span className="flex items-center gap-2 italic text-gray-400">
-                            <Loader2 size={10} className="animate-spin" /> Mencari alamat...
+                            <Loader2 size={12} className="animate-spin" /> Mencari alamat...
                           </span>
                         ) : currentAddress || 'Alamat tidak ditemukan'}
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 text-[10px] pt-2">
-                       <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                          <span className="text-gray-400 font-bold uppercase block mb-1">Jarak</span>
-                          <span className="text-sm font-bold text-gray-700">{distance !== null ? `${Math.round(distance)}m` : '...'}</span>
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                          <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] block mb-1.5">Jarak</span>
+                          <span className="text-sm font-black text-gray-800">{distance !== null ? `${Math.round(distance)}m` : '...'}</span>
                        </div>
-                       <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                          <span className="text-gray-400 font-bold uppercase block mb-1">Status OT</span>
-                          <span className="text-sm font-bold text-amber-600">Terbatas</span>
+                       <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                          <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] block mb-1.5">Status OT</span>
+                          <span className="text-sm font-black text-amber-600">Terbatas</span>
                        </div>
                     </div>
+                    
                     {isBlockedByLocation && (
-                      <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl flex gap-3 items-start animate-pulse">
-                         <AlertCircle size={16} className="text-rose-500 shrink-0 mt-0.5" />
-                         <p className="text-[10px] text-rose-600 font-bold leading-tight uppercase tracking-tight">Presensi Lembur dikunci. Anda berada diluar zona yang diizinkan.</p>
+                      <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex gap-4 items-start animate-pulse">
+                         <AlertCircle size={20} className="text-rose-500 shrink-0 mt-0.5" />
+                         <p className="text-[10px] text-rose-600 font-black leading-tight uppercase tracking-widest">Presensi Lembur dikunci. Anda berada diluar zona yang diizinkan.</p>
                       </div>
                     )}
                  </div>
                ) : (
-                 <div className="flex flex-col items-center justify-center py-14 text-gray-300">
-                    <MapIcon size={40} className="animate-bounce" />
-                    <p className="text-[10px] font-bold uppercase tracking-widest mt-4">Mengunci Sinyal GPS...</p>
+                 <div className="flex flex-col items-center justify-center py-20 text-gray-300">
+                    <MapIcon size={48} className="animate-bounce" />
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-6">Mengunci Sinyal GPS...</p>
                  </div>
                )}
             </div>
           </div>
         </div>
       ) : (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
           <OvertimeHistory logs={recentLogs} isLoading={isLoading} />
         </div>
       )}
