@@ -5,7 +5,7 @@ import {
   CheckSquare, FileText, Users, Wallet, CreditCard, 
   MessageSquare, AlertTriangle, ShieldCheck, ChevronRight, 
   ArrowLeft, User, MapPin, ExternalLink, Info, Plus,
-  Plane, Heart, FileCheck, History, LogIn, LogOut, Target, Video, Files, Database
+  Plane, Heart, FileCheck, History, LogIn, LogOut, Target, Video, Files, Database, Star, Trophy
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { authService } from '../../services/authService';
@@ -13,8 +13,9 @@ import { accountService } from '../../services/accountService';
 import { scheduleService } from '../../services/scheduleService';
 import { presenceService } from '../../services/presenceService';
 import { overtimeService } from '../../services/overtimeService';
+import { awardService } from '../../services/awardService';
 import { googleDriveService } from '../../services/googleDriveService';
-import { AuthUser, Account, Schedule, Attendance, Overtime } from '../../types';
+import { AuthUser, Account, Schedule, Attendance, Overtime, EmployeeOfThePeriod } from '../../types';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import Swal from 'sweetalert2';
 
@@ -31,8 +32,10 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
   const [todayAttendance, setTodayAttendance] = useState<Attendance | null>(null);
   const [attendanceHistory, setAttendanceHistory] = useState<Attendance[]>([]);
   const [overtimeHistory, setOvertimeHistory] = useState<Overtime[]>([]);
+  const [bestEmployee, setBestEmployee] = useState<EmployeeOfThePeriod | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('main');
+  const [elapsedTime, setElapsedTime] = useState<string>('');
 
   const isAdmin = user?.role === 'admin' || user?.is_hr_admin || user?.is_performance_admin || user?.is_finance_admin;
 
@@ -41,17 +44,21 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
       try {
         setIsLoading(true);
         if (user?.id) {
-          const [acc, attendance, history, otHistory] = await Promise.all([
+          const [acc, attendance, history, otHistory, awards] = await Promise.all([
             accountService.getById(user.id),
             presenceService.getTodayAttendance(user.id),
             presenceService.getRecentHistory(user.id, 10),
-            overtimeService.getRecentHistory(user.id, 10)
+            overtimeService.getRecentHistory(user.id, 10),
+            awardService.getEmployeeOfThePeriodAll()
           ]);
 
           setAccount(acc);
           setTodayAttendance(attendance);
           setAttendanceHistory(history);
           setOvertimeHistory(otHistory);
+          if (awards && awards.length > 0) {
+            setBestEmployee(awards[0]);
+          }
 
           if (acc?.schedule_id) {
             const sched = await scheduleService.getById(acc.schedule_id);
@@ -67,6 +74,41 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
 
     loadData();
   }, [user.id]);
+
+  // Timer logic for active attendance
+  useEffect(() => {
+    const activeSession = todayAttendance && !todayAttendance.check_out 
+      ? todayAttendance.check_in 
+      : overtimeHistory.find(ot => !ot.check_out)?.check_in;
+
+    if (!activeSession) {
+      setElapsedTime('');
+      return;
+    }
+
+    const updateTimer = () => {
+      const start = new Date(activeSession).getTime();
+      const now = new Date().getTime();
+      const diff = now - start;
+
+      if (diff < 0) {
+        setElapsedTime('00:00:00');
+        return;
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      setElapsedTime(
+        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+      );
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [todayAttendance, overtimeHistory]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -431,7 +473,7 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-white pb-20">
       {/* Top Banner */}
       <div className="bg-[#006E62] text-white px-6 py-8 rounded-b-[40px] shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
@@ -439,25 +481,39 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
         
         <div className="relative z-10 flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-200/80">{getGreeting()}</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-200/80">Selamat Datang</p>
             <h1 className="text-2xl font-black tracking-tight leading-none">{account?.full_name?.split(' ')[0]}</h1>
+            <p className="text-[10px] font-bold text-emerald-100/70 mt-1">
+              {account?.position || 'Staff'} • {account?.grade || account?.department || 'Operasional'}
+            </p>
+            
+            {elapsedTime && (
+              <div className="flex items-center gap-1.5 mt-2">
+                <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
+                <span className="text-[10px] font-bold font-mono text-red-400 tracking-wider">{elapsedTime}</span>
+              </div>
+            )}
+
             <div className="flex items-center gap-1.5 mt-2 bg-white/10 w-fit px-2 py-1 rounded-full backdrop-blur-md">
               <MapPin size={10} className="text-emerald-300" />
               <span className="text-[9px] font-bold uppercase tracking-wider">{account?.location?.name || 'Lokasi Belum Diatur'}</span>
             </div>
           </div>
-          <div className="w-16 h-16 rounded-2xl border-2 border-white/30 p-1 bg-white/10 backdrop-blur-md">
-            {account?.photo_google_id ? (
-              <img 
-                src={googleDriveService.getFileUrl(account.photo_google_id)} 
-                className="w-full h-full object-cover rounded-xl" 
-                alt="Profile" 
-              />
-            ) : (
-              <div className="w-full h-full bg-emerald-700 rounded-xl flex items-center justify-center font-black text-xl">
-                {account?.full_name?.charAt(0)}
-              </div>
-            )}
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-16 h-16 rounded-2xl border-2 border-white/30 p-1 bg-white/10 backdrop-blur-md">
+              {account?.photo_google_id ? (
+                <img 
+                  src={googleDriveService.getFileUrl(account.photo_google_id)} 
+                  className="w-full h-full object-cover rounded-xl" 
+                  alt="Profile" 
+                />
+              ) : (
+                <div className="w-full h-full bg-emerald-700 rounded-xl flex items-center justify-center font-black text-xl">
+                  {account?.full_name?.charAt(0)}
+                </div>
+              )}
+            </div>
+            <span className="text-[9px] font-bold text-emerald-200/60 tracking-widest">{account?.internal_nik || '-'}</span>
           </div>
         </div>
       </div>
@@ -470,7 +526,60 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.2 }}
         >
-          {viewMode === 'main' && renderMainGrid()}
+          {viewMode === 'main' && (
+            <>
+              {renderMainGrid()}
+              
+              {/* Best Employee Section */}
+              {bestEmployee && (
+                <div className="px-4 mt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Best Employee</h3>
+                    <span className="text-[9px] font-bold text-[#006E62] uppercase tracking-wider">
+                      {new Date(0, bestEmployee.month - 1).toLocaleString('id-ID', { month: 'long' })} {bestEmployee.year}
+                    </span>
+                  </div>
+                  
+                  <div className="bg-white rounded-3xl border border-gray-100 p-4 flex items-center gap-4">
+                    <div className="relative">
+                      <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-emerald-50">
+                        {bestEmployee.accounts?.[0]?.photo_google_id ? (
+                          <img 
+                            src={googleDriveService.getFileUrl(bestEmployee.accounts[0].photo_google_id)} 
+                            alt="" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-50 flex items-center justify-center text-gray-300">
+                            <User size={24} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="absolute -bottom-2 -right-2 w-7 h-7 bg-[#006E62] rounded-xl flex items-center justify-center text-white shadow-lg">
+                        <Trophy size={14} />
+                      </div>
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-gray-800 text-sm truncate">{bestEmployee.accounts?.[0]?.full_name}</h4>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter truncate">{bestEmployee.accounts?.[0]?.position}</p>
+                      <div className="mt-2 flex items-center gap-1">
+                        <Star size={10} className="text-amber-400 fill-amber-400" />
+                        <p className="text-[10px] text-gray-500 italic line-clamp-1">"{bestEmployee.reason || 'Karyawan Teladan'}"</p>
+                      </div>
+                    </div>
+                    
+                    <button 
+                      onClick={() => setActiveTab('employee_of_the_period')}
+                      className="p-2 bg-emerald-50 text-[#006E62] rounded-xl active:scale-90 transition-transform"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
           {viewMode === 'presence_sub' && renderPresenceSub()}
           {viewMode === 'overtime_sub' && renderOvertimeSub()}
           {viewMode === 'off_sub' && renderOffSub()}

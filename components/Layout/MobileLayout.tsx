@@ -36,7 +36,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children, activeTab, setAct
   return (
     <div className="min-h-screen bg-white flex flex-col md:hidden">
       {/* Top Header */}
-      <header className="h-16 flex items-center justify-between px-4 bg-white sticky top-0 z-40 border-b border-gray-50">
+      <header className="h-16 flex items-center justify-between px-4 bg-white fixed top-0 left-0 right-0 z-50 border-b border-gray-50">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-[#006E62] rounded-lg flex items-center justify-center text-white font-bold italic text-sm shadow-sm">H</div>
         </div>
@@ -59,12 +59,12 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children, activeTab, setAct
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto p-6 scrollbar-none">
+      <main className="flex-1 overflow-y-auto pt-16 pb-20 scrollbar-none">
         {children}
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="h-20 bg-white border-t border-gray-100 flex items-center justify-around px-6 sticky bottom-0 z-40 pb-safe">
+      <nav className="h-20 bg-white border-t border-gray-100 flex items-center justify-around px-6 fixed bottom-0 left-0 right-0 z-50 pb-safe">
         <button 
           onClick={() => setActiveTab('dashboard')}
           className={`p-3 rounded-2xl transition-all duration-300 ${activeTab === 'dashboard' ? 'bg-[#006E62] text-white shadow-lg shadow-emerald-100 scale-110' : 'text-gray-400'}`}

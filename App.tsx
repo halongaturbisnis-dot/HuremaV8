@@ -160,72 +160,74 @@ const App: React.FC = () => {
           {activeTab === 'dashboard' ? (
             <MobileDashboard user={user} setActiveTab={setActiveTab} />
           ) : activeTab === 'location' ? (
-            <LocationMain />
+            <div className="p-4"><LocationMain /></div>
           ) : activeTab === 'account' ? (
-            <AccountMain user={user} setUser={setUser} />
+            <div className="p-4"><AccountMain user={user} setUser={setUser} /></div>
           ) : activeTab === 'schedule' ? (
-            <ScheduleMain />
+            <div className="p-4"><ScheduleMain /></div>
           ) : activeTab === 'document' ? (
-            <DocumentMain user={user} />
+            <div className="p-4"><DocumentMain user={user} /></div>
           ) : activeTab === 'presence' ? (
-            <PresenceMain />
+            <div className="p-4"><PresenceMain /></div>
           ) : activeTab === 'overtime' ? (
-            <OvertimeMain />
+            <div className="p-4"><OvertimeMain /></div>
           ) : activeTab === 'submission' ? (
-            <SubmissionMain />
+            <div className="p-4"><SubmissionMain /></div>
           ) : activeTab === 'leave' ? (
-            <LeaveMain />
+            <div className="p-4"><LeaveMain /></div>
           ) : activeTab === 'annual_leave' ? (
-            <AnnualLeaveMain />
+            <div className="p-4"><AnnualLeaveMain /></div>
           ) : activeTab === 'permission' ? (
-            <PermissionMain />
+            <div className="p-4"><PermissionMain /></div>
           ) : activeTab === 'maternity_leave' ? (
-            <MaternityLeaveMain />
+            <div className="p-4"><MaternityLeaveMain /></div>
           ) : activeTab === 'kpi' ? (
-            <KPIMain />
+            <div className="p-4"><KPIMain /></div>
           ) : activeTab === 'key_activity' ? (
-            <KeyActivityMain />
+            <div className="p-4"><KeyActivityMain /></div>
           ) : activeTab === 'employee_of_the_period' ? (
-            <EmployeeOfThePeriodMain />
+            <div className="p-4"><EmployeeOfThePeriodMain /></div>
           ) : activeTab === 'sales_report' ? (
-            <SalesReportMain />
+            <div className="p-4"><SalesReportMain /></div>
           ) : activeTab === 'feedback' ? (
-            <FeedbackMain />
+            <div className="p-4"><FeedbackMain /></div>
           ) : activeTab === 'lapor' ? (
-            <LaporMain />
+            <div className="p-4"><LaporMain /></div>
           ) : activeTab === 'rapat' ? (
-            <RapatMain />
+            <div className="p-4"><RapatMain /></div>
           ) : activeTab === 'pengumuman' ? (
-            <PengumumanMain user={user} />
+            <div className="p-4"><PengumumanMain user={user} /></div>
           ) : activeTab === 'salary_scheme' ? (
-            <SalarySchemeMain />
+            <div className="p-4"><SalarySchemeMain /></div>
           ) : activeTab === 'salary_adjustment' ? (
-            <SalaryAdjustmentMain />
+            <div className="p-4"><SalaryAdjustmentMain /></div>
           ) : activeTab === 'payroll' ? (
-            <PayrollMain />
+            <div className="p-4"><PayrollMain /></div>
           ) : activeTab === 'my_payslip' ? (
-            <MyPayslip />
+            <div className="p-4"><MyPayslip /></div>
           ) : activeTab === 'reimbursement' ? (
-            <ReimbursementMain />
+            <div className="p-4"><ReimbursementMain /></div>
           ) : activeTab === 'early_salary' ? (
-            <EarlySalaryMain />
+            <div className="p-4"><EarlySalaryMain /></div>
           ) : activeTab === 'compensation' ? (
-            <CompensationMain />
+            <div className="p-4"><CompensationMain /></div>
           ) : activeTab === 'dispensation' ? (
-            <DispensationMain user={user} />
+            <div className="p-4"><DispensationMain user={user} /></div>
           ) : activeTab === 'admin_dispensation' ? (
-            <AdminDispensationMain user={user} />
+            <div className="p-4"><AdminDispensationMain user={user} /></div>
           ) : activeTab === 'attendance_report' ? (
-            <AttendanceReportMain />
+            <div className="p-4"><AttendanceReportMain /></div>
           ) : activeTab === 'finance_report' ? (
-            <FinanceReportMain />
+            <div className="p-4"><FinanceReportMain /></div>
           ) : activeTab === 'master_app' ? (
-            <MasterMain />
+            <div className="p-4"><MasterMain /></div>
           ) : activeTab === 'settings' ? (
-            isAdmin ? <AdminSettingsModule /> : <AccountMain user={user} setUser={setUser} isSelfProfile={true} />
+            <div className="p-4">{isAdmin ? <AdminSettingsModule /> : <AccountMain user={user} setUser={setUser} isSelfProfile={true} />}</div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-              <p className="font-medium text-sm">Modul "{activeTab}" sedang dalam pengembangan.</p>
+            <div className="p-4">
+              <div className="flex flex-col items-center justify-center h-64 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                <p className="font-medium text-sm">Modul "{activeTab}" sedang dalam pengembangan.</p>
+              </div>
             </div>
           )}
         </Suspense>
