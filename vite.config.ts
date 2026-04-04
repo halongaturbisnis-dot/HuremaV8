@@ -19,6 +19,7 @@ export default defineConfig(({ mode }) => {
           includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
           workbox: {
             globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+            maximumFileSizeToCacheInBytes: 4000000,
             // Disable pre-caching of all modules to reduce initial burst
             // Only essential assets will be cached
             runtimeCaching: [
@@ -69,6 +70,9 @@ export default defineConfig(({ mode }) => {
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+      },
+      build: {
+        chunkSizeWarningLimit: 2500,
       },
       resolve: {
         alias: {

@@ -4,7 +4,7 @@ import { X, Save, Search, User, Calendar, FileText, Loader2, CheckCircle2 } from
 import { accountService } from '../../../services/accountService';
 import { awardService } from '../../../services/awardService';
 import { googleDriveService } from '../../../services/googleDriveService';
-import { Account, EmployeeOfThePeriodInput } from '../../../types';
+import { Account, EmployeeOfThePeriod, EmployeeOfThePeriodInput } from '../../../types';
 import Swal from 'sweetalert2';
 
 interface EmployeeOfThePeriodFormProps {

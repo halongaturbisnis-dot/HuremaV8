@@ -35,13 +35,13 @@ const mapWarningTypeToUI = (type: string) => {
 
 const mapTerminationTypeToDB = (type: string) => {
   if (type.includes('Resign')) return 'Resign';
-  if (type.includes('Pemecatan') || type.includes('PHK')) return 'Pemecatan';
+  if (type.includes('Pemecatan') || type.includes('PHK')) return 'Pemecatan / PHK';
   return type;
 };
 
 const mapTerminationTypeToUI = (type: string) => {
   if (type === 'Resign') return 'Resign';
-  if (type === 'Pemecatan') return 'Pemecatan / PHK';
+  if (type === 'Pemecatan' || type === 'Pemecatan / PHK') return 'Pemecatan / PHK';
   return type;
 };
 
@@ -277,9 +277,10 @@ export const disciplineService = {
 
     // Create Compensation Record if amount > 0
     if (input.severance_amount > 0 || input.penalty_amount > 0) {
+      const dbTerminationType = mapTerminationTypeToDB(input.termination_type) as 'Resign' | 'Pemecatan / PHK';
       await financeService.createCompensation({
         account_id: input.account_id,
-        termination_type: mapTerminationTypeToDB(input.termination_type),
+        termination_type: dbTerminationType,
         termination_date: input.termination_date,
         amount: input.termination_type.includes('PHK') ? input.severance_amount : input.penalty_amount,
         type: input.termination_type.includes('PHK') ? 'Severance' : 'Penalty',
@@ -718,9 +719,10 @@ export const disciplineService = {
 
       if (item.severance_amount > 0 || item.penalty_amount > 0) {
         const isSeverance = item.termination_type.includes('PHK');
+        const dbTerminationType = mapTerminationTypeToDB(item.termination_type) as 'Resign' | 'Pemecatan / PHK';
         await financeService.createCompensation({
           account_id: item.account_id,
-          termination_type: mapTerminationTypeToDB(item.termination_type),
+          termination_type: dbTerminationType,
           termination_date: item.termination_date,
           amount: isSeverance ? item.severance_amount : item.penalty_amount,
           type: isSeverance ? 'Severance' : 'Penalty',

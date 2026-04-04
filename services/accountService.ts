@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase';
 import { Account, AccountInput, CareerLog, AccountInput as AccountInputType, CareerLogInput, HealthLog, HealthLogInput } from '../types';
 import { locationService } from './locationService';
 import { scheduleService } from './scheduleService';
+import { authService } from './authService';
+import { googleDriveService } from './googleDriveService';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
@@ -66,7 +68,6 @@ export const accountService = {
       .not('access_code', 'ilike', '%SPADMIN%');
 
     // Apply Admin Location Scope
-    const { authService } = await import('./authService');
     const user = authService.getCurrentUser();
     if (user && user.role !== 'admin') {
       const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
@@ -317,7 +318,6 @@ export const accountService = {
     terminations.data?.forEach(log => log.file_id && fileIds.add(log.file_id));
 
     // 4. Hapus file dari Google Drive secara paralel (dengan sedikit delay/batching jika banyak)
-    const { googleDriveService } = await import('./googleDriveService');
     for (const fileId of fileIds) {
       try {
         await googleDriveService.deleteFile(fileId);
@@ -1048,7 +1048,6 @@ export const accountService = {
     
     // 2. Hapus file dari Drive
     if (data?.file_sk_id) {
-      const { googleDriveService } = await import('./googleDriveService');
       await googleDriveService.deleteFile(data.file_sk_id);
     }
 
@@ -1117,7 +1116,6 @@ export const accountService = {
     
     // 2. Hapus file dari Drive
     if (data?.file_mcu_id) {
-      const { googleDriveService } = await import('./googleDriveService');
       await googleDriveService.deleteFile(data.file_mcu_id);
     }
 

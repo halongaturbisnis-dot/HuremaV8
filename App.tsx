@@ -45,6 +45,7 @@ const DailyMonitoring = lazy(() => import('./modules/monitoring/DailyMonitoring'
 const Login = lazy(() => import('./modules/auth/Login'));
 
 import { authService } from './services/authService';
+import { settingsService } from './services/settingsService';
 import { AuthUser } from './types';
 
 const App: React.FC = () => {
@@ -85,7 +86,6 @@ const App: React.FC = () => {
         
         try {
           // Fetch latest permissions
-          const { settingsService } = await import('./services/settingsService');
           const [hrAdmins, perfAdmins, finAdmins] = await Promise.all([
             settingsService.getSetting('admin_hr_ids', []),
             settingsService.getSetting('admin_performance_ids', []),
