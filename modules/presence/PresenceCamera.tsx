@@ -1,6 +1,6 @@
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Camera, RefreshCw, ShieldCheck, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { Camera, RefreshCw, ShieldCheck, ArrowRight, ArrowLeft, ArrowUp, ArrowDown, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface PresenceCameraProps {
@@ -15,7 +15,7 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
   const requestRef = useRef<number>(null);
   
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [step, setStep] = useState<'RIGHT' | 'LEFT' | 'READY'>('RIGHT');
+  const [step, setStep] = useState<'RIGHT' | 'LEFT' | 'UP' | 'DOWN' | 'MOUTH' | 'READY'>('RIGHT');
   const isComponentMounted = useRef(true);
   const lastVideoTimeRef = useRef(-1);
 
@@ -84,13 +84,28 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
           const nose = landmarks[4];
           const rightEdge = landmarks[234];
           const leftEdge = landmarks[454];
+          const topEdge = landmarks[10];
+          const bottomEdge = landmarks[152];
 
           const faceWidth = Math.abs(leftEdge.x - rightEdge.x);
+          const faceHeight = Math.abs(bottomEdge.y - topEdge.y);
+          
           const noseRelativeX = (nose.x - Math.min(rightEdge.x, leftEdge.x)) / faceWidth;
+          const noseRelativeY = (nose.y - Math.min(topEdge.y, bottomEdge.y)) / faceHeight;
 
           setStep(prev => {
             if (prev === 'RIGHT' && noseRelativeX < 0.35) return 'LEFT';
-            if (prev === 'LEFT' && noseRelativeX > 0.65) return 'READY';
+            if (prev === 'LEFT' && noseRelativeX > 0.65) return 'UP';
+            if (prev === 'UP' && noseRelativeY < 0.35) return 'DOWN';
+            if (prev === 'DOWN' && noseRelativeY > 0.65) return 'MOUTH';
+            
+            if (prev === 'MOUTH') {
+              const blendshapes = results.faceBlendshapes[0]?.categories;
+              if (blendshapes) {
+                const jawOpen = blendshapes.find((c: any) => (c.categoryName === 'jawOpen' || c.label === 'jawOpen'))?.score || 0;
+                if (jawOpen > 0.35) return 'READY';
+              }
+            }
             return prev;
           });
         }
@@ -124,7 +139,7 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
     }
   };
 
-  const FaceSilhouette = ({ direction }: { direction: 'RIGHT' | 'LEFT' | 'READY' }) => {
+  const FaceSilhouette = ({ direction }: { direction: 'RIGHT' | 'LEFT' | 'UP' | 'DOWN' | 'MOUTH' | 'READY' }) => {
     return (
       <div className="relative w-48 h-56 flex flex-col items-center justify-center">
         {/* Direction Indicator Overlay - Bright color and shadow */}
@@ -152,6 +167,39 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
                 <ArrowLeft size={32} />
               </motion.div>
             )}
+            {direction === 'UP' && (
+              <motion.div
+                key="up"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: [ 20, -20, 20 ], opacity: 1 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                className="text-emerald-400"
+              >
+                <ArrowUp size={32} />
+              </motion.div>
+            )}
+            {direction === 'DOWN' && (
+              <motion.div
+                key="down"
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: [ -20, 20, -20 ], opacity: 1 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                className="text-emerald-400"
+              >
+                <ArrowDown size={32} />
+              </motion.div>
+            )}
+            {direction === 'MOUTH' && (
+              <motion.div
+                key="mouth"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: [0.8, 1.2, 0.8], opacity: 1 }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                className="text-emerald-400"
+              >
+                <div className="w-8 h-8 border-4 border-current rounded-full" />
+              </motion.div>
+            )}
             {direction === 'READY' && (
               <motion.div
                 key="ready"
@@ -169,7 +217,10 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
           <svg viewBox="0 0 200 200" className="w-full h-full transition-all duration-500 text-emerald-400">
             {/* Face Silhouette - Thicker stroke */}
             <g className="transition-transform duration-700 ease-in-out" style={{ 
-              transform: direction === 'RIGHT' ? 'translateX(20px) rotateY(45deg)' : direction === 'LEFT' ? 'translateX(-20px) rotateY(-45deg)' : 'none',
+              transform: `
+                ${direction === 'RIGHT' ? 'translateX(20px) rotateY(45deg)' : direction === 'LEFT' ? 'translateX(-20px) rotateY(-45deg)' : ''}
+                ${direction === 'UP' ? 'translateY(-15px) rotateX(-30deg)' : direction === 'DOWN' ? 'translateY(15px) rotateX(30deg)' : ''}
+              `,
               transformOrigin: 'center'
             }}>
               <path 
@@ -183,6 +234,15 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
               <circle cx="120" cy="90" r="4" fill="currentColor" opacity={direction === 'RIGHT' ? 0.2 : 0.8} />
               {/* Nose */}
               <path d="M100,95 L100,115 L95,115" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+              {/* Mouth - Dynamic for Buka Mulut */}
+              <path 
+                d={direction === 'MOUTH' ? "M85,140 Q100,165 115,140" : "M85,145 Q100,145 115,145"} 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="4" 
+                strokeLinecap="round"
+                className="transition-all duration-300"
+              />
             </g>
           </svg>
         </div>
@@ -234,6 +294,15 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
               {step === 'LEFT' && (
                 <p className="text-white text-[11px] font-bold uppercase tracking-[0.2em]">Tengok ke Kiri</p>
               )}
+              {step === 'UP' && (
+                <p className="text-white text-[11px] font-bold uppercase tracking-[0.2em]">Dangak ke Atas</p>
+              )}
+              {step === 'DOWN' && (
+                <p className="text-white text-[11px] font-bold uppercase tracking-[0.2em]">Menunduk ke Bawah</p>
+              )}
+              {step === 'MOUTH' && (
+                <p className="text-white text-[11px] font-bold uppercase tracking-[0.2em]">Buka Mulut Anda</p>
+              )}
               {step === 'READY' && (
                 <p className="text-emerald-400 text-[11px] font-bold uppercase tracking-[0.2em]">Identitas Terverifikasi</p>
               )}
@@ -273,7 +342,13 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
             <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
               <div 
                 className={`h-full transition-all duration-700 ease-out shadow-[0_0_15px_rgba(0,110,98,0.5)] bg-[#006E62]`} 
-                style={{ width: step === 'RIGHT' ? '33%' : step === 'LEFT' ? '66%' : '100%' }}
+                style={{ 
+                  width: step === 'RIGHT' ? '20%' : 
+                         step === 'LEFT' ? '40%' : 
+                         step === 'UP' ? '60%' : 
+                         step === 'DOWN' ? '80%' : 
+                         step === 'MOUTH' ? '90%' : '100%' 
+                }}
               />
             </div>
           </div>
