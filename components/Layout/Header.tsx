@@ -12,12 +12,12 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ activeTab, onMenuClick, user }) => {
   return (
-    <header className="h-16 border-b border-gray-100 flex items-center justify-between px-4 md:px-8 bg-white sticky top-0 z-30">
-      <div className="flex items-center gap-2 md:hidden">
-        <img src={LOGO_ICON} alt="Logo" className="w-8 h-8 rounded-lg object-contain" onClick={onMenuClick} />
-        <h1 className="text-xl font-bold tracking-tight text-[#006E62] leading-tight">HUREMA</h1>
+    <header className="h-16 border-b border-gray-100 flex items-center px-4 md:px-8 bg-white sticky top-0 z-30">
+      <div className="flex items-center gap-2 md:hidden flex-shrink-0 flex-nowrap">
+        <img src={LOGO_ICON} alt="Logo" className="w-8 h-8 rounded-lg object-contain cursor-pointer" onClick={onMenuClick} />
+        <span className="text-xl font-bold tracking-tight text-[#006E62] leading-none whitespace-nowrap">HUREMA</span>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 ml-auto">
         <div className="flex flex-col items-end hidden sm:flex">
           <span className="text-sm font-semibold text-gray-700">{user.full_name}</span>
         </div>
