@@ -15,6 +15,7 @@ import { presenceService } from '../../services/presenceService';
 import { overtimeService } from '../../services/overtimeService';
 import { awardService } from '../../services/awardService';
 import { googleDriveService } from '../../services/googleDriveService';
+import { Client_Name } from '../../assets';
 import { AuthUser, Account, Schedule, Attendance, Overtime, EmployeeOfThePeriod } from '../../types';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import Swal from 'sweetalert2';
@@ -484,6 +485,12 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12 blur-xl"></div>
         
         <div className="relative z-10 flex flex-col gap-6">
+          <div className="text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70 whitespace-normal">
+              {Client_Name}
+            </p>
+          </div>
+          
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/90">Selamat Datang</p>
