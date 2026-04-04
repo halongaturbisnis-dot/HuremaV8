@@ -63,10 +63,11 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
 
   const startCamera = async () => {
     try {
-      // Menggunakan resolusi 720p ideal untuk menghindari cropping digital (zoom) di perangkat mobile
+      // Menggunakan resolusi 720p ideal dengan aspect ratio 9:16 untuk portrait mobile
       const s = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           facingMode: 'user', 
+          aspectRatio: { ideal: 9/16 },
           width: { ideal: 720 }, 
           height: { ideal: 1280 } 
         } 
@@ -191,7 +192,7 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black flex flex-col animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[9999] bg-black flex flex-col animate-in fade-in duration-300">
       {!isAiLoaded ? (
         <div className="flex-1 flex flex-col items-center justify-center text-white/50 gap-4">
           <Loader2 className="animate-spin text-[#006E62]" size={48} />
@@ -204,7 +205,7 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
             autoPlay 
             playsInline 
             muted 
-            className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+            className="absolute inset-0 w-full h-full object-contain bg-black scale-x-[-1]"
           />
           
           {/* Overlay Gradient */}
