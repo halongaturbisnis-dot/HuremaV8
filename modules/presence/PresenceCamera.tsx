@@ -25,7 +25,7 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
       const timer = setTimeout(() => {
         handleCapture();
         setHasCaptured(true);
-      }, 1000);
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [step, hasCaptured, isProcessing]);
@@ -306,6 +306,18 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
             muted 
             className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
           />
+          
+          {/* Scanning Animation Overlay */}
+          <AnimatePresence>
+            {step === 'READY' && !hasCaptured && (
+              <motion.div
+                initial={{ top: "0%" }}
+                animate={{ top: "100%" }}
+                transition={{ duration: 2, ease: "linear" }}
+                className="absolute left-0 right-0 h-1 bg-[#006E62] shadow-[0_0_15px_#006E62] z-50 pointer-events-none"
+              />
+            )}
+          </AnimatePresence>
           
           {/* Overlay Gradient */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40 pointer-events-none" />

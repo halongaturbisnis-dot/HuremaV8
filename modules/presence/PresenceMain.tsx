@@ -26,6 +26,8 @@ const PresenceMain: React.FC = () => {
   const [serverTime, setServerTime] = useState<Date>(new Date());
   const [coords, setCoords] = useState<{lat: number, lng: number} | null>(null);
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
+  const [currentAddress, setCurrentAddress] = useState<string | null>(null);
+  const [isFetchingAddress, setIsFetchingAddress] = useState(false);
   const [distance, setDistance] = useState<number | null>(null);
   const [activeHoliday, setActiveHoliday] = useState<any>(null);
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
@@ -160,6 +162,23 @@ const PresenceMain: React.FC = () => {
     }
   }, [coords, account]);
 
+  useEffect(() => {
+    if (coords && !currentAddress && !isFetchingAddress) {
+      const fetchAddress = async () => {
+        try {
+          setIsFetchingAddress(true);
+          const addr = await presenceService.getReverseGeocode(coords.lat, coords.lng);
+          setCurrentAddress(addr);
+        } catch (error) {
+          console.error("Error fetching address:", error);
+        } finally {
+          setIsFetchingAddress(false);
+        }
+      };
+      fetchAddress();
+    }
+  }, [coords, currentAddress, isFetchingAddress]);
+
   const handleCaptureComplete = (photoBlob: Blob) => {
     setCapturedPhoto(photoBlob);
     setPhotoPreviewUrl(URL.createObjectURL(photoBlob));
@@ -267,7 +286,7 @@ const PresenceMain: React.FC = () => {
 
       // Tahap 1: Jalankan geocoding dan upload secara paralel untuk efisiensi
       const [address, photoId] = await Promise.all([
-        presenceService.getReverseGeocode(coords.lat, coords.lng),
+        currentAddress || presenceService.getReverseGeocode(coords.lat, coords.lng),
         googleDriveService.uploadFile(new File([photoBlob], `Presence_${isCurrentlyCheckingOut ? 'OUT' : 'IN'}_${Date.now()}.jpg`))
       ]);
 
@@ -551,6 +570,21 @@ const PresenceMain: React.FC = () => {
                       officeLng={account.location.longitude}
                       radius={account.location.radius}
                     />
+                    
+                    <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                      <div className="flex items-center gap-2 mb-1">
+                        <MapPin size={12} className="text-[#006E62]" />
+                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Alamat Geotag</span>
+                      </div>
+                      <p className="text-[10px] font-medium text-gray-700 leading-relaxed">
+                        {isFetchingAddress ? (
+                          <span className="flex items-center gap-2 italic text-gray-400">
+                            <Loader2 size={10} className="animate-spin" /> Mencari alamat...
+                          </span>
+                        ) : currentAddress || 'Alamat tidak ditemukan'}
+                      </p>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4 text-[10px] pt-2">
                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
                           <span className="text-gray-400 font-bold uppercase block mb-1">Jarak</span>
