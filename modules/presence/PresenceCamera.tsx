@@ -266,8 +266,22 @@ const PresenceCamera: React.FC<PresenceCameraProps> = ({ onCapture, onClose, isP
           >
             <ArrowLeft size={24} />
           </button>
-          <div className="bg-black/40 backdrop-blur-xl px-4 py-2 rounded-full border border-white/10">
-            <p className="text-white text-[10px] font-black uppercase tracking-[0.2em]">Verifikasi Wajah</p>
+          <div className="flex flex-col items-center gap-2">
+            <div className="bg-black/40 backdrop-blur-xl px-4 py-2 rounded-full border border-white/10">
+              <p className="text-white text-[10px] font-black uppercase tracking-[0.2em]">Verifikasi Wajah</p>
+            </div>
+            <AnimatePresence>
+              {step === 'MOUTH' && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  className="bg-emerald-500/20 backdrop-blur-xl px-3 py-1 rounded-lg border border-emerald-500/30"
+                >
+                  <p className="text-emerald-400 text-[8px] font-bold uppercase tracking-[0.1em]">Wajah Tegak & Lurus ke Depan</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
           <div className="w-12" />
         </div>
