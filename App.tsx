@@ -53,7 +53,7 @@ const App: React.FC = () => {
   const currentUser = authService.getCurrentUser();
   const isAdminInitial = currentUser?.role === 'admin' || currentUser?.is_hr_admin || currentUser?.is_performance_admin || currentUser?.is_finance_admin;
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'location' | 'account' | 'schedule' | 'document' | 'settings' | 'presence' | 'overtime' | 'submission' | 'leave' | 'annual_leave' | 'permission' | 'maternity_leave' | 'master_app' | 'admin_settings' | 'kpi' | 'key_activity' | 'sales_report' | 'feedback' | 'lapor' | 'rapat' | 'pengumuman' | 'salary_scheme' | 'salary_adjustment' | 'payroll' | 'my_payslip' | 'reimbursement' | 'early_salary' | 'compensation' | 'employee_of_the_period' | 'dispensation' | 'admin_dispensation' | 'attendance_report' | 'finance_report' | 'employee_report' | 'daily_monitoring'>(
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'location' | 'account' | 'schedule' | 'document' | 'settings' | 'presence' | 'overtime' | 'submission' | 'leave' | 'annual_leave' | 'permission' | 'maternity_leave' | 'master_app' | 'admin_settings' | 'kpi' | 'key_activity' | 'sales_report' | 'feedback' | 'lapor' | 'rapat' | 'pengumuman' | 'salary_scheme' | 'salary_adjustment' | 'payroll' | 'my_payslip' | 'reimbursement' | 'early_salary' | 'compensation' | 'employee_of_the_period' | 'dispensation' | 'admin_dispensation' | 'attendance_report' | 'finance_report' | 'employee_report' | 'daily_monitoring' | 'out_of_range_submission'>(
     (window.innerWidth < 768) 
       ? 'dashboard' 
       : (isAdminInitial ? 'master_app' : 'presence')
@@ -211,6 +211,8 @@ const App: React.FC = () => {
             <div className="p-4"><EarlySalaryMain /></div>
           ) : activeTab === 'compensation' ? (
             <div className="p-4"><CompensationMain /></div>
+          ) : activeTab === 'out_of_range_submission' ? (
+            <div className="p-4"><SubmissionMain type="Presensi Luar" /></div>
           ) : activeTab === 'dispensation' ? (
             <div className="p-4"><DispensationMain user={user} /></div>
           ) : activeTab === 'admin_dispensation' ? (
@@ -475,6 +477,8 @@ const App: React.FC = () => {
               <EarlySalaryMain />
             ) : activeTab === 'compensation' ? (
               <CompensationMain />
+            ) : activeTab === 'out_of_range_submission' ? (
+              <SubmissionMain type="Presensi Luar" />
             ) : activeTab === 'dispensation' ? (
               <DispensationMain user={user} />
             ) : activeTab === 'admin_dispensation' ? (

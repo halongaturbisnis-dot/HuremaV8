@@ -139,7 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
   };
 
   const isMasterActive = ['master_app', 'location', 'schedule', 'account', 'admin_settings'].includes(activeTab);
-  const isSubmissionActive = ['leave', 'overtime', 'permission', 'annual_leave', 'maternity_leave', 'admin_dispensation'].includes(activeTab);
+  const isSubmissionActive = ['leave', 'overtime', 'permission', 'annual_leave', 'maternity_leave', 'out_of_range_submission', 'admin_dispensation'].includes(activeTab);
   const isPerformanceActive = ['kpi', 'key_activity', 'sales_report'].includes(activeTab);
   const isFinanceActive = ['salary_scheme', 'salary_adjustment', 'payroll', 'reimbursement', 'early_salary', 'compensation'].includes(activeTab);
   const isReportActive = ['employee_report', 'attendance_report', 'finance_report'].includes(activeTab);
@@ -337,6 +337,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
                   isCollapsed={isCollapsed}
                 />
               )}
+              <NavItem 
+                id="out_of_range_submission" 
+                icon={MapPin} 
+                label="Pengajuan Presensi Luar" 
+                indent 
+                showNew={isAdmin && pendingSubmissions['Presensi Luar'] > 0} 
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                isCollapsed={isCollapsed}
+              />
               {(isAdmin || user?.is_hr_admin) && (
                 <NavItem 
                   id="admin_dispensation" 

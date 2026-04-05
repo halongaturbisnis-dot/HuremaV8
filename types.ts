@@ -176,6 +176,8 @@ export interface Attendance {
   status_in: string;
   status_out: string;
   work_duration: string | null;
+  presence_type: string | null;
+  out_of_range_reason: string | null;
   created_at?: string;
 }
 

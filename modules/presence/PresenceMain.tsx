@@ -33,6 +33,12 @@ const PresenceMain: React.FC = () => {
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   
+  // Out of Range Presence Request
+  const [isOutOfRangeRequested, setIsOutOfRangeRequested] = useState(false);
+  const [presenceType, setPresenceType] = useState('Tugas Luar');
+  const [outOfRangeReason, setOutOfRangeReason] = useState('');
+  const [lockedCoords, setLockedCoords] = useState<{lat: number, lng: number} | null>(null);
+  
   // State khusus Shift Dinamis
   const [dynamicShifts, setDynamicShifts] = useState<Schedule[]>([]);
   const [selectedShift, setSelectedShift] = useState<Schedule | null>(null);
@@ -183,6 +189,7 @@ const PresenceMain: React.FC = () => {
     setCapturedPhoto(photoBlob);
     setPhotoPreviewUrl(URL.createObjectURL(photoBlob));
     setIsCameraActive(false);
+    setLockedCoords(coords); // Lock coordinates
   };
 
   const resetCapture = () => {
@@ -286,24 +293,27 @@ const PresenceMain: React.FC = () => {
 
       // Tahap 1: Jalankan geocoding dan upload secara paralel untuk efisiensi
       const [address, photoId] = await Promise.all([
-        currentAddress || presenceService.getReverseGeocode(coords.lat, coords.lng),
+        currentAddress || presenceService.getReverseGeocode(lockedCoords?.lat || coords!.lat, lockedCoords?.lng || coords!.lng),
         googleDriveService.uploadFile(new File([photoBlob], `Presence_${isCurrentlyCheckingOut ? 'OUT' : 'IN'}_${Date.now()}.jpg`))
       ]);
 
       const currentTimeStr = serverTime.toISOString();
       
       // Tahap 2: Simpan ke database Supabase
+      const submissionCoords = lockedCoords || coords;
       if (!isCurrentlyCheckingOut) {
         const payload: any = {
           account_id: account.id,
           check_in: currentTimeStr,
-          in_latitude: coords.lat,
-          in_longitude: coords.lng,
+          in_latitude: submissionCoords?.lat,
+          in_longitude: submissionCoords?.lng,
           in_photo_id: photoId,
           in_address: address,
           status_in: scheduleResult.status,
           late_minutes: scheduleResult.minutes,
-          late_reason: reason
+          late_reason: reason,
+          presence_type: isOutOfRangeRequested ? presenceType : 'Reguler',
+          out_of_range_reason: isOutOfRangeRequested ? outOfRangeReason : null
         };
         await presenceService.checkIn(payload);
       } else {
@@ -312,13 +322,15 @@ const PresenceMain: React.FC = () => {
         }
         const payload: any = {
           check_out: currentTimeStr,
-          out_latitude: coords.lat,
-          out_longitude: coords.lng,
+          out_latitude: submissionCoords?.lat,
+          out_longitude: submissionCoords?.lng,
           out_photo_id: photoId,
           out_address: address,
           status_out: scheduleResult.status,
           early_departure_minutes: scheduleResult.minutes,
-          early_departure_reason: reason
+          early_departure_reason: reason,
+          presence_type: isOutOfRangeRequested ? presenceType : 'Reguler',
+          out_of_range_reason: isOutOfRangeRequested ? outOfRangeReason : null
         };
         await presenceService.checkOut(currentAttendance.id, payload);
       }
@@ -524,10 +536,10 @@ const PresenceMain: React.FC = () => {
                 </p>
                 
                 <button 
-                  disabled={isBlockedByLocation || isCapturing || !landmarker || (account.schedule_type === 'Shift Dinamis' && !todayAttendance && !selectedShift)}
+                  disabled={(isBlockedByLocation && !isOutOfRangeRequested) || isCapturing || !landmarker || (account.schedule_type === 'Shift Dinamis' && !todayAttendance && !selectedShift)}
                   onClick={() => setIsCameraActive(true)}
                   className={`mt-8 flex items-center gap-3 px-12 py-4 rounded-2xl font-bold uppercase text-xs tracking-widest shadow-lg transition-all ${
-                    !isBlockedByLocation && !isCapturing && landmarker && (account.schedule_type !== 'Shift Dinamis' || !!todayAttendance || !!selectedShift)
+                    (!isBlockedByLocation || isOutOfRangeRequested) && !isCapturing && landmarker && (account.schedule_type !== 'Shift Dinamis' || !!todayAttendance || !!selectedShift)
                     ? 'bg-[#006E62] text-white hover:bg-[#005a50] hover:scale-105 active:scale-95' 
                     : 'bg-gray-100 text-gray-300 cursor-not-allowed shadow-none'
                   }`}
@@ -598,7 +610,41 @@ const PresenceMain: React.FC = () => {
                     {isBlockedByLocation && (
                       <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl flex gap-3 items-start animate-pulse">
                          <AlertCircle size={16} className="text-rose-500 shrink-0 mt-0.5" />
-                         <p className="text-[10px] text-rose-600 font-bold leading-tight uppercase tracking-tight">Presensi dikunci. Anda berada diluar zona yang diizinkan.</p>
+                         <p className="text-[10px] text-rose-600 font-bold leading-tight uppercase tracking-tight">Lokasi anda berada di luar radius jangkauan lokasi {account.location.name}</p>
+                      </div>
+                    )}
+
+                    {isBlockedByLocation && (
+                      <div className="mt-4 p-4 bg-white rounded-xl border border-gray-100">
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-xs font-bold text-gray-700">Ajukan Presensi Luar</span>
+                          <button
+                            onClick={() => setIsOutOfRangeRequested(!isOutOfRangeRequested)}
+                            className={`w-10 h-6 rounded-full transition-colors ${isOutOfRangeRequested ? 'bg-[#006E62]' : 'bg-gray-200'}`}
+                          >
+                            <div className={`w-4 h-4 bg-white rounded-full transition-transform ${isOutOfRangeRequested ? 'translate-x-5' : 'translate-x-1'}`} />
+                          </button>
+                        </div>
+                        {isOutOfRangeRequested && (
+                          <div className="space-y-3">
+                            <select 
+                              value={presenceType} 
+                              onChange={(e) => setPresenceType(e.target.value)}
+                              className="w-full p-2 text-xs border border-gray-200 rounded-lg"
+                            >
+                              <option value="Tugas Luar">Tugas Luar</option>
+                              <option value="WFH">WFH</option>
+                              <option value="Ketemu Client">Ketemu Client</option>
+                              <option value="Lainnya">Lainnya</option>
+                            </select>
+                            <textarea 
+                              value={outOfRangeReason} 
+                              onChange={(e) => setOutOfRangeReason(e.target.value)}
+                              placeholder="Alasan presensi luar..."
+                              className="w-full p-2 text-xs border border-gray-200 rounded-lg"
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
                  </div>

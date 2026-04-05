@@ -9,7 +9,11 @@ import SubmissionDetail from './SubmissionDetail';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import { CardSkeleton } from '../../components/Common/Skeleton';
 
-const SubmissionMain: React.FC = () => {
+interface SubmissionMainProps {
+  type?: string;
+}
+
+const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -23,13 +27,14 @@ const SubmissionMain: React.FC = () => {
 
   useEffect(() => {
     fetchSubmissions();
-  }, []);
+  }, [type]);
 
   const fetchSubmissions = async () => {
     try {
       setIsLoading(true);
       const data = await submissionService.getAll();
-      setSubmissions(data);
+      const filtered = type ? data.filter(s => s.type === type) : data;
+      setSubmissions(filtered);
     } catch (error) {
       console.error(error);
     } finally {
@@ -183,7 +188,7 @@ const SubmissionMain: React.FC = () => {
           submission={selectedSubmission} 
           onClose={() => setSelectedSubmission(null)} 
           onVerify={handleVerify}
-          canVerify={currentUser?.id !== selectedSubmission.account_id && selectedSubmission.status === 'Pending'}
+          canVerify={(currentUser?.role === 'admin' || currentUser?.is_hr_admin) && currentUser?.id !== selectedSubmission.account_id && selectedSubmission.status === 'Pending'}
         />
       )}
     </div>
