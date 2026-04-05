@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   MapPin, LayoutDashboard, Settings, Users, MonitorCog, UserKey, Radar, Coffee, ChartPie, Toolbox, Handshake, Speech, MessagesSquare, 
   CalendarClock, Files, ChevronDown, ChevronRight, DollarSign, Banknote, Coins, BanknoteArrowDown, HandCoins, Diff,
-  Menu as MenuIcon, ChevronLeft, Database, Fingerprint, LogOut, Timer, ClipboardCheck, Plane, Calendar, ClipboardList, Heart, Target, BarChart3, CheckSquare, AlertTriangle, Video, Megaphone, Receipt, Trophy, Wallet, ShieldCheck, Activity, EarthLock
+  Menu as MenuIcon, ChevronLeft, Database, Fingerprint, LogOut, Timer, ClipboardCheck, Plane, Calendar, ClipboardList, Heart, Target, BarChart3, CheckSquare, AlertTriangle, Video, Megaphone, Receipt, Trophy, Wallet, ShieldCheck, Activity, EarthLock, AlertCircle
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { financeService } from '../../services/financeService';
@@ -148,7 +148,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
   return (
     <aside 
       className={`hidden md:flex flex-col border-r border-gray-100 bg-white sticky top-0 h-screen transition-all duration-300 z-30 ${
-        isCollapsed ? 'w-24' : 'w-64'
+        isCollapsed ? 'w-24' : 'w-72'
       }`}
     >
       <div className="flex items-center justify-between p-4 mb-4">
@@ -274,10 +274,22 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
             title={isCollapsed ? 'Pengajuan' : ''}
           >
             <span className="absolute bottom-0 left-0 h-0.5 bg-[#006E62] w-0 transition-all duration-300 group-hover:w-full"></span>
-            <ClipboardCheck size={20} className="shrink-0 text-gray-600" />
+            <div className="relative shrink-0">
+              <ClipboardCheck size={20} className="text-gray-600" />
+              {isAdmin && (Object.values(pendingSubmissions).some((c: any) => c > 0) || unreadDispensations > 0) && (
+                <div className="absolute -top-1 -right-1">
+                  <AlertCircle size={10} className="text-red-600 fill-red-600 stroke-white stroke-2" />
+                </div>
+              )}
+            </div>
             {!isCollapsed && (
               <div className="flex items-center justify-between flex-1 overflow-hidden">
-                <span className="font-medium text-sm truncate">Pengajuan</span>
+                <div className="flex items-center gap-2 truncate">
+                  <span className="font-medium text-sm truncate">Pengajuan</span>
+                  {isAdmin && (Object.values(pendingSubmissions).some((c: any) => c > 0) || unreadDispensations > 0) && (
+                    <AlertCircle size={14} className="text-red-600 fill-red-600 stroke-white stroke-2" />
+                  )}
+                </div>
                 {isSubmissionOpen ? <ChevronDown size={16} className="text-gray-300" /> : <ChevronRight size={16} className="text-gray-300" />}
               </div>
             )}

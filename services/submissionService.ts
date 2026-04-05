@@ -420,7 +420,7 @@ export const submissionService = {
     // Fetch Pending "Presensi Luar" from attendances table
     let attendanceQuery = supabase
       .from('attendances')
-      .select('id, account:accounts!account_id!inner(location_id)')
+      .select('check_in_validity, check_out_validity, account:accounts!account_id!inner(location_id)')
       .or('check_in_validity.eq.FALSE,check_out_validity.eq.FALSE');
 
     if (user && user.role !== 'admin') {
@@ -437,7 +437,12 @@ export const submissionService = {
 
     const { data: attendanceData, error: attendanceError } = await attendanceQuery;
     if (!attendanceError && attendanceData) {
-      counts['Presensi Luar'] = attendanceData.length;
+      let totalPendingLuar = 0;
+      attendanceData.forEach(att => {
+        if (att.check_in_validity === 'FALSE') totalPendingLuar++;
+        if (att.check_out_validity === 'FALSE') totalPendingLuar++;
+      });
+      counts['Presensi Luar'] = totalPendingLuar;
     }
 
     return counts;

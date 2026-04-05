@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckCircle, XCircle, Clock, User, FileText, Paperclip, ExternalLink, Calendar, MessageSquare, MapPin, Navigation, AlertCircle, Info, Search, Camera } from 'lucide-react';
+import { X, CheckCircle, XCircle, Clock, User, FileText, Paperclip, ExternalLink, Calendar, MessageSquare, MapPin, Eye, Navigation, AlertCircle, Info, Search, Camera } from 'lucide-react';
 import { Submission } from '../../types';
 import { googleDriveService } from '../../services/googleDriveService';
 import PresenceMap from '../presence/PresenceMap';
@@ -118,26 +118,20 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                       <p className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">{submission.account?.internal_nik}</p>
                     </div>
                   </div>
-                  
-                  {/* Department & Position Card */}
-                  <div className="bg-gray-50/50 rounded-xl p-3 border border-gray-100">
-                    <div className="space-y-2">
-                      <div>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Departemen</p>
-                        <p className="text-xs font-bold text-[#006E62]">{(submission.account as any)?.grade || '-'}</p>
-                      </div>
-                      <div className="pt-2 border-t border-gray-200/50">
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jabatan</p>
-                        <p className="text-xs font-medium text-gray-700">{submission.account?.position || '-'}</p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3">
-                  <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm h-full flex flex-col justify-center">
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Lokasi Penempatan</p>
-                    <p className="text-sm font-bold text-gray-700">{(submission.account as any)?.location?.name || '-'}</p>
+                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-3">
+                  <div>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Departemen</p>
+                    <p className="text-xs font-bold text-[#006E62]">{(submission.account as any)?.grade || '-'}</p>
+                  </div>
+                  <div className="pt-2 border-t border-gray-100">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jabatan</p>
+                    <p className="text-xs font-medium text-gray-700">{submission.account?.position || '-'}</p>
+                  </div>
+                  <div className="pt-2 border-t border-gray-100">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Lokasi Penempatan</p>
+                    <p className="text-xs font-bold text-gray-700">{(submission.account as any)?.location?.name || '-'}</p>
                   </div>
                 </div>
               </div>
@@ -323,7 +317,7 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                           />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                             <div className="bg-white/90 p-2 rounded-full shadow-lg">
-                              <Search size={20} className="text-[#006E62]" />
+                              <Eye size={20} className="text-[#006E62]" />
                             </div>
                           </div>
                         </a>
