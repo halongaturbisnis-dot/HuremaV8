@@ -196,6 +196,14 @@ const PresenceMain: React.FC = () => {
     if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
     setCapturedPhoto(null);
     setPhotoPreviewUrl(null);
+    setLockedCoords(null); // Unlock coordinates
+  };
+
+  const handleToggleOutOfRange = (value: boolean) => {
+    setIsOutOfRangeRequested(value);
+    if (!value) {
+      resetCapture(); // Reset photo and unlock coords when toggled off
+    }
   };
 
   const handleAttendance = async () => {
@@ -242,17 +250,16 @@ const PresenceMain: React.FC = () => {
 
     const locationRadius = account.location?.radius || 100;
     const isCheckOut = !!todayAttendance && !todayAttendance.check_out;
-    // FIX: Ensure strict boolean check to prevent string "false" or null issues
     const isLimited = isCheckOut 
       ? account.is_presence_limited_checkout === true 
       : account.is_presence_limited_checkin === true;
 
-    if (isLimited && distance > locationRadius) {
+    if (isLimited && distance > locationRadius && !isOutOfRangeRequested) {
        setIsCameraActive(false);
        return Swal.fire({
-         title: 'Diluar Radius',
-         text: `Anda berada diluar radius penempatan (${Math.round(distance)}m > ${locationRadius}m). Presensi dibatasi hanya di area lokasi.`,
-         icon: 'error',
+         title: 'Di Luar Radius',
+         text: `Anda berada di luar radius penempatan (${Math.round(distance)}m > ${locationRadius}m). Silahkan aktifkan "Ajukan Presensi Luar" jika Anda memiliki alasan yang sah.`,
+         icon: 'warning',
          confirmButtonColor: '#006E62'
        });
     }
@@ -262,11 +269,14 @@ const PresenceMain: React.FC = () => {
     const scheduleResult = presenceService.calculateStatus(serverTime, targetSchedule, isCheckOut ? 'OUT' : 'IN');
     
     let reason = null;
-    if (scheduleResult.status !== 'Tepat Waktu') {
+    // Wajibkan alasan jika terlambat/pulang awal ATAU jika presensi luar
+    const isLateOrEarly = scheduleResult.status !== 'Tepat Waktu';
+    
+    if (isLateOrEarly || isOutOfRangeRequested) {
       const { value: text, isConfirmed } = await Swal.fire({
-        title: `Konfirmasi ${scheduleResult.status}`,
+        title: `Konfirmasi ${isLateOrEarly ? scheduleResult.status : 'Presensi Luar'}`,
         input: 'textarea',
-        inputLabel: `Anda terdeteksi ${scheduleResult.status.toLowerCase()} ${scheduleResult.minutes} menit. Harap berikan alasan:`,
+        inputLabel: `${isLateOrEarly ? `Anda terdeteksi ${scheduleResult.status.toLowerCase()} ${scheduleResult.minutes} menit. ` : ''}Harap berikan alasan ${isOutOfRangeRequested ? 'presensi luar' : 'keterlambatan/pulang awal'} Anda:`,
         inputPlaceholder: 'Tuliskan alasan Anda di sini...',
         inputAttributes: { 'aria-label': 'Tuliskan alasan Anda di sini' },
         showCancelButton: true,
@@ -619,7 +629,7 @@ const PresenceMain: React.FC = () => {
                         <div className="flex items-center justify-between mb-4">
                           <span className="text-xs font-bold text-gray-700">Ajukan Presensi Luar</span>
                           <button
-                            onClick={() => setIsOutOfRangeRequested(!isOutOfRangeRequested)}
+                            onClick={() => handleToggleOutOfRange(!isOutOfRangeRequested)}
                             className={`w-10 h-6 rounded-full transition-colors ${isOutOfRangeRequested ? 'bg-[#006E62]' : 'bg-gray-200'}`}
                           >
                             <div className={`w-4 h-4 bg-white rounded-full transition-transform ${isOutOfRangeRequested ? 'translate-x-5' : 'translate-x-1'}`} />
