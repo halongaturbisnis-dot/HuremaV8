@@ -136,13 +136,20 @@ const DailyMonitoring: React.FC = () => {
                       <td className="px-4 py-3 text-xs text-gray-600 font-mono">{formatTime(item.today_rule?.check_out_time)}</td>
                       <td className="px-4 py-3 text-xs text-emerald-600 font-bold font-mono">
                         {formatTime(item.attendance?.check_in)}
-                        {item.attendance?.presence_type && item.attendance.presence_type !== 'Reguler' && (
+                        {(item.attendance?.check_in_type && item.attendance.check_in_type !== 'Reguler') && (
                           <span className="ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded uppercase">
-                            {item.attendance.presence_type}
+                            {item.attendance.check_in_type}
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-600 font-mono">{formatTime(item.attendance?.check_out)}</td>
+                      <td className="px-4 py-3 text-xs text-gray-600 font-mono">
+                        {formatTime(item.attendance?.check_out)}
+                        {(item.attendance?.check_out_type && item.attendance.check_out_type !== 'Reguler') && (
+                          <span className="ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded uppercase">
+                            {item.attendance.check_out_type}
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${item.attendance?.check_out ? 'bg-gray-100 text-gray-500' : 'bg-emerald-50 text-emerald-600'}`}>
                           {item.attendance?.check_out ? 'Sudah Pulang' : 'Belum Pulang'}

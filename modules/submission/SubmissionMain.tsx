@@ -37,26 +37,50 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
         const { data, error } = await supabase
           .from('attendances')
           .select('*, account:accounts!account_id(full_name, internal_nik)')
-          .neq('presence_type', 'Reguler')
+          .or('check_in_type.neq.Reguler,check_out_type.neq.Reguler')
           .order('created_at', { ascending: false });
         if (error) throw error;
+        
         // Map attendances to Submission-like structure
-        const mapped = (data as any[]).map(a => ({
-          id: a.id,
-          type: 'Presensi Luar',
-          account_id: a.account_id,
-          account: a.account,
-          status: (a.check_in_validity === 'FALSE' || a.check_out_validity === 'FALSE') ? 'Pending' : (a.check_in_validity === 'TRUE' || a.check_out_validity === 'TRUE' ? 'Disetujui' : 'Ditolak'),
-          description: (a.check_in_reason || a.check_out_reason) || 'Presensi Luar Lokasi',
-          created_at: a.created_at,
-          submission_data: { 
-            attendance_id: a.id, 
-            check_in_type: a.check_in_type,
-            check_out_type: a.check_out_type,
-            check_in_reason: a.check_in_reason,
-            check_out_reason: a.check_out_reason
+        const mapped: any[] = [];
+        (data as any[]).forEach(a => {
+          // Check In Out of Range
+          if (a.check_in_type && a.check_in_type !== 'Reguler') {
+            mapped.push({
+              id: `${a.id}_IN`,
+              type: 'Presensi Luar',
+              account_id: a.account_id,
+              account: a.account,
+              status: a.check_in_validity === 'FALSE' ? 'Pending' : (a.check_in_validity === 'TRUE' ? 'Disetujui' : 'Ditolak'),
+              description: `[MASUK] ${a.check_in_type}: ${a.check_in_reason || 'Tanpa alasan'}`,
+              created_at: a.check_in || a.created_at,
+              submission_data: { 
+                attendance_id: a.id, 
+                presence_type: 'IN',
+                reason: a.check_in_reason,
+                location_type: a.check_in_type
+              }
+            });
           }
-        }));
+          // Check Out Out of Range
+          if (a.check_out_type && a.check_out_type !== 'Reguler') {
+            mapped.push({
+              id: `${a.id}_OUT`,
+              type: 'Presensi Luar',
+              account_id: a.account_id,
+              account: a.account,
+              status: a.check_out_validity === 'FALSE' ? 'Pending' : (a.check_out_validity === 'TRUE' ? 'Disetujui' : 'Ditolak'),
+              description: `[PULANG] ${a.check_out_type}: ${a.check_out_reason || 'Tanpa alasan'}`,
+              created_at: a.check_out || a.created_at,
+              submission_data: { 
+                attendance_id: a.id, 
+                presence_type: 'OUT',
+                reason: a.check_out_reason,
+                location_type: a.check_out_type
+              }
+            });
+          }
+        });
         setSubmissions(mapped as any);
       } else {
         const data = await submissionService.getAll();
@@ -87,7 +111,15 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
         setIsSaving(true);
         if (type === 'Presensi Luar') {
           const sub = submissions.find(s => s.id === id);
-          await submissionService.verifyAttendance(id, sub?.submission_data.presence_type === 'IN' ? 'IN' : 'OUT', status === 'Disetujui' ? 'TRUE' : 'DENY', currentUser.id, notes);
+          if (sub?.submission_data?.attendance_id) {
+            await submissionService.verifyAttendance(
+              sub.submission_data.attendance_id, 
+              sub.submission_data.presence_type, 
+              status === 'Disetujui' ? 'TRUE' : 'DENY', 
+              currentUser.id, 
+              notes
+            );
+          }
         } else {
           await submissionService.verify(id, status, currentUser.id, notes);
         }
