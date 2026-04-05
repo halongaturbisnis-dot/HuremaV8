@@ -4,7 +4,7 @@ import {
   Users, UserCheck, UserX, Clock, Calendar, 
   Heart, Briefcase, Search, ArrowLeft, Eye,
   Coffee, Moon, Sun, AlertCircle, CheckCircle2,
-  Baby, UserCircle, CircleAlert
+  Baby, UserCircle, CircleAlert, Check, TriangleAlert, X
 } from 'lucide-react';
 import { monitoringService } from '../../services/monitoringService';
 import { googleDriveService } from '../../services/googleDriveService';
@@ -127,9 +127,9 @@ const DailyMonitoring: React.FC = () => {
                       <div className="min-w-0">
                         <p className="text-sm font-bold text-gray-800 truncate">{item.full_name}</p>
                         <div className="flex flex-col">
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{item.internal_nik}</p>
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{item.department}</p>
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{item.position}</p>
+                          <p className="text-[10px] font-bold text-gray-400 tracking-tighter">{item.internal_nik}</p>
+                          <p className="text-[10px] font-bold text-gray-400 tracking-tighter">{item.grade || item.department}</p>
+                          <p className="text-[10px] font-bold text-gray-400 tracking-tighter">{item.position}</p>
                         </div>
                       </div>
                     </div>
@@ -155,12 +155,19 @@ const DailyMonitoring: React.FC = () => {
                     <>
                       <td className="px-4 py-3 text-center">
                         <div className="flex flex-col items-center gap-1">
-                          <p className={`text-sm font-black font-mono ${item.attendance?.late_minutes > 0 ? 'text-red-600' : 'text-[#006E62]'}`}>
+                          <p className="text-sm font-black font-mono text-gray-900">
                             {formatTime(item.attendance?.check_in)}
                           </p>
                           {(item.attendance?.check_in_type && item.attendance.check_in_type !== 'Reguler') && (
-                            <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded uppercase">
-                              {item.attendance.check_in_type} ({item.attendance.check_in_validity === 'TRUE' ? 'ACC' : item.attendance.check_in_validity === 'DENY' ? 'DITOLAK' : 'PENDING'})
+                            <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded uppercase flex items-center gap-1">
+                              {item.attendance.check_in_type}
+                              {item.attendance.check_in_validity === 'TRUE' ? (
+                                <Check size={10} className="text-[#006E62]" />
+                              ) : item.attendance.check_in_validity === 'DENY' ? (
+                                <X size={10} className="text-red-600" />
+                              ) : (
+                                <TriangleAlert size={10} className="text-amber-600" />
+                              )}
                             </span>
                           )}
                           <p className={`text-[9px] font-bold uppercase ${item.attendance?.late_minutes > 0 ? 'text-red-600' : 'text-[#006E62]'}`}>
@@ -170,12 +177,19 @@ const DailyMonitoring: React.FC = () => {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex flex-col items-center gap-1">
-                          <p className={`text-sm font-black font-mono ${item.attendance?.early_departure_minutes > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                          <p className="text-sm font-black font-mono text-gray-900">
                             {formatTime(item.attendance?.check_out)}
                           </p>
                           {(item.attendance?.check_out_type && item.attendance.check_out_type !== 'Reguler') && (
-                            <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded uppercase">
-                              {item.attendance.check_out_type} ({item.attendance.check_out_validity === 'TRUE' ? 'ACC' : item.attendance.check_out_validity === 'DENY' ? 'DITOLAK' : 'PENDING'})
+                            <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded uppercase flex items-center gap-1">
+                              {item.attendance.check_out_type}
+                              {item.attendance.check_out_validity === 'TRUE' ? (
+                                <Check size={10} className="text-[#006E62]" />
+                              ) : item.attendance.check_out_validity === 'DENY' ? (
+                                <X size={10} className="text-red-600" />
+                              ) : (
+                                <TriangleAlert size={10} className="text-amber-600" />
+                              )}
                             </span>
                           )}
                           {item.attendance?.check_out && (
@@ -295,7 +309,9 @@ const DailyMonitoring: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Pemantauan Harian</h2>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Status kehadiran karyawan hari ini</p>
+          <p className="text-[10px] font-bold text-gray-400 tracking-widest">
+            <span className="uppercase">Status kehadiran karyawan hari</span> <span className="text-[#006E62]">{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
+          </p>
         </div>
         <div className="relative w-full md:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
