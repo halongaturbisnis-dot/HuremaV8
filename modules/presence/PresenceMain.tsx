@@ -39,6 +39,7 @@ const PresenceMain: React.FC = () => {
   const [checkOutType, setCheckOutType] = useState('Tugas Luar');
   const [checkInReason, setCheckInReason] = useState('');
   const [checkOutReason, setCheckOutReason] = useState('');
+  const [lateEarlyReason, setLateEarlyReason] = useState('');
   const [lockedCoords, setLockedCoords] = useState<{lat: number, lng: number} | null>(null);
   
   // State khusus Shift Dinamis
@@ -209,23 +210,24 @@ const PresenceMain: React.FC = () => {
       setCheckOutReason('');
     }
   };
+  const isCheckOutStatus = !!todayAttendance && !todayAttendance.check_out;
+  const scheduleResult = presenceService.calculateStatus(serverTime, account!.schedule!, isCheckOutStatus ? 'OUT' : 'IN');
+  const isLateOrEarly = scheduleResult.status === 'Terlambat' || scheduleResult.status === 'Pulang Cepat';
+
   const handleAttendance = async () => {
     if (!capturedPhoto) return;
     
     // Validasi alasan keterlambatan / pulang awal
-    const isCheckOut = !!todayAttendance && !todayAttendance.check_out;
+    if (isLateOrEarly && !lateEarlyReason.trim()) {
+      return Swal.fire('Peringatan', 'Alasan keterlambatan/pulang awal wajib diisi.', 'warning');
+    }
 
     // Validasi alasan presensi luar
-    if (isOutOfRangeRequested && (isCheckOut ? !checkOutReason.trim() : !checkInReason.trim())) {
+    if (isOutOfRangeRequested && (isCheckOutStatus ? !checkOutReason.trim() : !checkInReason.trim())) {
       return Swal.fire('Peringatan', 'Alasan presensi luar wajib diisi.', 'warning');
     }
 
-    const scheduleResult = presenceService.calculateStatus(serverTime, account!.schedule!, isCheckOut ? 'OUT' : 'IN');
-    const reason = (scheduleResult.status === 'Terlambat' || scheduleResult.status === 'Pulang Cepat') ? 'Alasan otomatis' : null; // Simplified for now
-    
-    if ((scheduleResult.status === 'Terlambat' || scheduleResult.status === 'Pulang Cepat') && !reason) {
-      return Swal.fire('Peringatan', 'Alasan keterlambatan/pulang awal wajib diisi.', 'warning');
-    }
+    const reason = isLateOrEarly ? lateEarlyReason : null;
 
     setIsCapturing(true);
     try {
@@ -376,6 +378,17 @@ const PresenceMain: React.FC = () => {
                       <span className="text-[10px] font-bold uppercase tracking-widest">Identitas Terverifikasi</span>
                     </div>
                   </div>
+                  {isLateOrEarly && (
+                    <div className="mt-4 pt-4 border-t border-gray-50">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Alasan Keterlambatan/Pulang Awal</p>
+                      <textarea
+                        value={lateEarlyReason}
+                        onChange={(e) => setLateEarlyReason(e.target.value)}
+                        placeholder="Masukkan alasan..."
+                        className="w-full p-2 text-xs border border-gray-200 rounded-lg"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="w-full max-w-sm space-y-3">
