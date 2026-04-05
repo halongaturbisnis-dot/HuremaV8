@@ -105,7 +105,7 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Departemen</p>
-                    <p className="text-xs font-bold text-gray-700">{(submission.account as any)?.department || '-'}</p>
+                    <p className="text-xs font-bold text-gray-700">{(submission.account as any)?.grade || '-'}</p>
                   </div>
                   <div className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Lokasi Penempatan</p>

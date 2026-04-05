@@ -43,7 +43,7 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
               full_name, 
               internal_nik, 
               photo_google_id,
-              department,
+              grade,
               position,
               location:locations!location_id(
                 id,
