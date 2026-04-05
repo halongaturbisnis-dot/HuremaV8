@@ -36,7 +36,37 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
       if (type === 'Presensi Luar') {
         const { data, error } = await supabase
           .from('attendances')
-          .select('*, account:accounts!account_id(full_name, internal_nik)')
+          .select(`
+            *,
+            account:accounts!account_id(
+              id,
+              full_name, 
+              internal_nik, 
+              photo_google_id,
+              department,
+              position,
+              location:locations!location_id(
+                id,
+                name,
+                latitude,
+                longitude,
+                radius
+              ),
+              schedule:schedules!schedule_id(
+                id,
+                name,
+                tolerance_minutes,
+                tolerance_checkin_minutes,
+                rules:schedule_rules(
+                  id,
+                  day_of_week,
+                  check_in_time,
+                  check_out_time,
+                  is_holiday
+                )
+              )
+            )
+          `)
           .or('check_in_type.neq.Reguler,check_out_type.neq.Reguler')
           .order('created_at', { ascending: false });
         if (error) throw error;
@@ -58,7 +88,9 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
                 attendance_id: a.id, 
                 presence_type: 'IN',
                 reason: a.check_in_reason,
-                location_type: a.check_in_type
+                location_type: a.check_in_type,
+                // Pass full attendance data for detailed view
+                full_attendance: a
               }
             });
           }
@@ -76,7 +108,9 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
                 attendance_id: a.id, 
                 presence_type: 'OUT',
                 reason: a.check_out_reason,
-                location_type: a.check_out_type
+                location_type: a.check_out_type,
+                // Pass full attendance data for detailed view
+                full_attendance: a
               }
             });
           }

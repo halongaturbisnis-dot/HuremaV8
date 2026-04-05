@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, CheckCircle, XCircle, Clock, User, FileText, Paperclip, ExternalLink, Calendar, MessageSquare } from 'lucide-react';
+import { X, CheckCircle, XCircle, Clock, User, FileText, Paperclip, ExternalLink, Calendar, MessageSquare, MapPin, Navigation, AlertCircle, Info } from 'lucide-react';
 import { Submission } from '../../types';
 import { googleDriveService } from '../../services/googleDriveService';
+import PresenceMap from '../presence/PresenceMap';
 
 interface SubmissionDetailProps {
   submission: Submission;
@@ -22,6 +23,16 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const formatTimeOnly = (isoString: string | null) => {
+    if (!isoString) return '-';
+    try {
+      const date = new Date(isoString);
+      return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+    } catch (e) {
+      return '-';
+    }
   };
 
   const DataItem = ({ label, value }: { label: string, value: string }) => (
@@ -67,85 +78,285 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-             <ProfileItem 
-                label="Pengaju" 
-                name={submission.account?.full_name || '-'} 
-                photoId={submission.account?.photo_google_id} 
-             />
-             <DataItem label="NIK Internal" value={submission.account?.internal_nik || '-'} />
-             <DataItem label="Tanggal Pengajuan" value={formatDate(submission.created_at)} />
-             <DataItem label="Status Saat Ini" value={submission.status} />
-          </div>
+          {submission.type === 'Presensi Luar' ? (
+            <div className="space-y-6">
+              {/* Header Info: Profile & Status */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-emerald-50 bg-gray-100 flex items-center justify-center shrink-0 shadow-inner">
+                    {submission.account?.photo_google_id ? (
+                      <img 
+                        src={googleDriveService.getFileUrl(submission.account.photo_google_id)} 
+                        alt={submission.account.full_name} 
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <User size={32} className="text-gray-300" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-0.5">Karyawan Pengaju</p>
+                    <h4 className="text-base font-black text-gray-800 truncate leading-tight">{submission.account?.full_name}</h4>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">{submission.account?.internal_nik} • {submission.account?.position}</p>
+                  </div>
+                </div>
 
-          <div className="space-y-2">
-            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b pb-1">Data Spesifik Pengajuan</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-               {(() => {
-                 const data = { ...submission.submission_data };
-                 const keys = Object.keys(data).filter(k => !k.toLowerCase().endsWith('_id'));
-                 
-                 // Find Start Date and End Date keys (case insensitive)
-                 const startDateKey = keys.find(k => k.toLowerCase().replace(' ', '') === 'startdate');
-                 const endDateKey = keys.find(k => k.toLowerCase().replace(' ', '') === 'enddate');
-
-                 const otherKeys = keys.filter(k => k !== startDateKey && k !== endDateKey);
-
-                 return (
-                   <>
-                     {startDateKey && (
-                       <div key={startDateKey} className="flex justify-between items-center p-2 bg-emerald-50/20 rounded border border-emerald-100/30">
-                          <span className="text-[10px] font-medium text-gray-500 capitalize">{startDateKey.replace('_', ' ')}</span>
-                          <span className="text-[10px] font-bold text-[#006E62]">{data[startDateKey]}</span>
-                       </div>
-                     )}
-                     {endDateKey && (
-                       <div key={endDateKey} className="flex justify-between items-center p-2 bg-emerald-50/20 rounded border border-emerald-100/30">
-                          <span className="text-[10px] font-medium text-gray-500 capitalize">{endDateKey.replace('_', ' ')}</span>
-                          <span className="text-[10px] font-bold text-[#006E62]">{data[endDateKey]}</span>
-                       </div>
-                     )}
-                     {otherKeys.map(key => (
-                       <div key={key} className="flex justify-between items-center p-2 bg-emerald-50/20 rounded border border-emerald-100/30">
-                          <span className="text-[10px] font-medium text-gray-500 capitalize">{key.replace('_', ' ')}</span>
-                          <span className="text-[10px] font-bold text-[#006E62]">{data[key]}</span>
-                       </div>
-                     ))}
-                   </>
-                 );
-               })()}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b pb-1">Keterangan / Alasan</h4>
-            <div className="p-4 bg-gray-50 rounded-xl italic text-xs text-gray-600 leading-relaxed border border-gray-100">
-               "{submission.description}"
-            </div>
-          </div>
-
-          {submission.file_id && (
-            <div className="space-y-2">
-              <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b pb-1">Lampiran Dokumen</h4>
-              <div className="grid grid-cols-1 gap-2">
-                {submission.file_id.split(',').map((fid, index) => (
-                  <a 
-                    key={index}
-                    href={googleDriveService.getViewerUrl(fid)} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all group"
-                  >
-                     <div className="flex items-center gap-3">
-                       <Paperclip size={18} className="text-[#006E62]" />
-                       <span className="text-xs font-bold text-gray-700 truncate max-w-[200px]">
-                         {fid.includes('|') ? fid.split('|')[1] : `Lihat Lampiran ${index + 1}`}
-                       </span>
-                     </div>
-                     <ExternalLink size={14} className="text-gray-300 group-hover:text-[#006E62]" />
-                  </a>
-                ))}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Departemen</p>
+                    <p className="text-xs font-bold text-gray-700">{(submission.account as any)?.department || '-'}</p>
+                  </div>
+                  <div className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Lokasi Penempatan</p>
+                    <p className="text-xs font-bold text-gray-700">{(submission.account as any)?.location?.name || '-'}</p>
+                  </div>
+                </div>
               </div>
+
+              {/* Map & Location Detail */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="p-3 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
+                  <div className="flex items-center gap-2">
+                    <MapPin size={14} className="text-emerald-600" />
+                    <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Titik Presensi vs Lokasi Kantor</span>
+                  </div>
+                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[9px] font-black rounded-full uppercase">
+                    {submission.submission_data.presence_type === 'IN' ? 'Presensi Masuk' : 'Presensi Keluar'}
+                  </span>
+                </div>
+                <div className="p-4 space-y-4">
+                  {(() => {
+                    const att = submission.submission_data.full_attendance;
+                    const office = (submission.account as any)?.location;
+                    const isIN = submission.submission_data.presence_type === 'IN';
+                    const userLat = isIN ? att?.in_latitude : att?.out_latitude;
+                    const userLng = isIN ? att?.in_longitude : att?.out_longitude;
+                    const address = isIN ? att?.in_address : att?.out_address;
+
+                    if (!userLat || !userLng || !office?.latitude) return (
+                      <div className="py-8 text-center text-gray-400 text-xs italic">Data lokasi tidak tersedia</div>
+                    );
+
+                    return (
+                      <>
+                        <div className="h-48 rounded-xl overflow-hidden border border-gray-100 shadow-inner relative">
+                          <PresenceMap 
+                            userLat={userLat}
+                            userLng={userLng}
+                            officeLat={office.latitude}
+                            officeLng={office.longitude}
+                            radius={office.radius || 100}
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+                              <Navigation size={16} className="text-emerald-600" />
+                            </div>
+                            <div>
+                              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Alamat Presensi (Reverse Geotag)</p>
+                              <p className="text-[11px] text-gray-600 leading-relaxed font-medium">{address || 'Alamat tidak terdeteksi'}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+                              <AlertCircle size={16} className="text-amber-600" />
+                            </div>
+                            <div>
+                              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Tipe & Alasan Presensi Luar</p>
+                              <p className="text-[11px] font-bold text-gray-700">{submission.submission_data.location_type}</p>
+                              <p className="text-[11px] text-gray-500 italic">"{submission.submission_data.reason || '-'}"</p>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* Schedule & Attendance Status */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+                  <div className="flex items-center gap-2 pb-2 border-b border-gray-50">
+                    <Calendar size={14} className="text-blue-600" />
+                    <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Informasi Jadwal</span>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Nama Jadwal</p>
+                    <p className="text-xs font-bold text-gray-700">{(submission.account as any)?.schedule?.name || '-'}</p>
+                  </div>
+                  {(() => {
+                    const att = submission.submission_data.full_attendance;
+                    const date = new Date(att?.created_at || new Date());
+                    const dayOfWeek = date.getDay();
+                    const rule = (submission.account as any)?.schedule?.rules?.find((r: any) => r.day_of_week === dayOfWeek);
+                    const tolerance = (submission.account as any)?.schedule?.tolerance_minutes || 0;
+                    
+                    return (
+                      <div className="grid grid-cols-2 gap-2 pt-1">
+                        <div>
+                          <p className="text-[8px] font-bold text-gray-400 uppercase">Jam Masuk</p>
+                          <p className="text-[11px] font-bold text-emerald-600">{rule?.check_in_time || '-'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[8px] font-bold text-gray-400 uppercase">Jam Pulang</p>
+                          <p className="text-[11px] font-bold text-red-600">{rule?.check_out_time || '-'}</p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-[8px] font-bold text-gray-400 uppercase">Toleransi</p>
+                          <p className="text-[11px] font-bold text-gray-600">{tolerance} Menit</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+                  <div className="flex items-center gap-2 pb-2 border-b border-gray-50">
+                    <Clock size={14} className="text-purple-600" />
+                    <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Status Kehadiran</span>
+                  </div>
+                  {(() => {
+                    const att = submission.submission_data.full_attendance;
+                    const isIN = submission.submission_data.presence_type === 'IN';
+                    const time = isIN ? att?.check_in : att?.check_out;
+                    const lateEarly = isIN ? att?.late_minutes : att?.early_departure_minutes;
+                    const reason = isIN ? att?.late_reason : att?.early_departure_reason;
+                    
+                    return (
+                      <>
+                        <div>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Waktu Presensi</p>
+                          <p className="text-xs font-bold text-gray-700">{time ? formatTimeOnly(time) : '-'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{isIN ? 'Keterlambatan' : 'Pulang Awal'}</p>
+                          <p className={`text-xs font-bold ${lateEarly > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                            {lateEarly || 0} Menit
+                          </p>
+                        </div>
+                        {lateEarly > 0 && (
+                          <div className="pt-1">
+                            <p className="text-[8px] font-bold text-gray-400 uppercase">Alasan {isIN ? 'Terlambat' : 'Pulang Awal'}</p>
+                            <p className="text-[10px] text-gray-500 italic leading-tight">"{reason || '-'}"</p>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+
+                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+                  <div className="flex items-center gap-2 pb-2 border-b border-gray-50">
+                    <Info size={14} className="text-orange-600" />
+                    <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Foto Verifikasi</span>
+                  </div>
+                  <div className="aspect-square rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center">
+                    {(() => {
+                      const att = submission.submission_data.full_attendance;
+                      const isIN = submission.submission_data.presence_type === 'IN';
+                      const photoId = isIN ? att?.in_photo_id : att?.out_photo_id;
+                      
+                      if (!photoId) return <User size={24} className="text-gray-200" />;
+                      
+                      return (
+                        <img 
+                          src={googleDriveService.getFileUrl(photoId)} 
+                          alt="Foto Presensi" 
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                 <ProfileItem 
+                    label="Pengaju" 
+                    name={submission.account?.full_name || '-'} 
+                    photoId={submission.account?.photo_google_id} 
+                 />
+                 <DataItem label="NIK Internal" value={submission.account?.internal_nik || '-'} />
+                 <DataItem label="Tanggal Pengajuan" value={formatDate(submission.created_at)} />
+                 <DataItem label="Status Saat Ini" value={submission.status} />
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b pb-1">Data Spesifik Pengajuan</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                   {(() => {
+                     const data = { ...submission.submission_data };
+                     const keys = Object.keys(data).filter(k => !k.toLowerCase().endsWith('_id') && k !== 'full_attendance');
+                     
+                     // Find Start Date and End Date keys (case insensitive)
+                     const startDateKey = keys.find(k => k.toLowerCase().replace(' ', '') === 'startdate');
+                     const endDateKey = keys.find(k => k.toLowerCase().replace(' ', '') === 'enddate');
+
+                     const otherKeys = keys.filter(k => k !== startDateKey && k !== endDateKey);
+
+                     return (
+                       <>
+                         {startDateKey && (
+                           <div key={startDateKey} className="flex justify-between items-center p-2 bg-emerald-50/20 rounded border border-emerald-100/30">
+                              <span className="text-[10px] font-medium text-gray-500 capitalize">{startDateKey.replace('_', ' ')}</span>
+                              <span className="text-[10px] font-bold text-[#006E62]">{data[startDateKey]}</span>
+                           </div>
+                         )}
+                         {endDateKey && (
+                           <div key={endDateKey} className="flex justify-between items-center p-2 bg-emerald-50/20 rounded border border-emerald-100/30">
+                              <span className="text-[10px] font-medium text-gray-500 capitalize">{endDateKey.replace('_', ' ')}</span>
+                              <span className="text-[10px] font-bold text-[#006E62]">{data[endDateKey]}</span>
+                           </div>
+                         )}
+                         {otherKeys.map(key => (
+                           <div key={key} className="flex justify-between items-center p-2 bg-emerald-50/20 rounded border border-emerald-100/30">
+                              <span className="text-[10px] font-medium text-gray-500 capitalize">{key.replace('_', ' ')}</span>
+                              <span className="text-[10px] font-bold text-[#006E62]">{data[key]}</span>
+                           </div>
+                         ))}
+                       </>
+                     );
+                   })()}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b pb-1">Keterangan / Alasan</h4>
+                <div className="p-4 bg-gray-50 rounded-xl italic text-xs text-gray-600 leading-relaxed border border-gray-100">
+                   "{submission.description}"
+                </div>
+              </div>
+
+              {submission.file_id && (
+                <div className="space-y-2">
+                  <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b pb-1">Lampiran Dokumen</h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    {submission.file_id.split(',').map((fid, index) => (
+                      <a 
+                        key={index}
+                        href={googleDriveService.getViewerUrl(fid)} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all group"
+                      >
+                         <div className="flex items-center gap-3">
+                           <Paperclip size={18} className="text-[#006E62]" />
+                           <span className="text-xs font-bold text-gray-700 truncate max-w-[200px]">
+                             {fid.includes('|') ? fid.split('|')[1] : `Lihat Lampiran ${index + 1}`}
+                           </span>
+                         </div>
+                         <ExternalLink size={14} className="text-gray-300 group-hover:text-[#006E62]" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
