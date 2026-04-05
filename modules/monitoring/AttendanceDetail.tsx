@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, Clock, User, MapPin, Navigation, Eye, Calendar, Info, AlertCircle } from 'lucide-react';
+import { X, Clock, User, MapPin, Navigation, Eye, Calendar, Info, AlertCircle, Check, TriangleAlert } from 'lucide-react';
 import { Attendance, Account } from '../../types';
 import { googleDriveService } from '../../services/googleDriveService';
 import PresenceMap from '../presence/PresenceMap';
@@ -46,6 +46,28 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
     return R * c; // distance in meters
   };
 
+  const getStatusIcon = (status?: string) => {
+    switch (status) {
+      case 'Disetujui':
+        return <Check size={14} className="text-emerald-600" />;
+      case 'Ditolak':
+        return <X size={14} className="text-red-600" />;
+      default:
+        return <TriangleAlert size={14} className="text-amber-600" />;
+    }
+  };
+
+  const getStatusTooltip = (status?: string) => {
+    switch (status) {
+      case 'Disetujui':
+        return 'Disetujui';
+      case 'Ditolak':
+        return 'Ditolak';
+      default:
+        return 'Perlu Verifikasi';
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in duration-200">
@@ -67,38 +89,75 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Header Info: Profile & Status */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-emerald-50 bg-gray-100 flex items-center justify-center shrink-0 shadow-inner">
-                {account.photo_google_id ? (
-                  <img 
-                    src={googleDriveService.getFileUrl(account.photo_google_id)} 
-                    alt={account.full_name} 
-                    className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <User size={32} className="text-gray-300" />
-                )}
+            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-emerald-50 bg-gray-100 flex items-center justify-center shrink-0 shadow-inner">
+                  {account.photo_google_id ? (
+                    <img 
+                      src={googleDriveService.getFileUrl(account.photo_google_id)} 
+                      alt={account.full_name} 
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <User size={32} className="text-gray-300" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-0.5">Karyawan</p>
+                  <h4 className="text-base font-black text-gray-800 truncate leading-tight">{account.full_name}</h4>
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">{account.internal_nik}</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-0.5">Karyawan</p>
-                <h4 className="text-base font-black text-gray-800 truncate leading-tight">{account.full_name}</h4>
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">{account.internal_nik}</p>
+              <div className="grid grid-cols-1 gap-2 pt-2 border-t border-gray-50">
+                <div>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Departemen</p>
+                  <p className="text-xs font-bold text-[#006E62]">{account.grade || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jabatan</p>
+                  <p className="text-xs font-medium text-gray-700">{account.position || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Lokasi Penempatan</p>
+                  <p className="text-xs font-bold text-gray-700">{account.location?.name || '-'}</p>
+                </div>
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Departemen</p>
-                <p className="text-xs font-bold text-[#006E62]">{account.department || '-'}</p>
+            <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-50">
+                <Calendar size={14} className="text-blue-600" />
+                <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Detail Jadwal</span>
               </div>
-              <div>
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jabatan</p>
-                <p className="text-xs font-medium text-gray-700">{account.position || '-'}</p>
-              </div>
-              <div className="col-span-2 pt-2 border-t border-gray-50">
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Lokasi Penempatan</p>
-                <p className="text-xs font-bold text-gray-700">{account.location?.name || '-'}</p>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Nama Jadwal</p>
+                  <p className="text-xs font-bold text-gray-700">{account.schedule?.name || '-'}</p>
+                </div>
+                {(() => {
+                  const date = new Date(attendance.created_at || new Date());
+                  const dayOfWeek = date.getDay();
+                  const rule = account.schedule?.rules?.find((r: any) => r.day_of_week === dayOfWeek);
+                  const tolerance = account.schedule?.tolerance_minutes || 0;
+                  
+                  return (
+                    <div className="grid grid-cols-2 gap-4 pt-1">
+                      <div>
+                        <p className="text-[8px] font-bold text-gray-400 uppercase">Jam Masuk</p>
+                        <p className="text-[11px] font-bold text-emerald-600">{rule?.check_in_time || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] font-bold text-gray-400 uppercase">Jam Pulang</p>
+                        <p className="text-[11px] font-bold text-red-600">{rule?.check_out_time || '-'}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-[8px] font-bold text-gray-400 uppercase">Toleransi</p>
+                        <p className="text-[11px] font-bold text-gray-600">{tolerance} Menit</p>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -137,7 +196,7 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Status</p>
                         <p className={`text-xs font-bold ${attendance.late_minutes > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                          {attendance.status_in} {attendance.late_minutes > 0 ? `(${attendance.late_minutes}m)` : ''}
+                          {attendance.status_in} {attendance.late_minutes > 0 ? `(${attendance.late_minutes} Menit)` : ''}
                         </p>
                       </div>
                     </div>
@@ -151,10 +210,20 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                         </p>
                       </div>
                       <div>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Tipe</p>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${attendance.check_in_type === 'Reguler' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                          {attendance.check_in_type || 'Reguler'}
-                        </span>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jenis Presensi</p>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${attendance.check_in_type === 'Reguler' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                            {attendance.check_in_type || 'Reguler'}
+                          </span>
+                          {attendance.check_in_type !== 'Reguler' && (
+                            <div className="group relative">
+                              {getStatusIcon(attendance.check_in_status)}
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                {getStatusTooltip(attendance.check_in_status)}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -182,6 +251,13 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                               alt="Foto Masuk" 
                               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                               referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                const id = attendance.in_photo_id?.split('|')[0];
+                                if (id && !target.src.includes('lh3')) {
+                                  target.src = `https://lh3.googleusercontent.com/d/${id}=s1600`;
+                                }
+                              }}
                             />
                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                               <Eye size={20} className="text-white" />
@@ -192,14 +268,16 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                         )}
                       </div>
                     </div>
-                    {attendance.late_reason && (
-                      <div className="flex-1">
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Alasan Terlambat</p>
-                        <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-100/50 italic text-[11px] text-amber-700">
-                          "{attendance.late_reason}"
-                        </div>
+                    <div className="flex-1">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Alasan</p>
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 italic text-[11px] text-gray-600 min-h-[60px]">
+                        {attendance.check_in_type !== 'Reguler' ? (
+                          attendance.late_reason || 'Tidak ada alasan'
+                        ) : (
+                          attendance.late_minutes > 0 ? attendance.late_reason || 'Terlambat tanpa alasan' : 'Tepat Waktu'
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -239,7 +317,7 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Status</p>
                         <p className={`text-xs font-bold ${attendance.early_departure_minutes > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                          {attendance.status_out || '-'} {attendance.early_departure_minutes > 0 ? `(${attendance.early_departure_minutes}m)` : ''}
+                          {attendance.status_out || '-'} {attendance.early_departure_minutes > 0 ? `(${attendance.early_departure_minutes} Menit)` : ''}
                         </p>
                       </div>
                     </div>
@@ -253,10 +331,20 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                         </p>
                       </div>
                       <div>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Tipe</p>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${attendance.check_out_type === 'Reguler' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                          {attendance.check_out_type || 'Reguler'}
-                        </span>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jenis Presensi</p>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${attendance.check_out_type === 'Reguler' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                            {attendance.check_out_type || 'Reguler'}
+                          </span>
+                          {attendance.check_out_type && attendance.check_out_type !== 'Reguler' && (
+                            <div className="group relative">
+                              {getStatusIcon(attendance.check_out_status)}
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                {getStatusTooltip(attendance.check_out_status)}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -284,6 +372,13 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                               alt="Foto Pulang" 
                               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                               referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                const id = attendance.out_photo_id?.split('|')[0];
+                                if (id && !target.src.includes('lh3')) {
+                                  target.src = `https://lh3.googleusercontent.com/d/${id}=s1600`;
+                                }
+                              }}
                             />
                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                               <Eye size={20} className="text-white" />
@@ -294,14 +389,16 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                         )}
                       </div>
                     </div>
-                    {attendance.early_departure_reason && (
-                      <div className="flex-1">
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Alasan Pulang Awal</p>
-                        <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-100/50 italic text-[11px] text-amber-700">
-                          "{attendance.early_departure_reason}"
-                        </div>
+                    <div className="flex-1">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Alasan</p>
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 italic text-[11px] text-gray-600 min-h-[60px]">
+                        {attendance.check_out_type && attendance.check_out_type !== 'Reguler' ? (
+                          attendance.early_departure_reason || 'Tidak ada alasan'
+                        ) : (
+                          attendance.early_departure_minutes > 0 ? attendance.early_departure_reason || 'Pulang awal tanpa alasan' : 'Sesuai Jadwal'
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>

@@ -50,9 +50,10 @@ interface AccountDetailProps {
   onDelete: (id: string) => void;
   isReadOnly?: boolean;
   data?: Account;
+  hideLogs?: boolean;
 }
 
-const AccountDetail: React.FC<AccountDetailProps> = ({ id, onClose, onEdit, onDelete, isReadOnly = false, data }) => {
+const AccountDetail: React.FC<AccountDetailProps> = ({ id, onClose, onEdit, onDelete, isReadOnly = false, data, hideLogs = false }) => {
   const [account, setAccount] = useState<Account | null>(data || null);
   const [careerLogs, setCareerLogs] = useState<CareerLog[]>([]);
   const [healthLogs, setHealthLogs] = useState<HealthLog[]>([]);
@@ -612,90 +613,41 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ id, onClose, onEdit, onDe
         </DetailSection>
 
         {/* f. Riwayat Kontrak Kerja */}
-        <DetailSection 
-          icon={FileBadge} 
-          title="Riwayat Kontrak Kerja"
-          onAdd={() => setShowContractForm({ show: true, data: { account_id: id } })}
-          isScrollable
-        >
-           <div className="space-y-3">
-            {contracts.length === 0 ? (
-              <p className="text-[10px] text-gray-400 italic">Belum ada riwayat kontrak.</p>
-            ) : (
-              contracts.map(c => (
-                <div 
-                  key={c.id} 
-                  className="flex group justify-between items-start border-l-2 border-emerald-100 pl-3 py-1 relative cursor-pointer hover:bg-gray-50/50 transition-colors"
-                  onClick={() => setSelectedContractDetail(c)}
-                >
-                  <div className="flex-1 min-w-0 pr-4">
-                    <p className="text-[10px] font-bold text-[#006E62] leading-tight">{c.contract_number}</p>
-                    <p className="text-[9px] text-gray-500 font-medium uppercase tracking-tighter">{c.contract_type}</p>
-                    <div className="flex justify-between items-center mt-1">
-                      <p className="text-[8px] text-gray-400 uppercase font-bold">{formatDate(c.start_date)} - {c.end_date ? formatDate(c.end_date) : 'TETAP'}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {!isReadOnly && (
-                      <>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); setShowContractForm({ show: true, data: c }); }} 
-                          className="text-[#006E62] hover:opacity-80"
-                        >
-                          <Edit2 size={12} />
-                        </button>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleDeleteContract(c.id); }} 
-                          className="text-red-500 hover:opacity-80"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-           </div>
-        </DetailSection>
-
-        {/* g. Riwayat Karir */}
-        <DetailSection 
-          icon={Clock} 
-          title="Riwayat Karir" 
-          onAdd={() => setShowLogForm({ type: 'career', data: account })}
-          isScrollable
-        >
-          <div className="space-y-3">
-            {careerLogs.length === 0 ? (
-              <p className="text-[10px] text-gray-400 italic">Belum ada riwayat perubahan karir.</p>
-            ) : (
-              careerLogs.map((log) => {
-                if (!log) return null; // Safety guard
-                return (
+        {!hideLogs && (
+          <DetailSection 
+            icon={FileBadge} 
+            title="Riwayat Kontrak Kerja"
+            onAdd={() => setShowContractForm({ show: true, data: { account_id: id } })}
+            isScrollable
+          >
+             <div className="space-y-3">
+              {contracts.length === 0 ? (
+                <p className="text-[10px] text-gray-400 italic">Belum ada riwayat kontrak.</p>
+              ) : (
+                contracts.map(c => (
                   <div 
-                    key={log.id} 
+                    key={c.id} 
                     className="flex group justify-between items-start border-l-2 border-emerald-100 pl-3 py-1 relative cursor-pointer hover:bg-gray-50/50 transition-colors"
-                    onClick={() => setSelectedCareerDetail(log)}
+                    onClick={() => setSelectedContractDetail(c)}
                   >
                     <div className="flex-1 min-w-0 pr-4">
-                      <p className="text-[10px] font-bold text-[#006E62] leading-tight">{log.position} • {log.grade}</p>
-                      <p className="text-[9px] text-gray-400 font-medium uppercase tracking-tighter">{log.location_name}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <p className="text-[8px] text-gray-400 font-bold uppercase">{formatDate(log.change_date)}</p>
+                      <p className="text-[10px] font-bold text-[#006E62] leading-tight">{c.contract_number}</p>
+                      <p className="text-[9px] text-gray-500 font-medium uppercase tracking-tighter">{c.contract_type}</p>
+                      <div className="flex justify-between items-center mt-1">
+                        <p className="text-[8px] text-gray-400 uppercase font-bold">{formatDate(c.start_date)} - {c.end_date ? formatDate(c.end_date) : 'TETAP'}</p>
                       </div>
                     </div>
                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       {!isReadOnly && (
                         <>
                           <button 
-                            onClick={(e) => { e.stopPropagation(); setShowLogForm({ type: 'career', data: log, isEdit: true }); }} 
+                            onClick={(e) => { e.stopPropagation(); setShowContractForm({ show: true, data: c }); }} 
                             className="text-[#006E62] hover:opacity-80"
                           >
                             <Edit2 size={12} />
                           </button>
                           <button 
-                            onClick={(e) => { e.stopPropagation(); handleDeleteLog(log.id, 'career'); }} 
+                            onClick={(e) => { e.stopPropagation(); handleDeleteContract(c.id); }} 
                             className="text-red-500 hover:opacity-80"
                           >
                             <Trash2 size={12} />
@@ -704,236 +656,297 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ id, onClose, onEdit, onDe
                       )}
                     </div>
                   </div>
-                );
-              })
-            )}
-          </div>
-        </DetailSection>
+                ))
+              )}
+             </div>
+          </DetailSection>
+        )}
+
+        {/* g. Riwayat Karir */}
+        {!hideLogs && (
+          <DetailSection 
+            icon={Clock} 
+            title="Riwayat Karir" 
+            onAdd={() => setShowLogForm({ type: 'career', data: account })}
+            isScrollable
+          >
+            <div className="space-y-3">
+              {careerLogs.length === 0 ? (
+                <p className="text-[10px] text-gray-400 italic">Belum ada riwayat perubahan karir.</p>
+              ) : (
+                careerLogs.map((log) => {
+                  if (!log) return null; // Safety guard
+                  return (
+                    <div 
+                      key={log.id} 
+                      className="flex group justify-between items-start border-l-2 border-emerald-100 pl-3 py-1 relative cursor-pointer hover:bg-gray-50/50 transition-colors"
+                      onClick={() => setSelectedCareerDetail(log)}
+                    >
+                      <div className="flex-1 min-w-0 pr-4">
+                        <p className="text-[10px] font-bold text-[#006E62] leading-tight">{log.position} • {log.grade}</p>
+                        <p className="text-[9px] text-gray-400 font-medium uppercase tracking-tighter">{log.location_name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="text-[8px] text-gray-400 font-bold uppercase">{formatDate(log.change_date)}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {!isReadOnly && (
+                          <>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setShowLogForm({ type: 'career', data: log, isEdit: true }); }} 
+                              className="text-[#006E62] hover:opacity-80"
+                            >
+                              <Edit2 size={12} />
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleDeleteLog(log.id, 'career'); }} 
+                              className="text-red-500 hover:opacity-80"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </DetailSection>
+        )}
 
         {/* h. Daftar Sertifikasi */}
-        <DetailSection 
-          icon={Award} 
-          title="Daftar Sertifikasi" 
-          onAdd={() => setShowCertForm({ show: true, data: { account_id: id } })}
-          isScrollable
-        >
-          <div className="space-y-3">
-            {certs.length === 0 ? (
-              <p className="text-[10px] text-gray-400 italic">Belum ada riwayat sertifikasi.</p>
-            ) : (
-              certs.map((cert) => (
-                <div 
-                  key={cert.id} 
-                  className="flex group justify-between items-start border-l-2 border-emerald-100 pl-3 py-1 relative cursor-pointer hover:bg-gray-50/50 transition-colors"
-                  onClick={() => setSelectedCertDetail(cert)}
-                >
-                  <div className="flex-1 min-w-0 pr-4">
-                    <p className="text-[10px] font-bold text-[#006E62] leading-tight">{cert.cert_name}</p>
-                    <p className="text-[9px] text-gray-500 font-medium uppercase tracking-tighter">{cert.cert_type}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-[8px] text-gray-400 font-bold uppercase">{formatDate(cert.cert_date)}</p>
+        {!hideLogs && (
+          <DetailSection 
+            icon={Award} 
+            title="Daftar Sertifikasi" 
+            onAdd={() => setShowCertForm({ show: true, data: { account_id: id } })}
+            isScrollable
+          >
+            <div className="space-y-3">
+              {certs.length === 0 ? (
+                <p className="text-[10px] text-gray-400 italic">Belum ada riwayat sertifikasi.</p>
+              ) : (
+                certs.map((cert) => (
+                  <div 
+                    key={cert.id} 
+                    className="flex group justify-between items-start border-l-2 border-emerald-100 pl-3 py-1 relative cursor-pointer hover:bg-gray-50/50 transition-colors"
+                    onClick={() => setSelectedCertDetail(cert)}
+                  >
+                    <div className="flex-1 min-w-0 pr-4">
+                      <p className="text-[10px] font-bold text-[#006E62] leading-tight">{cert.cert_name}</p>
+                      <p className="text-[9px] text-gray-500 font-medium uppercase tracking-tighter">{cert.cert_type}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-[8px] text-gray-400 font-bold uppercase">{formatDate(cert.cert_date)}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {!isReadOnly && (
+                        <>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setShowCertForm({ show: true, data: cert }); }} 
+                            className="text-[#006E62] hover:opacity-80"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleDeleteCert(cert.id); }} 
+                            className="text-red-500 hover:opacity-80"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {!isReadOnly && (
-                      <>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); setShowCertForm({ show: true, data: cert }); }} 
-                          className="text-[#006E62] hover:opacity-80"
-                        >
-                          <Edit2 size={12} />
-                        </button>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleDeleteCert(cert.id); }} 
-                          className="text-red-500 hover:opacity-80"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </DetailSection>
+                ))
+              )}
+            </div>
+          </DetailSection>
+        )}
 
         {/* i. Riwayat Kesehatan */}
-        <DetailSection 
-          icon={Activity} 
-          title="Riwayat Kesehatan" 
-          onAdd={() => setShowLogForm({ type: 'health', data: { account_id: id } })}
-          isScrollable
-        >
-          <div className="space-y-3">
-            {healthLogs.length === 0 ? (
-              <p className="text-[10px] text-gray-400 italic">Belum ada riwayat kesehatan.</p>
-            ) : (
-              healthLogs.map((log) => (
-                <div 
-                  key={log.id} 
-                  className="flex group justify-between items-start border-l-2 border-emerald-100 pl-3 py-1 relative cursor-pointer hover:bg-gray-50/50 transition-colors"
-                  onClick={() => setSelectedHealthDetail(log)}
-                >
-                  <div className="flex-1 min-w-0 pr-4">
-                    <p className="text-[10px] font-bold text-[#006E62] leading-tight">{log.mcu_status}</p>
-                    <p className="text-[9px] text-gray-500 font-medium uppercase tracking-tighter">{log.health_risk}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-[8px] text-gray-400 font-bold uppercase">{formatDate(log.change_date)}</p>
+        {!hideLogs && (
+          <DetailSection 
+            icon={Activity} 
+            title="Riwayat Kesehatan" 
+            onAdd={() => setShowLogForm({ type: 'health', data: { account_id: id } })}
+            isScrollable
+          >
+            <div className="space-y-3">
+              {healthLogs.length === 0 ? (
+                <p className="text-[10px] text-gray-400 italic">Belum ada riwayat kesehatan.</p>
+              ) : (
+                healthLogs.map((log) => (
+                  <div 
+                    key={log.id} 
+                    className="flex group justify-between items-start border-l-2 border-emerald-100 pl-3 py-1 relative cursor-pointer hover:bg-gray-50/50 transition-colors"
+                    onClick={() => setSelectedHealthDetail(log)}
+                  >
+                    <div className="flex-1 min-w-0 pr-4">
+                      <p className="text-[10px] font-bold text-[#006E62] leading-tight">{log.mcu_status}</p>
+                      <p className="text-[9px] text-gray-500 font-medium uppercase tracking-tighter">{log.health_risk}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-[8px] text-gray-400 font-bold uppercase">{formatDate(log.change_date)}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {!isReadOnly && (
+                        <>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setShowLogForm({ type: 'health', data: log, isEdit: true }); }} 
+                            className="text-[#006E62] hover:opacity-80"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleDeleteLog(log.id, 'health'); }} 
+                            className="text-red-500 hover:opacity-80"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {!isReadOnly && (
-                      <>
+                ))
+              )}
+            </div>
+          </DetailSection>
+        )}
+
+        {/* j. Status Kedisiplinan */}
+        {!hideLogs && (
+          <DetailSection 
+            icon={ShieldAlert} 
+            title="Riwayat Peringatan" 
+            onAdd={() => setShowWarningForm({ show: true })} 
+            isScrollable
+          >
+            <div className="space-y-3">
+              {warnings.length === 0 ? (
+                <p className="text-[10px] text-gray-400 italic">Belum ada riwayat peringatan.</p>
+              ) : (
+                warnings.map(w => (
+                  <div 
+                    key={w.id} 
+                    className="flex group justify-between items-start border-l-2 border-emerald-100 pl-3 py-1 relative cursor-pointer hover:bg-gray-50/50 transition-colors"
+                    onClick={() => setSelectedWarningDetail(w)}
+                  >
+                    <div className="flex-1 min-w-0 pr-4">
+                      <p className="text-[10px] font-bold text-[#006E62] leading-tight">{w.warning_type}</p>
+                      <p className="text-[8px] text-gray-400 uppercase font-bold">{formatDate(w.issue_date)}</p>
+                      <p className="text-[10px] text-gray-600 mt-1 line-clamp-1 italic">"{w.reason}"</p>
+                    </div>
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {!isReadOnly && (
                         <button 
-                          onClick={(e) => { e.stopPropagation(); setShowLogForm({ type: 'health', data: log, isEdit: true }); }} 
-                          className="text-[#006E62] hover:opacity-80"
-                        >
-                          <Edit2 size={12} />
-                        </button>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleDeleteLog(log.id, 'health'); }} 
+                          onClick={(e) => { e.stopPropagation(); handleDeleteWarning(w.id); }} 
                           className="text-red-500 hover:opacity-80"
                         >
                           <Trash2 size={12} />
                         </button>
-                      </>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
-        </DetailSection>
-
-        {/* j. Status Kedisiplinan */}
-        <DetailSection 
-          icon={ShieldAlert} 
-          title="Riwayat Peringatan" 
-          onAdd={() => setShowWarningForm({ show: true })} 
-          isScrollable
-        >
-          <div className="space-y-3">
-            {warnings.length === 0 ? (
-              <p className="text-[10px] text-gray-400 italic">Belum ada riwayat peringatan.</p>
-            ) : (
-              warnings.map(w => (
-                <div 
-                  key={w.id} 
-                  className="flex group justify-between items-start border-l-2 border-emerald-100 pl-3 py-1 relative cursor-pointer hover:bg-gray-50/50 transition-colors"
-                  onClick={() => setSelectedWarningDetail(w)}
-                >
-                  <div className="flex-1 min-w-0 pr-4">
-                    <p className="text-[10px] font-bold text-[#006E62] leading-tight">{w.warning_type}</p>
-                    <p className="text-[8px] text-gray-400 uppercase font-bold">{formatDate(w.issue_date)}</p>
-                    <p className="text-[10px] text-gray-600 mt-1 line-clamp-1 italic">"{w.reason}"</p>
-                  </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {!isReadOnly && (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleDeleteWarning(w.id); }} 
-                        className="text-red-500 hover:opacity-80"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </DetailSection>
+                ))
+              )}
+            </div>
+          </DetailSection>
+        )}
 
         {/* k. Status Exit / Pemberhentian */}
-        <DetailSection 
-          icon={LogOut} 
-          title="Status Exit" 
-          onAdd={!termination && !isInactive ? () => setShowTerminationForm({ show: true }) : undefined}
-          isScrollable
-        >
-          {termination || isInactive ? (
-            <div 
-              className="space-y-3 p-3 bg-red-50/50 border border-red-100 rounded cursor-pointer hover:bg-red-50 transition-colors"
-              onClick={() => termination && setSelectedTerminationDetail(termination)}
-            >
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest">{termination?.termination_type || 'KONTRAK BERAKHIR'}</span>
-                <span className="text-[10px] font-bold text-gray-500">{formatDate(termination?.termination_date || account.end_date || '')}</span>
-              </div>
-              <DataRow label="Alasan Keluar" value={termination?.reason || 'Masa kontrak telah habis atau akun dinonaktifkan secara otomatis.'} />
-              {termination?.termination_type === 'Pemecatan / PHK' && (
-                <DataRow label="Uang Pesangon" value={formatCurrency(termination.severance_amount)} />
-              )}
-              {termination?.termination_type === 'Resign' && (
-                <DataRow label="Biaya Penalti" value={formatCurrency(termination.penalty_amount)} />
-              )}
-              {!isReadOnly && (
-                <button 
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      
-                      setIsSaving(true);
-                      // Cek real-time apakah kontrak terakhir sudah expired dari database
-                      const latestContract = await contractService.getLatestContract(id);
-                      setIsSaving(false);
-
-                      const isContractExpired = latestContract && 
-                                               latestContract.contract_type !== 'PKWTT' && 
-                                               latestContract.end_date && 
-                                               latestContract.end_date < today;
-
-                      if (isContractExpired) {
-                        Swal.fire({
-                          title: 'Kontrak Berakhir',
-                          text: 'Kontrak karyawan ini telah berakhir. Silakan perbarui/tambah log kontrak kerja baru untuk mengaktifkan kembali karyawan ini.',
-                          icon: 'warning',
-                          confirmButtonColor: '#006E62'
-                        });
-                        return;
-                      }
-
-                      const res = await Swal.fire({ 
-                        title: 'Batalkan Pemberhentian?', 
-                        text: 'Akun akan diaktifkan kembali.', 
-                        icon: 'question', 
-                        showCancelButton: true, 
-                        confirmButtonColor: '#006E62' 
-                      });
-                      
-                      if (res.isConfirmed) {
+        {!hideLogs && (
+          <DetailSection 
+            icon={LogOut} 
+            title="Status Exit" 
+            onAdd={!termination && !isInactive ? () => setShowTerminationForm({ show: true }) : undefined}
+            isScrollable
+          >
+            {termination || isInactive ? (
+              <div 
+                className="space-y-3 p-3 bg-red-50/50 border border-red-100 rounded cursor-pointer hover:bg-red-50 transition-colors"
+                onClick={() => termination && setSelectedTerminationDetail(termination)}
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest">{termination?.termination_type || 'KONTRAK BERAKHIR'}</span>
+                  <span className="text-[10px] font-bold text-gray-500">{formatDate(termination?.termination_date || account.end_date || '')}</span>
+                </div>
+                <DataRow label="Alasan Keluar" value={termination?.reason || 'Masa kontrak telah habis atau akun dinonaktifkan secara otomatis.'} />
+                {termination?.termination_type === 'Pemecatan / PHK' && (
+                  <DataRow label="Uang Pesangon" value={formatCurrency(termination.severance_amount)} />
+                )}
+                {termination?.termination_type === 'Resign' && (
+                  <DataRow label="Biaya Penalti" value={formatCurrency(termination.penalty_amount)} />
+                )}
+                {!isReadOnly && (
+                  <button 
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        
                         setIsSaving(true);
-                        try {
-                          if (termination) {
-                            await disciplineService.deleteTermination(termination.id, id);
-                          } else {
-                            // Jika tidak ada log terminasi tapi end_date terisi (auto-nonaktif)
-                            await accountService.update(id, { end_date: null });
-                            await contractService.syncAccountStatusAndDates(id);
-                          }
-                          setTermination(null);
-                          // Refresh data to get synced status
-                          await fetchData();
-                          Swal.fire({ title: 'Berhasil!', text: 'Karyawan telah diaktifkan kembali.', icon: 'success', timer: 1500, showConfirmButton: false });
-                        } catch (err) {
-                          Swal.fire('Gagal', 'Gagal mengaktifkan kembali karyawan.', 'error');
-                        } finally {
-                          setIsSaving(false);
+                        // Cek real-time apakah kontrak terakhir sudah expired dari database
+                        const latestContract = await contractService.getLatestContract(id);
+                        setIsSaving(false);
+  
+                        const isContractExpired = latestContract && 
+                                                 latestContract.contract_type !== 'PKWTT' && 
+                                                 latestContract.end_date && 
+                                                 latestContract.end_date < today;
+  
+                        if (isContractExpired) {
+                          Swal.fire({
+                            title: 'Kontrak Berakhir',
+                            text: 'Kontrak karyawan ini telah berakhir. Silakan perbarui/tambah log kontrak kerja baru untuk mengaktifkan kembali karyawan ini.',
+                            icon: 'warning',
+                            confirmButtonColor: '#006E62'
+                          });
+                          return;
                         }
-                      }
-                    }}
-                  className="w-full mt-2 py-1.5 text-[10px] font-bold uppercase text-red-600 border border-red-200 rounded hover:bg-white transition-colors"
-                >
-                  Batalkan Exit / Aktifkan Kembali
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-6 text-gray-300">
-               <LogOut size={32} strokeWidth={1} />
-               <p className="text-[10px] font-bold uppercase tracking-widest mt-2 text-gray-400">Status: Aktif Bekerja</p>
-            </div>
-          )}
-        </DetailSection>
+  
+                        const res = await Swal.fire({ 
+                          title: 'Batalkan Pemberhentian?', 
+                          text: 'Akun akan diaktifkan kembali.', 
+                          icon: 'question', 
+                          showCancelButton: true, 
+                          confirmButtonColor: '#006E62' 
+                        });
+                        
+                        if (res.isConfirmed) {
+                          setIsSaving(true);
+                          try {
+                            if (termination) {
+                              await disciplineService.deleteTermination(termination.id, id);
+                            } else {
+                              // Jika tidak ada log terminasi tapi end_date terisi (auto-nonaktif)
+                              await accountService.update(id, { end_date: null });
+                              await contractService.syncAccountStatusAndDates(id);
+                            }
+                            setTermination(null);
+                            // Refresh data to get synced status
+                            await fetchData();
+                            Swal.fire({ title: 'Berhasil!', text: 'Karyawan telah diaktifkan kembali.', icon: 'success', timer: 1500, showConfirmButton: false });
+                          } catch (err) {
+                            Swal.fire('Gagal', 'Gagal mengaktifkan kembali karyawan.', 'error');
+                          } finally {
+                            setIsSaving(false);
+                          }
+                        }
+                      }}
+                    className="w-full mt-2 py-1.5 text-[10px] font-bold uppercase text-red-600 border border-red-200 rounded hover:bg-white transition-colors"
+                  >
+                    Batalkan Exit / Aktifkan Kembali
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-6 text-gray-300">
+                 <LogOut size={32} strokeWidth={1} />
+                 <p className="text-[10px] font-bold uppercase tracking-widest mt-2 text-gray-400">Status: Aktif Bekerja</p>
+              </div>
+            )}
+          </DetailSection>
+        )}
       </div>
 
       {/* Modal Preview Media */}

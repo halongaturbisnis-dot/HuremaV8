@@ -171,7 +171,7 @@ const DailyMonitoring: React.FC = () => {
                             </span>
                           )}
                           <p className={`text-[9px] font-bold uppercase ${item.attendance?.late_minutes > 0 ? 'text-red-600' : 'text-[#006E62]'}`}>
-                            {item.attendance?.late_minutes > 0 ? `Terlambat ${item.attendance.late_minutes}m` : 'Tepat Waktu'}
+                            {item.attendance?.late_minutes > 0 ? `Terlambat ${item.attendance.late_minutes} Menit` : 'Tepat Waktu'}
                           </p>
                         </div>
                       </td>
@@ -194,7 +194,7 @@ const DailyMonitoring: React.FC = () => {
                           )}
                           {item.attendance?.check_out && (
                             <p className={`text-[9px] font-bold uppercase ${item.attendance?.early_departure_minutes > 0 ? 'text-red-600' : 'text-[#006E62]'}`}>
-                              {item.attendance?.early_departure_minutes > 0 ? `Pulang Awal ${item.attendance.early_departure_minutes}m` : 'Tepat Waktu'}
+                              {item.attendance?.early_departure_minutes > 0 ? `Pulang Awal ${item.attendance.early_departure_minutes} Menit` : 'Tepat Waktu'}
                             </p>
                           )}
                         </div>
@@ -310,7 +310,7 @@ const DailyMonitoring: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Pemantauan Harian</h2>
           <p className="text-[10px] font-bold text-gray-400 tracking-widest">
-            <span className="uppercase">Status kehadiran karyawan hari</span> <span className="text-[#006E62]">{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
+            <span className="uppercase">Status kehadiran karyawan hari</span> <span className="uppercase text-[#006E62]">{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
           </p>
         </div>
         <div className="relative w-full md:w-72">
@@ -392,6 +392,7 @@ const DailyMonitoring: React.FC = () => {
                 onEdit={() => {}} // Disable edit from here
                 onDelete={() => {}} // Disable delete from here
                 isReadOnly={true}
+                hideLogs={true}
               />
             </div>
           </div>

@@ -13,11 +13,11 @@ interface PresenceMapProps {
 
 const PresenceMap: React.FC<PresenceMapProps> = ({ userLat, userLng, officeLat, officeLng, radius }) => {
   const mapRef = useRef<any>(null);
-  const containerId = "map-presence-container";
+  const containerId = useRef(`map-presence-${Math.random().toString(36).substr(2, 9)}`);
 
   useEffect(() => {
     if (!mapRef.current) {
-      mapRef.current = L.map(containerId, { zoomControl: false, attributionControl: false }).setView([officeLat, officeLng], 16);
+      mapRef.current = L.map(containerId.current, { zoomControl: false, attributionControl: false }).setView([officeLat, officeLng], 16);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapRef.current);
       
       // Office Circle
@@ -59,7 +59,7 @@ const PresenceMap: React.FC<PresenceMapProps> = ({ userLat, userLng, officeLat, 
   }, [userLat, userLng]);
 
   return (
-    <div id={containerId} className="w-full h-32 rounded-lg border border-gray-100 shadow-inner overflow-hidden" />
+    <div id={containerId.current} className="w-full h-full rounded-lg border border-gray-100 shadow-inner overflow-hidden" />
   );
 };
 
