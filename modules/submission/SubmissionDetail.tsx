@@ -35,6 +35,22 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
     }
   };
 
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371e3; // Earth radius in meters
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    const d = R * c;
+    return d; // distance in meters
+  };
+
   const DataItem = ({ label, value }: { label: string, value: string }) => (
     <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 h-full">
       <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">{label}</p>
@@ -160,13 +176,15 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                             </div>
                           </div>
                           <div className="flex gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
-                              <AlertCircle size={16} className="text-amber-600" />
+                            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                              <MapPin size={16} className="text-blue-600" />
                             </div>
                             <div>
-                              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Tipe & Alasan Presensi Luar</p>
-                              <p className="text-[11px] font-bold text-gray-700">{submission.submission_data.location_type}</p>
-                              <p className="text-[11px] text-gray-500 italic">"{submission.submission_data.reason || '-'}"</p>
+                              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jarak Titik Presensi</p>
+                              <p className="text-[11px] font-bold text-gray-700">
+                                {Math.round(calculateDistance(userLat, userLng, office.latitude, office.longitude))} Meter dari Kantor
+                              </p>
+                              <p className="text-[9px] text-gray-400 font-medium italic">Radius Kantor: {office.radius || 100}m</p>
                             </div>
                           </div>
                         </div>
@@ -253,7 +271,7 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                     <Info size={14} className="text-orange-600" />
                     <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Foto Verifikasi</span>
                   </div>
-                  <div className="aspect-square rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center">
+                  <div className="aspect-square rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center relative group">
                     {(() => {
                       const att = submission.submission_data.full_attendance;
                       const isIN = submission.submission_data.presence_type === 'IN';
@@ -261,16 +279,43 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                       
                       if (!photoId) return <User size={24} className="text-gray-200" />;
                       
+                      const [id] = photoId.split('|');
+                      // Try multiple URL formats for better compatibility
+                      const photoUrl = `https://drive.google.com/uc?id=${id}`;
+                      
                       return (
                         <img 
-                          src={googleDriveService.getFileUrl(photoId)} 
+                          src={photoUrl} 
                           alt="Foto Presensi" 
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                           referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            // Fallback to lh3 if uc fails
+                            if (!target.src.includes('lh3')) {
+                              target.src = `https://lh3.googleusercontent.com/d/${id}=s1600`;
+                            } else {
+                              target.src = 'https://via.placeholder.com/400?text=Foto+Tidak+Tersedia';
+                            }
+                          }}
                         />
                       );
                     })()}
                   </div>
+                </div>
+              </div>
+
+              {/* Tipe & Alasan Presensi Luar - Full Width at Bottom of Scroll Area */}
+              <div className="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-amber-50">
+                  <AlertCircle size={14} className="text-amber-600" />
+                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Tipe & Alasan Presensi Luar</span>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-gray-800">{submission.submission_data.location_type}</p>
+                  <p className="text-xs text-gray-600 italic leading-relaxed bg-amber-50/30 p-3 rounded-lg border border-amber-50/50">
+                    "{submission.submission_data.reason || 'Tidak ada alasan yang diberikan'}"
+                  </p>
                 </div>
               </div>
             </div>
@@ -401,16 +446,18 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
 
         {canVerify && (
           <div className="p-6 border-t border-gray-100 bg-gray-50 space-y-4">
-             <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Catatan Verifikator (Opsional)</label>
-                <textarea 
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Berikan alasan penyetujuan atau penolakan..."
-                  className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-[#006E62] outline-none resize-none bg-white"
-                  rows={2}
-                />
-             </div>
+             {submission.type !== 'Presensi Luar' && (
+                <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Catatan Verifikator (Opsional)</label>
+                    <textarea 
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Berikan alasan penyetujuan atau penolakan..."
+                      className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-[#006E62] outline-none resize-none bg-white"
+                      rows={2}
+                    />
+                </div>
+             )}
              <div className="grid grid-cols-2 gap-3">
                 <button 
                   onClick={() => onVerify(submission.id, 'Ditolak', notes)}
