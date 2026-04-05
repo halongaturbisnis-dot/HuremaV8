@@ -250,11 +250,10 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
               <tr>
                 <th className="px-6 py-4">Nama</th>
                 <th className="px-6 py-4">Presensi</th>
-                <th className="px-6 py-4">Jenis Presensi</th>
+                <th className="px-6 py-4 min-w-[140px]">Jenis Presensi</th>
                 <th className="px-6 py-4">Alasan</th>
-                <th className="px-6 py-4">Lokasi</th>
+                <th className="px-6 py-4 min-w-[160px]">Lokasi</th>
                 <th className="px-6 py-4">Tanggal</th>
-                <th className="px-6 py-4 text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -277,21 +276,13 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
                   </td>
                   <td className="px-6 py-4 text-gray-600 font-medium">{submission.submission_data?.location_type || submission.type}</td>
                   <td className="px-6 py-4">
-                    <p className="text-gray-500 line-clamp-1 italic text-xs">
+                    <p className="text-gray-500 line-clamp-1 italic text-xs max-w-[200px]">
                       {submission.submission_data?.reason || submission.description.replace(/^\[(MASUK|PULANG)\]\s*[^:]*:\s*/, '')}
                     </p>
                   </td>
                   <td className="px-6 py-4 text-gray-500 text-xs font-medium">{(submission.account as any)?.location?.name || '-'}</td>
                   <td className="px-6 py-4 text-gray-500 text-xs">
                     {new Date(submission.created_at!).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
-                      submission.status === 'Pending' ? 'bg-orange-50 text-orange-600' :
-                      submission.status === 'Disetujui' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
-                    }`}>
-                      {submission.status}
-                    </span>
                   </td>
                 </tr>
               ))}

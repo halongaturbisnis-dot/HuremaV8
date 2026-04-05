@@ -30,11 +30,11 @@ const NavItem: React.FC<NavItemProps> = ({
   <button
     type="button"
     onClick={() => setActiveTab(id)}
-    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 group relative overflow-hidden ${
+    className={`flex items-center gap-3 py-3 rounded-md transition-all duration-200 w-full mb-1 group relative overflow-hidden ${
       activeTab === id 
         ? 'bg-[#006E62] text-white shadow-md' 
         : 'text-gray-600 hover:bg-gray-100'
-    } ${indent && !isCollapsed ? 'ml-4 w-[calc(100%-1rem)]' : ''}`}
+    } ${indent && !isCollapsed ? 'pl-10 pr-4' : 'px-4'}`}
     title={isCollapsed ? label : ''}
   >
     <span className="absolute bottom-0 left-0 h-0.5 bg-[#006E62] w-0 transition-all duration-300 group-hover:w-full"></span>
@@ -148,7 +148,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
   return (
     <aside 
       className={`hidden md:flex flex-col border-r border-gray-100 bg-white sticky top-0 h-screen transition-all duration-300 z-30 ${
-        isCollapsed ? 'w-24' : 'w-72'
+        isCollapsed ? 'w-24' : 'w-64'
       }`}
     >
       <div className="flex items-center justify-between p-4 mb-4">
