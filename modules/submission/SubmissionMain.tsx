@@ -3,7 +3,8 @@ import { ClipboardCheck, Search, Filter, Plus, Clock, CheckCircle2, XCircle, Lis
 import Swal from 'sweetalert2';
 import { submissionService } from '../../services/submissionService';
 import { authService } from '../../services/authService';
-import { Submission } from '../../types';
+import { supabase } from '../../lib/supabase';
+import { Submission, Attendance } from '../../types';
 import SubmissionForm from './SubmissionForm';
 import SubmissionDetail from './SubmissionDetail';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';

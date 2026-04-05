@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { Submission, SubmissionInput, SubmissionStatus } from '../types';
+import { Submission, SubmissionInput, SubmissionStatus, Attendance } from '../types';
 
 const sanitizePayload = (payload: any) => {
   const sanitized = { ...payload };

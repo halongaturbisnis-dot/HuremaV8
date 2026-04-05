@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 /* Added ShieldCheck to lucide-react imports */
 import { Fingerprint, Clock, MapPin, History, AlertCircle, Map as MapIcon, Camera, Search, UserX, CalendarClock, MessageSquare, ShieldCheck, Umbrella, RefreshCw, Check, Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -17,6 +18,7 @@ import LoadingSpinner from '../../components/Common/LoadingSpinner';
 
 const PresenceMain: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'capture' | 'history'>('capture');
+  const navigate = useNavigate();
   const [account, setAccount] = useState<Account | null>(null);
   const [todayAttendance, setTodayAttendance] = useState<Attendance | null>(null);
   const [recentLogs, setRecentLogs] = useState<Attendance[]>([]);
@@ -205,21 +207,32 @@ const PresenceMain: React.FC = () => {
       resetCapture(); // Reset photo and unlock coords when toggled off
     }
   };
-
-import { useNavigate } from 'react-router-dom';
-// ... (rest of imports)
-
-const PresenceMain: React.FC = () => {
-  const navigate = useNavigate();
-  // ...
   const handleAttendance = async () => {
     if (!capturedPhoto) return;
-    // ...
+    
+    // Validasi alasan presensi luar
     if (isOutOfRangeRequested && !outOfRangeReason.trim()) {
       return Swal.fire('Peringatan', 'Alasan presensi luar wajib diisi.', 'warning');
     }
-    // ...
-    if (!isCurrentlyCheckingOut) {
+
+    // Validasi alasan keterlambatan / pulang awal
+    const isCheckOut = !!todayAttendance && !todayAttendance.check_out;
+    const scheduleResult = presenceService.calculateStatus(serverTime, account!.schedule!, isCheckOut ? 'OUT' : 'IN');
+    const reason = (scheduleResult.status === 'Terlambat' || scheduleResult.status === 'Pulang Cepat') ? 'Alasan otomatis' : null; // Simplified for now
+    
+    if ((scheduleResult.status === 'Terlambat' || scheduleResult.status === 'Pulang Cepat') && !reason) {
+      return Swal.fire('Peringatan', 'Alasan keterlambatan/pulang awal wajib diisi.', 'warning');
+    }
+
+    setIsCapturing(true);
+    try {
+      const photoId = await googleDriveService.uploadFile(capturedPhoto as File);
+      const address = currentAddress || 'Lokasi tidak diketahui';
+      const currentTimeStr = serverTime.toISOString();
+      const isCurrentlyCheckingOut = !!todayAttendance && !todayAttendance.check_out;
+      const submissionCoords = lockedCoords || coords;
+
+      if (!isCurrentlyCheckingOut) {
         const payload: any = {
           account_id: account.id,
           check_in: currentTimeStr,
@@ -236,7 +249,7 @@ const PresenceMain: React.FC = () => {
         };
         await presenceService.checkIn(payload);
       } else {
-        if (!currentAttendance?.id) {
+        if (!todayAttendance?.id) {
           throw new Error("ID referensi presensi tidak ditemukan. Harap muat ulang halaman.");
         }
         const payload: any = {
@@ -252,7 +265,7 @@ const PresenceMain: React.FC = () => {
           out_of_range_reason: isOutOfRangeRequested ? outOfRangeReason : null,
           check_out_validity: isOutOfRangeRequested ? 'FALSE' : 'TRUE'
         };
-        await presenceService.checkOut(currentAttendance.id, payload);
+        await presenceService.checkOut(todayAttendance.id, payload);
       }
 
       // Tahap 3: Finalisasi UI (hanya setelah simpan DB sukses)
@@ -267,8 +280,13 @@ const PresenceMain: React.FC = () => {
       });
       
       navigate('/');
-    // ...
-  }
+    } catch (error) {
+      console.error(error);
+      Swal.fire('Gagal', 'Terjadi kesalahan saat menyimpan presensi.', 'error');
+    } finally {
+      setIsCapturing(false);
+    }
+  };
 
 
   if (isLoading) return <LoadingSpinner message="Sinkronisasi Data Satelit..." />;
