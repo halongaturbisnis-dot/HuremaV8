@@ -94,9 +94,9 @@ const App: React.FC = () => {
 
           const updatedUser = {
             ...currentUser,
-            is_hr_admin: hrAdmins.includes(currentUser.id),
-            is_performance_admin: perfAdmins.includes(currentUser.id),
-            is_finance_admin: finAdmins.includes(currentUser.id)
+            is_hr_admin: Array.isArray(hrAdmins) && hrAdmins.includes(currentUser.id),
+            is_performance_admin: Array.isArray(perfAdmins) && perfAdmins.includes(currentUser.id),
+            is_finance_admin: Array.isArray(finAdmins) && finAdmins.includes(currentUser.id)
           };
           
           setUser(updatedUser);

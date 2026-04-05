@@ -35,8 +35,10 @@ const PresenceMain: React.FC = () => {
   
   // Out of Range Presence Request
   const [isOutOfRangeRequested, setIsOutOfRangeRequested] = useState(false);
-  const [presenceType, setPresenceType] = useState('Tugas Luar');
-  const [outOfRangeReason, setOutOfRangeReason] = useState('');
+  const [checkInType, setCheckInType] = useState('Tugas Luar');
+  const [checkOutType, setCheckOutType] = useState('Tugas Luar');
+  const [checkInReason, setCheckInReason] = useState('');
+  const [checkOutReason, setCheckOutReason] = useState('');
   const [lockedCoords, setLockedCoords] = useState<{lat: number, lng: number} | null>(null);
   
   // State khusus Shift Dinamis
@@ -203,18 +205,21 @@ const PresenceMain: React.FC = () => {
     setIsOutOfRangeRequested(value);
     if (!value) {
       resetCapture(); // Reset photo and unlock coords when toggled off
+      setCheckInReason('');
+      setCheckOutReason('');
     }
   };
   const handleAttendance = async () => {
     if (!capturedPhoto) return;
     
+    // Validasi alasan keterlambatan / pulang awal
+    const isCheckOut = !!todayAttendance && !todayAttendance.check_out;
+
     // Validasi alasan presensi luar
-    if (isOutOfRangeRequested && !outOfRangeReason.trim()) {
+    if (isOutOfRangeRequested && (isCheckOut ? !checkOutReason.trim() : !checkInReason.trim())) {
       return Swal.fire('Peringatan', 'Alasan presensi luar wajib diisi.', 'warning');
     }
 
-    // Validasi alasan keterlambatan / pulang awal
-    const isCheckOut = !!todayAttendance && !todayAttendance.check_out;
     const scheduleResult = presenceService.calculateStatus(serverTime, account!.schedule!, isCheckOut ? 'OUT' : 'IN');
     const reason = (scheduleResult.status === 'Terlambat' || scheduleResult.status === 'Pulang Cepat') ? 'Alasan otomatis' : null; // Simplified for now
     
@@ -241,8 +246,8 @@ const PresenceMain: React.FC = () => {
           status_in: scheduleResult.status,
           late_minutes: scheduleResult.minutes,
           late_reason: reason,
-          presence_type: isOutOfRangeRequested ? presenceType : 'Reguler',
-          out_of_range_reason: isOutOfRangeRequested ? outOfRangeReason : null,
+          check_in_type: isOutOfRangeRequested ? checkInType : 'Reguler',
+          check_in_reason: isOutOfRangeRequested ? checkInReason : null,
           check_in_validity: isOutOfRangeRequested ? 'FALSE' : 'TRUE'
         };
         await presenceService.checkIn(payload);
@@ -259,8 +264,8 @@ const PresenceMain: React.FC = () => {
           status_out: scheduleResult.status,
           early_departure_minutes: scheduleResult.minutes,
           early_departure_reason: reason,
-          presence_type: isOutOfRangeRequested ? presenceType : 'Reguler',
-          out_of_range_reason: isOutOfRangeRequested ? outOfRangeReason : null,
+          check_out_type: isOutOfRangeRequested ? checkOutType : 'Reguler',
+          check_out_reason: isOutOfRangeRequested ? checkOutReason : null,
           check_out_validity: isOutOfRangeRequested ? 'FALSE' : 'TRUE'
         };
         await presenceService.checkOut(todayAttendance.id, payload);
@@ -553,8 +558,8 @@ const PresenceMain: React.FC = () => {
                         {isOutOfRangeRequested && (
                           <div className="space-y-3">
                             <select 
-                              value={presenceType} 
-                              onChange={(e) => setPresenceType(e.target.value)}
+                              value={isCheckOut ? checkOutType : checkInType} 
+                              onChange={(e) => isCheckOut ? setCheckOutType(e.target.value) : setCheckInType(e.target.value)}
                               className="w-full p-2 text-xs border border-gray-200 rounded-lg"
                             >
                               <option value="Tugas Luar">Tugas Luar</option>
@@ -563,8 +568,8 @@ const PresenceMain: React.FC = () => {
                               <option value="Lainnya">Lainnya</option>
                             </select>
                             <textarea 
-                              value={outOfRangeReason} 
-                              onChange={(e) => setOutOfRangeReason(e.target.value)}
+                              value={isCheckOut ? checkOutReason : checkInReason} 
+                              onChange={(e) => isCheckOut ? setCheckOutReason(e.target.value) : setCheckInReason(e.target.value)}
                               placeholder="Alasan presensi luar..."
                               className="w-full p-2 text-xs border border-gray-200 rounded-lg"
                             />

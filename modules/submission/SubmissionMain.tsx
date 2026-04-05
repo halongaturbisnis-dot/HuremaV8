@@ -47,9 +47,15 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
           account_id: a.account_id,
           account: a.account,
           status: (a.check_in_validity === 'FALSE' || a.check_out_validity === 'FALSE') ? 'Pending' : (a.check_in_validity === 'TRUE' || a.check_out_validity === 'TRUE' ? 'Disetujui' : 'Ditolak'),
-          description: a.out_of_range_reason || 'Presensi Luar Lokasi',
+          description: (a.check_in_reason || a.check_out_reason) || 'Presensi Luar Lokasi',
           created_at: a.created_at,
-          submission_data: { attendance_id: a.id, presence_type: a.presence_type }
+          submission_data: { 
+            attendance_id: a.id, 
+            check_in_type: a.check_in_type,
+            check_out_type: a.check_out_type,
+            check_in_reason: a.check_in_reason,
+            check_out_reason: a.check_out_reason
+          }
         }));
         setSubmissions(mapped as any);
       } else {
@@ -172,38 +178,41 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
           <p className="text-lg font-medium">Tidak ada data pengajuan.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredSubmissions.map(submission => (
-            <div 
-              key={submission.id}
-              onClick={() => setSelectedSubmission(submission)}
-              className="bg-white border border-gray-100 p-5 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer border-l-4 border-l-transparent hover:border-l-[#006E62] group relative"
-            >
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{submission.type}</span>
-                  <h3 className="font-bold text-gray-800 text-sm group-hover:text-[#006E62] line-clamp-1">{submission.account?.full_name}</h3>
-                </div>
-                <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${
-                  submission.status === 'Pending' ? 'bg-orange-50 text-orange-600' :
-                  submission.status === 'Disetujui' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
-                }`}>
-                  {submission.status}
-                </span>
-              </div>
-              
-              <p className="text-[11px] text-gray-500 line-clamp-2 mb-4 h-8">"{submission.description}"</p>
-              
-              <div className="flex items-center justify-between pt-4 border-t border-gray-50 text-[10px] font-bold text-gray-400 uppercase">
-                 <div className="flex items-center gap-1.5">
-                   <Clock size={12} /> {new Date(submission.created_at!).toLocaleDateString('id-ID')}
-                 </div>
-                 {submission.submission_data.duration_days && (
-                   <span className="text-[#00FFE4]">{submission.submission_data.duration_days} Hari</span>
-                 )}
-              </div>
-            </div>
-          ))}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-gray-50 text-gray-400 font-bold uppercase text-[10px] tracking-widest">
+              <tr>
+                <th className="px-6 py-4">Nama</th>
+                <th className="px-6 py-4">Jenis</th>
+                <th className="px-6 py-4">Alasan</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Tanggal</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredSubmissions.map(submission => (
+                <tr 
+                  key={submission.id}
+                  onClick={() => setSelectedSubmission(submission)}
+                  className="hover:bg-gray-50 cursor-pointer transition-colors"
+                >
+                  <td className="px-6 py-4 font-bold text-gray-800">{submission.account?.full_name}</td>
+                  <td className="px-6 py-4 text-gray-500">{submission.type}</td>
+                  <td className="px-6 py-4 text-gray-500 line-clamp-1">{submission.description}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                      submission.status === 'Pending' ? 'bg-orange-50 text-orange-600' :
+                      submission.status === 'Disetujui' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                    }`}>
+                      {submission.status === 'Pending' && <span className="mr-1 text-[8px] bg-orange-200 px-1 rounded">NEW</span>}
+                      {submission.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-500">{new Date(submission.created_at!).toLocaleDateString('id-ID')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 

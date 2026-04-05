@@ -176,8 +176,10 @@ export interface Attendance {
   status_in: string;
   status_out: string;
   work_duration: string | null;
-  presence_type: string | null;
-  out_of_range_reason: string | null;
+  check_in_reason: string | null;
+  check_out_reason: string | null;
+  check_in_type: string | null;
+  check_out_type: string | null;
   check_in_validity: 'TRUE' | 'FALSE' | 'DENY' | null;
   check_out_validity: 'TRUE' | 'FALSE' | 'DENY' | null;
   created_at?: string;
