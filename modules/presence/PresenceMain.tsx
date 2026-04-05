@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 /* Added ShieldCheck to lucide-react imports */
 import { Fingerprint, Clock, MapPin, History, AlertCircle, Map as MapIcon, Camera, Search, UserX, CalendarClock, MessageSquare, ShieldCheck, Umbrella, RefreshCw, Check, Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
@@ -18,7 +17,6 @@ import LoadingSpinner from '../../components/Common/LoadingSpinner';
 
 const PresenceMain: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'capture' | 'history'>('capture');
-  const navigate = useNavigate();
   const [account, setAccount] = useState<Account | null>(null);
   const [todayAttendance, setTodayAttendance] = useState<Attendance | null>(null);
   const [recentLogs, setRecentLogs] = useState<Attendance[]>([]);
@@ -279,7 +277,7 @@ const PresenceMain: React.FC = () => {
         showConfirmButton: false
       });
       
-      navigate('/');
+      window.location.href = '/';
     } catch (error) {
       console.error(error);
       Swal.fire('Gagal', 'Terjadi kesalahan saat menyimpan presensi.', 'error');
