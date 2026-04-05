@@ -15,6 +15,7 @@ import PresenceMap from './PresenceMap';
 import PresenceHistory from './PresenceHistory';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 
+
 const PresenceMain: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'capture' | 'history'>('capture');
   const [account, setAccount] = useState<Account | null>(null);
@@ -211,7 +212,9 @@ const PresenceMain: React.FC = () => {
     }
   };
   const isCheckOutStatus = !!todayAttendance && !todayAttendance.check_out;
-  const scheduleResult = presenceService.calculateStatus(serverTime, account!.schedule!, isCheckOutStatus ? 'OUT' : 'IN');
+  const scheduleResult = (account && account.schedule) 
+    ? presenceService.calculateStatus(serverTime, account.schedule, isCheckOutStatus ? 'OUT' : 'IN')
+    : { status: 'Tepat Waktu' };
   const isLateOrEarly = scheduleResult.status === 'Terlambat' || scheduleResult.status === 'Pulang Cepat';
 
   const handleAttendance = async () => {
@@ -246,7 +249,7 @@ const PresenceMain: React.FC = () => {
           in_photo_id: photoId,
           in_address: address,
           status_in: scheduleResult.status,
-          late_minutes: scheduleResult.minutes,
+          late_minutes: (scheduleResult as any).minutes || 0,
           late_reason: reason,
           check_in_type: isOutOfRangeRequested ? checkInType : 'Reguler',
           check_in_reason: isOutOfRangeRequested ? checkInReason : null,
@@ -264,7 +267,7 @@ const PresenceMain: React.FC = () => {
           out_photo_id: photoId,
           out_address: address,
           status_out: scheduleResult.status,
-          early_departure_minutes: scheduleResult.minutes,
+          early_departure_minutes: (scheduleResult as any).minutes || 0,
           early_departure_reason: reason,
           check_out_type: isOutOfRangeRequested ? checkOutType : 'Reguler',
           check_out_reason: isOutOfRangeRequested ? checkOutReason : null,
