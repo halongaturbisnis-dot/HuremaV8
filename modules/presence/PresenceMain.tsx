@@ -206,112 +206,20 @@ const PresenceMain: React.FC = () => {
     }
   };
 
+import { useNavigate } from 'react-router-dom';
+// ... (rest of imports)
+
+const PresenceMain: React.FC = () => {
+  const navigate = useNavigate();
+  // ...
   const handleAttendance = async () => {
     if (!capturedPhoto) return;
-    const photoBlob = capturedPhoto;
-    const todayDay = serverTime.getDay();
-    
-    // Resolve Target Schedule (Statis vs Dinamis vs Fleksibel)
-    let targetSchedule: Schedule | null = null;
-    if (account?.schedule_type === 'Fleksibel') {
-      targetSchedule = { id: 'FLEKSIBEL', name: 'Fleksibel' } as any;
-    } else if (account?.schedule_type === 'Shift Dinamis') {
-      if (!selectedShift) return Swal.fire('Peringatan', 'Pilih shift terlebih dahulu.', 'warning');
-      targetSchedule = selectedShift;
-    } else {
-      targetSchedule = account?.schedule || null;
+    // ...
+    if (isOutOfRangeRequested && !outOfRangeReason.trim()) {
+      return Swal.fire('Peringatan', 'Alasan presensi luar wajib diisi.', 'warning');
     }
-
-    const scheduleRule = targetSchedule?.rules?.find(r => r.day_of_week === todayDay);
-    const isHolidayToday = !!activeHoliday || !!scheduleRule?.is_holiday;
-
-    // Blokir jika hari libur (kecuali Fleksibel)
-    if (isHolidayToday && account?.schedule_type !== 'Fleksibel') {
-      const holidayLabel = activeHoliday ? `khusus (${activeHoliday.name})` : 'terjadwal (Off Day)';
-      return Swal.fire('Akses Ditolak', `Hari ini adalah hari libur ${holidayLabel}. Presensi dinonaktifkan.`, 'info');
-    }
-
-    if (!account) {
-      return Swal.fire('Gagal', 'Data akun tidak ditemukan.', 'error');
-    }
-    
-    if (!targetSchedule) {
-      return Swal.fire('Gagal', 'Jadwal kerja Anda belum ditentukan.', 'warning');
-    }
-
-    if (!coords || distance === null) {
-      return Swal.fire({
-        title: 'Lokasi Belum Siap',
-        text: 'Sinyal GPS sedang dioptimalkan. Mohon tunggu beberapa detik hingga indikator jarak muncul.',
-        icon: 'warning',
-        confirmButtonColor: '#006E62'
-      });
-    }
-
-    const locationRadius = account.location?.radius || 100;
-    const isCheckOut = !!todayAttendance && !todayAttendance.check_out;
-    const isLimited = isCheckOut 
-      ? account.is_presence_limited_checkout === true 
-      : account.is_presence_limited_checkin === true;
-
-    if (isLimited && distance > locationRadius && !isOutOfRangeRequested) {
-       setIsCameraActive(false);
-       return Swal.fire({
-         title: 'Di Luar Radius',
-         text: `Anda berada di luar radius penempatan (${Math.round(distance)}m > ${locationRadius}m). Silahkan aktifkan "Ajukan Presensi Luar" jika Anda memiliki alasan yang sah.`,
-         icon: 'warning',
-         confirmButtonColor: '#006E62'
-       });
-    }
-
-    if (isCapturing) return;
-
-    const scheduleResult = presenceService.calculateStatus(serverTime, targetSchedule, isCheckOut ? 'OUT' : 'IN');
-    
-    let reason = null;
-    // Wajibkan alasan jika terlambat/pulang awal ATAU jika presensi luar
-    const isLateOrEarly = scheduleResult.status !== 'Tepat Waktu';
-    
-    if (isLateOrEarly || isOutOfRangeRequested) {
-      const { value: text, isConfirmed } = await Swal.fire({
-        title: `Konfirmasi ${isLateOrEarly ? scheduleResult.status : 'Presensi Luar'}`,
-        input: 'textarea',
-        inputLabel: `${isLateOrEarly ? `Anda terdeteksi ${scheduleResult.status.toLowerCase()} ${scheduleResult.minutes} menit. ` : ''}Harap berikan alasan ${isOutOfRangeRequested ? 'presensi luar' : 'keterlambatan/pulang awal'} Anda:`,
-        inputPlaceholder: 'Tuliskan alasan Anda di sini...',
-        inputAttributes: { 'aria-label': 'Tuliskan alasan Anda di sini' },
-        showCancelButton: true,
-        confirmButtonColor: '#006E62',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Kirim Presensi',
-        cancelButtonText: 'Batal',
-        inputValidator: (value) => {
-          if (!value) return 'Alasan wajib diisi!';
-          return null;
-        }
-      });
-
-      if (!isConfirmed) return;
-      reason = text;
-    }
-
-    try {
-      setIsCapturing(true);
-      
-      // Capture current attendance state to avoid race conditions
-      const currentAttendance = todayAttendance;
-      const isCurrentlyCheckingOut = !!currentAttendance && !currentAttendance.check_out;
-
-      // Tahap 1: Jalankan geocoding dan upload secara paralel untuk efisiensi
-      const [address, photoId] = await Promise.all([
-        currentAddress || presenceService.getReverseGeocode(lockedCoords?.lat || coords!.lat, lockedCoords?.lng || coords!.lng),
-        googleDriveService.uploadFile(new File([photoBlob], `Presence_${isCurrentlyCheckingOut ? 'OUT' : 'IN'}_${Date.now()}.jpg`))
-      ]);
-
-      const currentTimeStr = serverTime.toISOString();
-      
-      // Tahap 2: Simpan ke database Supabase
-      const submissionCoords = lockedCoords || coords;
-      if (!isCurrentlyCheckingOut) {
+    // ...
+    if (!isCurrentlyCheckingOut) {
         const payload: any = {
           account_id: account.id,
           check_in: currentTimeStr,
@@ -323,7 +231,8 @@ const PresenceMain: React.FC = () => {
           late_minutes: scheduleResult.minutes,
           late_reason: reason,
           presence_type: isOutOfRangeRequested ? presenceType : 'Reguler',
-          out_of_range_reason: isOutOfRangeRequested ? outOfRangeReason : null
+          out_of_range_reason: isOutOfRangeRequested ? outOfRangeReason : null,
+          check_in_validity: isOutOfRangeRequested ? 'FALSE' : 'TRUE'
         };
         await presenceService.checkIn(payload);
       } else {
@@ -340,7 +249,8 @@ const PresenceMain: React.FC = () => {
           early_departure_minutes: scheduleResult.minutes,
           early_departure_reason: reason,
           presence_type: isOutOfRangeRequested ? presenceType : 'Reguler',
-          out_of_range_reason: isOutOfRangeRequested ? outOfRangeReason : null
+          out_of_range_reason: isOutOfRangeRequested ? outOfRangeReason : null,
+          check_out_validity: isOutOfRangeRequested ? 'FALSE' : 'TRUE'
         };
         await presenceService.checkOut(currentAttendance.id, payload);
       }
@@ -356,21 +266,10 @@ const PresenceMain: React.FC = () => {
         showConfirmButton: false
       });
       
-      // Refresh data tampilan
-      resetCapture();
-      await fetchInitialData();
-    } catch (error: any) {
-      console.error("Attendance Process Error:", error);
-      Swal.fire({
-        title: 'Gagal Menyimpan',
-        text: error.message || 'Terjadi kesalahan sistem saat menyimpan data. Harap periksa koneksi internet Anda.',
-        icon: 'error',
-        confirmButtonColor: '#006E62'
-      });
-    } finally {
-      setIsCapturing(false);
-    }
-  };
+      navigate('/');
+    // ...
+  }
+
 
   if (isLoading) return <LoadingSpinner message="Sinkronisasi Data Satelit..." />;
 

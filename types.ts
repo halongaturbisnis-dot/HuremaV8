@@ -178,6 +178,8 @@ export interface Attendance {
   work_duration: string | null;
   presence_type: string | null;
   out_of_range_reason: string | null;
+  check_in_validity: 'TRUE' | 'FALSE' | 'DENY' | null;
+  check_out_validity: 'TRUE' | 'FALSE' | 'DENY' | null;
   created_at?: string;
 }
 

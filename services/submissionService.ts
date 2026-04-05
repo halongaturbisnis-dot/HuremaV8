@@ -350,6 +350,25 @@ export const submissionService = {
     return data as Submission;
   },
 
+  async verifyAttendance(id: string, type: 'IN' | 'OUT', status: 'TRUE' | 'DENY', verifierId: string, notes?: string) {
+    const updatePayload: any = {};
+    if (type === 'IN') {
+      updatePayload.check_in_validity = status;
+    } else {
+      updatePayload.check_out_validity = status;
+    }
+    
+    const { data, error } = await supabase
+      .from('attendances')
+      .update(updatePayload)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data as Attendance;
+  },
+
   async delete(id: string) {
     const { error } = await supabase
       .from('account_submissions')

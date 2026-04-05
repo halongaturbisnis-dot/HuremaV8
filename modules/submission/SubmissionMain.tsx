@@ -32,9 +32,30 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
   const fetchSubmissions = async () => {
     try {
       setIsLoading(true);
-      const data = await submissionService.getAll();
-      const filtered = type ? data.filter(s => s.type === type) : data;
-      setSubmissions(filtered);
+      if (type === 'Presensi Luar') {
+        const { data, error } = await supabase
+          .from('attendances')
+          .select('*, account:accounts!account_id(full_name, internal_nik)')
+          .neq('presence_type', 'Reguler')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        // Map attendances to Submission-like structure
+        const mapped = (data as any[]).map(a => ({
+          id: a.id,
+          type: 'Presensi Luar',
+          account_id: a.account_id,
+          account: a.account,
+          status: (a.check_in_validity === 'FALSE' || a.check_out_validity === 'FALSE') ? 'Pending' : (a.check_in_validity === 'TRUE' || a.check_out_validity === 'TRUE' ? 'Disetujui' : 'Ditolak'),
+          description: a.out_of_range_reason || 'Presensi Luar Lokasi',
+          created_at: a.created_at,
+          submission_data: { attendance_id: a.id, presence_type: a.presence_type }
+        }));
+        setSubmissions(mapped as any);
+      } else {
+        const data = await submissionService.getAll();
+        const filtered = type ? data.filter(s => s.type === type) : data;
+        setSubmissions(filtered);
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -57,7 +78,12 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
     if (confirm.isConfirmed) {
       try {
         setIsSaving(true);
-        await submissionService.verify(id, status, currentUser.id, notes);
+        if (type === 'Presensi Luar') {
+          const sub = submissions.find(s => s.id === id);
+          await submissionService.verifyAttendance(id, sub?.submission_data.presence_type === 'IN' ? 'IN' : 'OUT', status === 'Disetujui' ? 'TRUE' : 'DENY', currentUser.id, notes);
+        } else {
+          await submissionService.verify(id, status, currentUser.id, notes);
+        }
         await fetchSubmissions();
         setSelectedSubmission(null);
         Swal.fire('Berhasil', `Pengajuan telah ${status.toLowerCase()}.`, 'success');
@@ -99,16 +125,18 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
     <div className="space-y-6">
       {isSaving && <LoadingSpinner message="Memproses Verifikasi..." />}
 
-      <div className="flex border-b border-gray-100 bg-white -mt-4 mb-6 sticky top-16 z-20 overflow-x-auto scrollbar-none">
-        <TabButton 
-          id="verification" 
-          label="Verifikasi" 
-          icon={Clock} 
-          count={submissions.filter(s => s.status === 'Pending').length} 
-        />
-        <TabButton id="monitoring" label="Daftar Masuk" icon={ListFilter} />
-        <TabButton id="history" label="Riwayat" icon={CheckCircle2} />
-      </div>
+      {type !== 'Presensi Luar' && (
+        <div className="flex border-b border-gray-100 bg-white -mt-4 mb-6 sticky top-16 z-20 overflow-x-auto scrollbar-none">
+          <TabButton 
+            id="verification" 
+            label="Verifikasi" 
+            icon={Clock} 
+            count={submissions.filter(s => s.status === 'Pending').length} 
+          />
+          <TabButton id="monitoring" label="Daftar Masuk" icon={ListFilter} />
+          <TabButton id="history" label="Riwayat" icon={CheckCircle2} />
+        </div>
+      )}
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md">
@@ -122,13 +150,15 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
           />
         </div>
         
-        <button 
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 bg-[#006E62] text-white px-4 py-2 rounded-md hover:bg-[#005a50] transition-colors shadow-sm text-sm font-medium"
-        >
-          <Plus size={18} />
-          <span>Buat Pengajuan</span>
-        </button>
+        {type !== 'Presensi Luar' && (
+          <button 
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-2 bg-[#006E62] text-white px-4 py-2 rounded-md hover:bg-[#005a50] transition-colors shadow-sm text-sm font-medium"
+          >
+            <Plus size={18} />
+            <span>Buat Pengajuan</span>
+          </button>
+        )}
       </div>
 
       {isLoading ? (
