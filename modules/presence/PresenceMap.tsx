@@ -33,14 +33,18 @@ const PresenceMap: React.FC<PresenceMapProps> = ({ userLat, userLng, officeLat, 
         icon: L.divIcon({ 
           className: 'bg-[#006E62] w-3 h-3 rounded-full border-2 border-white' 
         })
-      }).addTo(mapRef.current);
+      })
+      .bindTooltip("Lokasi Seharusnya", { permanent: true, direction: 'top', className: 'text-[9px] font-bold text-[#006E62] border-none shadow-none bg-white/80 px-1 rounded' })
+      .addTo(mapRef.current);
 
       // User ACTUAL Location Marker (HERE()) - Red Static Pin
       L.marker([userLat, userLng], {
         icon: L.divIcon({ 
           className: 'bg-red-600 w-3 h-3 rounded-full border-2 border-white shadow-lg' 
         })
-      }).addTo(mapRef.current);
+      })
+      .bindTooltip("Lokasi Presensi", { permanent: true, direction: 'top', className: 'text-[9px] font-bold text-red-600 border-none shadow-none bg-white/80 px-1 rounded' })
+      .addTo(mapRef.current);
 
       const bounds = L.latLngBounds([[userLat, userLng], [officeLat, officeLng]]);
       mapRef.current.fitBounds(bounds, { padding: [20, 20] });

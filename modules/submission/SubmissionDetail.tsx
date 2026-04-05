@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckCircle, XCircle, Clock, User, FileText, Paperclip, ExternalLink, Calendar, MessageSquare, MapPin, Navigation, AlertCircle, Info } from 'lucide-react';
+import { X, CheckCircle, XCircle, Clock, User, FileText, Paperclip, ExternalLink, Calendar, MessageSquare, MapPin, Navigation, AlertCircle, Info, Search, Camera } from 'lucide-react';
 import { Submission } from '../../types';
 import { googleDriveService } from '../../services/googleDriveService';
 import PresenceMap from '../presence/PresenceMap';
@@ -98,34 +98,46 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
             <div className="space-y-6">
               {/* Header Info: Profile & Status */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-emerald-50 bg-gray-100 flex items-center justify-center shrink-0 shadow-inner">
-                    {submission.account?.photo_google_id ? (
-                      <img 
-                        src={googleDriveService.getFileUrl(submission.account.photo_google_id)} 
-                        alt={submission.account.full_name} 
-                        className="w-full h-full object-cover"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <User size={32} className="text-gray-300" />
-                    )}
+                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-emerald-50 bg-gray-100 flex items-center justify-center shrink-0 shadow-inner">
+                      {submission.account?.photo_google_id ? (
+                        <img 
+                          src={googleDriveService.getFileUrl(submission.account.photo_google_id)} 
+                          alt={submission.account.full_name} 
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <User size={32} className="text-gray-300" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-0.5">Karyawan Pengaju</p>
+                      <h4 className="text-base font-black text-gray-800 truncate leading-tight">{submission.account?.full_name}</h4>
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">{submission.account?.internal_nik}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-0.5">Karyawan Pengaju</p>
-                    <h4 className="text-base font-black text-gray-800 truncate leading-tight">{submission.account?.full_name}</h4>
-                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">{submission.account?.internal_nik} • {submission.account?.position}</p>
+                  
+                  {/* Department & Position Card */}
+                  <div className="bg-gray-50/50 rounded-xl p-3 border border-gray-100">
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Departemen</p>
+                        <p className="text-xs font-bold text-[#006E62]">{(submission.account as any)?.grade || '-'}</p>
+                      </div>
+                      <div className="pt-2 border-t border-gray-200/50">
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jabatan</p>
+                        <p className="text-xs font-medium text-gray-700">{submission.account?.position || '-'}</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Departemen</p>
-                    <p className="text-xs font-bold text-gray-700">{(submission.account as any)?.grade || '-'}</p>
-                  </div>
-                  <div className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm h-full flex flex-col justify-center">
                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Lokasi Penempatan</p>
-                    <p className="text-xs font-bold text-gray-700">{(submission.account as any)?.location?.name || '-'}</p>
+                    <p className="text-sm font-bold text-gray-700">{(submission.account as any)?.location?.name || '-'}</p>
                   </div>
                 </div>
               </div>
@@ -171,7 +183,7 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                               <Navigation size={16} className="text-emerald-600" />
                             </div>
                             <div>
-                              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Alamat Presensi (Reverse Geotag)</p>
+                              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Alamat Presensi</p>
                               <p className="text-[11px] text-gray-600 leading-relaxed font-medium">{address || 'Alamat tidak terdeteksi'}</p>
                             </div>
                           </div>
@@ -182,9 +194,9 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                             <div>
                               <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jarak Titik Presensi</p>
                               <p className="text-[11px] font-bold text-gray-700">
-                                {Math.round(calculateDistance(userLat, userLng, office.latitude, office.longitude))} Meter dari Kantor
+                                {Math.round(calculateDistance(userLat, userLng, office.latitude, office.longitude))} Meter
                               </p>
-                              <p className="text-[9px] text-gray-400 font-medium italic">Radius Kantor: {office.radius || 100}m</p>
+                              <p className="text-[9px] text-gray-400 font-medium italic">Radius: {office.radius || 100}m</p>
                             </div>
                           </div>
                         </div>
@@ -246,8 +258,12 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                     return (
                       <>
                         <div>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Tanggal Presensi</p>
+                          <p className="text-xs font-bold text-gray-700">{time ? new Date(time).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</p>
+                        </div>
+                        <div>
                           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Waktu Presensi</p>
-                          <p className="text-xs font-bold text-gray-700">{time ? formatTimeOnly(time) : '-'}</p>
+                          <p className="text-xs font-bold text-[#006E62]">{time ? formatTimeOnly(time) : '-'}</p>
                         </div>
                         <div>
                           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{isIN ? 'Keterlambatan' : 'Pulang Awal'}</p>
@@ -284,21 +300,33 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                       const photoUrl = `https://drive.google.com/uc?id=${id}`;
                       
                       return (
-                        <img 
-                          src={photoUrl} 
-                          alt="Foto Presensi" 
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          referrerPolicy="no-referrer"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            // Fallback to lh3 if uc fails
-                            if (!target.src.includes('lh3')) {
-                              target.src = `https://lh3.googleusercontent.com/d/${id}=s1600`;
-                            } else {
-                              target.src = 'https://via.placeholder.com/400?text=Foto+Tidak+Tersedia';
-                            }
-                          }}
-                        />
+                        <a 
+                          href={googleDriveService.getViewerUrl(id)} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="block w-full h-full"
+                        >
+                          <img 
+                            src={photoUrl} 
+                            alt="Foto Presensi" 
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 cursor-zoom-in"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              // Fallback to lh3 if uc fails
+                              if (!target.src.includes('lh3')) {
+                                target.src = `https://lh3.googleusercontent.com/d/${id}=s1600`;
+                              } else {
+                                target.src = 'https://via.placeholder.com/400?text=Foto+Tidak+Tersedia';
+                              }
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <div className="bg-white/90 p-2 rounded-full shadow-lg">
+                              <Search size={20} className="text-[#006E62]" />
+                            </div>
+                          </div>
+                        </a>
                       );
                     })()}
                   </div>

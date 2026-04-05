@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   MapPin, LayoutDashboard, Settings, Users, MonitorCog, UserKey, Radar, Coffee, ChartPie, Toolbox, Handshake, Speech, MessagesSquare, 
   CalendarClock, Files, ChevronDown, ChevronRight, DollarSign, Banknote, Coins, BanknoteArrowDown, HandCoins, Diff,
-  Menu as MenuIcon, ChevronLeft, Database, Fingerprint, LogOut, Timer, ClipboardCheck, Plane, Calendar, ClipboardList, Heart, Target, BarChart3, CheckSquare, AlertTriangle, Video, Megaphone, Receipt, Trophy, Wallet, ShieldCheck, Activity
+  Menu as MenuIcon, ChevronLeft, Database, Fingerprint, LogOut, Timer, ClipboardCheck, Plane, Calendar, ClipboardList, Heart, Target, BarChart3, CheckSquare, AlertTriangle, Video, Megaphone, Receipt, Trophy, Wallet, ShieldCheck, Activity, EarthLock
 } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { financeService } from '../../services/financeService';
@@ -339,10 +339,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
               )}
               <NavItem 
                 id="out_of_range_submission" 
-                icon={MapPin} 
-                label="Pengajuan Presensi Luar" 
+                icon={EarthLock} 
+                label="Presensi Luar" 
                 indent 
-                showNew={isAdmin && pendingSubmissions['Presensi Luar'] > 0} 
+                badge={isAdmin ? pendingSubmissions['Presensi Luar'] : undefined} 
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 isCollapsed={isCollapsed}

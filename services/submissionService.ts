@@ -400,25 +400,45 @@ export const submissionService = {
       }
     }
 
-    const { data, error } = await query;
+    const { data: submissionsData, error: submissionsError } = await query;
     
-    if (error) throw error;
+    if (submissionsError) throw submissionsError;
     
     const counts: Record<string, number> = {
       'Libur Mandiri': 0,
       'Lembur': 0,
       'Izin': 0,
       'Cuti Tahunan': 0,
-      'Cuti Melahirkan': 0
+      'Cuti Melahirkan': 0,
+      'Presensi Luar': 0
     };
 
-    data?.forEach(item => {
-      if (counts[item.type] !== undefined) {
-        counts[item.type]++;
-      } else {
-        counts[item.type] = (counts[item.type] || 0) + 1;
-      }
+    submissionsData?.forEach(item => {
+      counts[item.type] = (counts[item.type] || 0) + 1;
     });
+
+    // Fetch Pending "Presensi Luar" from attendances table
+    let attendanceQuery = supabase
+      .from('attendances')
+      .select('id, account:accounts!account_id!inner(location_id)')
+      .or('check_in_validity.eq.FALSE,check_out_validity.eq.FALSE');
+
+    if (user && user.role !== 'admin') {
+      const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
+      const limitedScopes = scopes.filter(s => s?.mode === 'limited');
+      
+      if (limitedScopes.length > 0) {
+        const allAllowedIds = Array.from(new Set(limitedScopes.flatMap(s => s?.location_ids || [])));
+        if (allAllowedIds.length > 0) {
+          attendanceQuery = attendanceQuery.in('account.location_id', allAllowedIds);
+        }
+      }
+    }
+
+    const { data: attendanceData, error: attendanceError } = await attendanceQuery;
+    if (!attendanceError && attendanceData) {
+      counts['Presensi Luar'] = attendanceData.length;
+    }
 
     return counts;
   }

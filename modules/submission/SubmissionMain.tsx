@@ -249,10 +249,12 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
             <thead className="bg-gray-50 text-gray-400 font-bold uppercase text-[10px] tracking-widest">
               <tr>
                 <th className="px-6 py-4">Nama</th>
-                <th className="px-6 py-4">Jenis</th>
+                <th className="px-6 py-4">Presensi</th>
+                <th className="px-6 py-4">Jenis Presensi</th>
                 <th className="px-6 py-4">Alasan</th>
-                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Lokasi</th>
                 <th className="px-6 py-4">Tanggal</th>
+                <th className="px-6 py-4 text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -262,19 +264,35 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
                   onClick={() => setSelectedSubmission(submission)}
                   className="hover:bg-gray-50 cursor-pointer transition-colors"
                 >
-                  <td className="px-6 py-4 font-bold text-gray-800">{submission.account?.full_name}</td>
-                  <td className="px-6 py-4 text-gray-500">{submission.type}</td>
-                  <td className="px-6 py-4 text-gray-500 line-clamp-1">{submission.description}</td>
                   <td className="px-6 py-4">
+                    <div className="font-bold text-gray-800">{submission.account?.full_name}</div>
+                    <div className="text-[10px] text-gray-400 uppercase tracking-widest">{submission.account?.internal_nik}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                      submission.submission_data?.presence_type === 'IN' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                    }`}>
+                      {submission.submission_data?.presence_type === 'IN' ? 'Masuk' : 'Pulang'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-600 font-medium">{submission.submission_data?.location_type || submission.type}</td>
+                  <td className="px-6 py-4">
+                    <p className="text-gray-500 line-clamp-1 italic text-xs">
+                      {submission.submission_data?.reason || submission.description.replace(/^\[(MASUK|PULANG)\]\s*[^:]*:\s*/, '')}
+                    </p>
+                  </td>
+                  <td className="px-6 py-4 text-gray-500 text-xs font-medium">{(submission.account as any)?.location?.name || '-'}</td>
+                  <td className="px-6 py-4 text-gray-500 text-xs">
+                    {new Date(submission.created_at!).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </td>
+                  <td className="px-6 py-4 text-center">
                     <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
                       submission.status === 'Pending' ? 'bg-orange-50 text-orange-600' :
                       submission.status === 'Disetujui' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
                     }`}>
-                      {submission.status === 'Pending' && <span className="mr-1 text-[8px] bg-orange-200 px-1 rounded">NEW</span>}
                       {submission.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-500">{new Date(submission.created_at!).toLocaleDateString('id-ID')}</td>
                 </tr>
               ))}
             </tbody>
