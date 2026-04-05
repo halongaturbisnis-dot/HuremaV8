@@ -4,11 +4,12 @@ import {
   Users, UserCheck, UserX, Clock, Calendar, 
   Heart, Briefcase, Search, ArrowLeft, Eye,
   Coffee, Moon, Sun, AlertCircle, CheckCircle2,
-  Baby, UserCircle
+  Baby, UserCircle, CircleAlert
 } from 'lucide-react';
 import { monitoringService } from '../../services/monitoringService';
 import { googleDriveService } from '../../services/googleDriveService';
 import AccountDetail from '../account/AccountDetail';
+import AttendanceDetail from './AttendanceDetail';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 
 const DailyMonitoring: React.FC = () => {
@@ -17,6 +18,8 @@ const DailyMonitoring: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'present' | 'notPresentYet' | 'holiday' | 'overtime' | 'leave' | 'permission'>('present');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const [selectedAttendance, setSelectedAttendance] = useState<any>(null);
+  const [selectedAccountForAttendance, setSelectedAccountForAttendance] = useState<any>(null);
 
   useEffect(() => {
     fetchData();
@@ -74,16 +77,14 @@ const DailyMonitoring: React.FC = () => {
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
                 <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Karyawan</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jabatan</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jadwal</th>
+                {type !== 'present' && <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jabatan</th>}
+                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Jadwal</th>
                 
                 {type === 'present' && (
                   <>
-                    <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Masuk (Jadwal)</th>
-                    <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pulang (Jadwal)</th>
-                    <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Presensi Masuk</th>
-                    <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Presensi Pulang</th>
-                    <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Status</th>
+                    <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Presensi Masuk</th>
+                    <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Presensi Keluar</th>
+                    <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
                   </>
                 )}
 
@@ -104,54 +105,88 @@ const DailyMonitoring: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filtered.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
+                <tr 
+                  key={item.id} 
+                  className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
+                  onClick={() => {
+                    if (type === 'present') {
+                      setSelectedAttendance(item.attendance);
+                      setSelectedAccountForAttendance(item);
+                    }
+                  }}
+                >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 overflow-hidden shrink-0 border border-gray-200">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 overflow-hidden shrink-0 border border-gray-200">
                         {item.photo_google_id ? (
                           <img src={googleDriveService.getFileUrl(item.photo_google_id)} alt="" className="w-full h-full object-cover" />
                         ) : (
-                          <UserCircle size={16} />
+                          <UserCircle size={20} />
                         )}
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-bold text-gray-800 truncate">{item.full_name}</p>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{item.internal_nik}</p>
+                        <div className="flex flex-col">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{item.internal_nik}</p>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{item.department}</p>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{item.position}</p>
+                        </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <p className="text-xs text-gray-600 font-medium">{item.position}</p>
-                    <p className="text-[10px] text-gray-400 uppercase">{item.grade}</p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded uppercase">
-                      {item.schedule_name}
-                    </span>
+                  {type !== 'present' && (
+                    <td className="px-4 py-3">
+                      <p className="text-xs text-gray-600 font-medium">{item.position}</p>
+                      <p className="text-[10px] text-gray-400 uppercase">{item.grade}</p>
+                    </td>
+                  )}
+                  <td className="px-4 py-3 text-center">
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="px-2 py-0.5 bg-[#006E62] text-white text-[10px] font-bold rounded uppercase">
+                        {item.schedule_name}
+                      </span>
+                      <p className="text-[10px] text-gray-500 font-medium">
+                        {formatTime(item.today_rule?.check_in_time)} - {formatTime(item.today_rule?.check_out_time)}
+                      </p>
+                    </div>
                   </td>
 
                   {type === 'present' && (
                     <>
-                      <td className="px-4 py-3 text-xs text-gray-600 font-mono">{formatTime(item.today_rule?.check_in_time)}</td>
-                      <td className="px-4 py-3 text-xs text-gray-600 font-mono">{formatTime(item.today_rule?.check_out_time)}</td>
-                      <td className="px-4 py-3 text-xs text-emerald-600 font-bold font-mono">
-                        {formatTime(item.attendance?.check_in)}
-                        {(item.attendance?.check_in_type && item.attendance.check_in_type !== 'Reguler') && (
-                          <span className="ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded uppercase">
-                            {item.attendance.check_in_type}
-                          </span>
-                        )}
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <p className={`text-sm font-black font-mono ${item.attendance?.late_minutes > 0 ? 'text-red-600' : 'text-[#006E62]'}`}>
+                            {formatTime(item.attendance?.check_in)}
+                          </p>
+                          {(item.attendance?.check_in_type && item.attendance.check_in_type !== 'Reguler') && (
+                            <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded uppercase">
+                              {item.attendance.check_in_type} ({item.attendance.check_in_validity === 'TRUE' ? 'ACC' : item.attendance.check_in_validity === 'DENY' ? 'DITOLAK' : 'PENDING'})
+                            </span>
+                          )}
+                          <p className={`text-[9px] font-bold uppercase ${item.attendance?.late_minutes > 0 ? 'text-red-600' : 'text-[#006E62]'}`}>
+                            {item.attendance?.late_minutes > 0 ? `Terlambat ${item.attendance.late_minutes}m` : 'Tepat Waktu'}
+                          </p>
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-600 font-mono">
-                        {formatTime(item.attendance?.check_out)}
-                        {(item.attendance?.check_out_type && item.attendance.check_out_type !== 'Reguler') && (
-                          <span className="ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded uppercase">
-                            {item.attendance.check_out_type}
-                          </span>
-                        )}
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <p className={`text-sm font-black font-mono ${item.attendance?.early_departure_minutes > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                            {formatTime(item.attendance?.check_out)}
+                          </p>
+                          {(item.attendance?.check_out_type && item.attendance.check_out_type !== 'Reguler') && (
+                            <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded uppercase">
+                              {item.attendance.check_out_type} ({item.attendance.check_out_validity === 'TRUE' ? 'ACC' : item.attendance.check_out_validity === 'DENY' ? 'DITOLAK' : 'PENDING'})
+                            </span>
+                          )}
+                          {item.attendance?.check_out && (
+                            <p className={`text-[9px] font-bold uppercase ${item.attendance?.early_departure_minutes > 0 ? 'text-red-600' : 'text-[#006E62]'}`}>
+                              {item.attendance?.early_departure_minutes > 0 ? `Pulang Awal ${item.attendance.early_departure_minutes}m` : 'Tepat Waktu'}
+                            </p>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${item.attendance?.check_out ? 'bg-gray-100 text-gray-500' : 'bg-emerald-50 text-emerald-600'}`}>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase ${item.attendance?.check_out ? 'bg-[#006E62] text-white' : 'bg-amber-100 text-amber-700'}`}>
                           {item.attendance?.check_out ? 'Sudah Pulang' : 'Belum Pulang'}
                         </span>
                       </td>
@@ -204,13 +239,31 @@ const DailyMonitoring: React.FC = () => {
                   )}
 
                   <td className="px-4 py-3 text-center">
-                    <button 
-                      onClick={() => setSelectedAccountId(item.id)}
-                      className="p-2 hover:bg-gray-100 text-gray-400 hover:text-[#006E62] transition-colors rounded-lg"
-                      title="Lihat Detail"
-                    >
-                      <Eye size={16} />
-                    </button>
+                    <div className="flex items-center justify-center gap-1">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (type === 'present') {
+                            setSelectedAttendance(item.attendance);
+                            setSelectedAccountForAttendance(item);
+                          }
+                        }}
+                        className="p-2 hover:bg-gray-100 text-gray-400 hover:text-[#006E62] transition-colors rounded-lg"
+                        title="Lihat Detail Presensi"
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedAccountId(item.id);
+                        }}
+                        className="p-2 hover:bg-gray-100 text-gray-400 hover:text-amber-600 transition-colors rounded-lg"
+                        title="Lihat Profil Karyawan"
+                      >
+                        <CircleAlert size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -300,7 +353,15 @@ const DailyMonitoring: React.FC = () => {
         <div className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
             <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50/50">
-              <h3 className="font-bold text-gray-800">Detail Profil Karyawan</h3>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                  <CircleAlert size={24} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-800">Detail Profil Karyawan</h3>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Informasi lengkap data karyawan</p>
+                </div>
+              </div>
               <button 
                 onClick={() => setSelectedAccountId(null)}
                 className="p-2 hover:bg-gray-200 rounded-full transition-colors"
@@ -319,6 +380,18 @@ const DailyMonitoring: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Attendance Detail Modal */}
+      {selectedAttendance && selectedAccountForAttendance && (
+        <AttendanceDetail 
+          attendance={selectedAttendance}
+          account={selectedAccountForAttendance}
+          onClose={() => {
+            setSelectedAttendance(null);
+            setSelectedAccountForAttendance(null);
+          }}
+        />
       )}
     </div>
   );
