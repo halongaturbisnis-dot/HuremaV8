@@ -381,17 +381,6 @@ const PresenceMain: React.FC = () => {
                       <span className="text-[10px] font-bold uppercase tracking-widest">Identitas Terverifikasi</span>
                     </div>
                   </div>
-                  {isLateOrEarly && (
-                    <div className="mt-4 pt-4 border-t border-gray-50">
-                      <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Alasan Keterlambatan/Pulang Awal</p>
-                      <textarea
-                        value={lateEarlyReason}
-                        onChange={(e) => setLateEarlyReason(e.target.value)}
-                        placeholder="Masukkan alasan..."
-                        className="w-full p-2 text-xs border border-gray-200 rounded-lg"
-                      />
-                    </div>
-                  )}
                 </div>
 
                 <div className="w-full max-w-sm space-y-3">
@@ -627,6 +616,18 @@ const PresenceMain: React.FC = () => {
                     </div>
                   )}
                </div>
+
+               {isLateOrEarly && (
+                 <div className="mt-4 p-4 bg-rose-50 rounded-xl border border-rose-100">
+                   <p className="text-[10px] font-bold text-rose-600 uppercase mb-2">Alasan Keterlambatan/Pulang Awal</p>
+                   <textarea
+                     value={lateEarlyReason}
+                     onChange={(e) => setLateEarlyReason(e.target.value)}
+                     placeholder="Masukkan alasan..."
+                     className="w-full p-3 text-xs border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                   />
+                 </div>
+               )}
 
                {account.schedule_type !== 'Fleksibel' && (
                  <div className="mt-4 lg:mt-8 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100/50 space-y-3">
