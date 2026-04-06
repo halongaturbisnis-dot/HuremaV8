@@ -243,7 +243,7 @@ export const reportService = {
       const accAnnualLeaves = (annualLeaves || []).filter(l => l.account_id === acc.id);
       const accPermissions = (permissions || []).filter(p => p.account_id === acc.id);
       const accMaternity = (maternityLeaves || []).filter(m => m.account_id === acc.id);
-      const accOvertimes = (overtimes || []).filter(o => o.account_id === acc.id);
+      const accOvertimes = (overtimes || []).filter(o => o.account_id === acc.id && o.check_out);
       const accDispensations = (dispensations || []).filter(d => d.account_id === acc.id);
 
       const present = accAttendances.length;
@@ -257,6 +257,16 @@ export const reportService = {
       const maternityLeave = accMaternity.length;
       const permission = accPermissions.length;
       const dispensationCount = accDispensations.length;
+
+      const overtimeCount = accOvertimes.length;
+      const overtimeMinutes = accOvertimes.reduce((sum, o) => {
+        if (o.duration_minutes) return sum + o.duration_minutes;
+        if (o.check_in && o.check_out) {
+          const diff = new Date(o.check_out).getTime() - new Date(o.check_in).getTime();
+          return sum + Math.floor(diff / 60000);
+        }
+        return sum;
+      }, 0);
 
       // Simple absent calculation: total days - (present + leave + maternity + permission + holidays)
       // Note: This is a simplification and might need refinement based on actual work days

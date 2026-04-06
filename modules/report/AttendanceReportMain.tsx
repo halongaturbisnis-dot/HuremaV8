@@ -113,7 +113,7 @@ const AttendanceReportMain: React.FC = () => {
 
     return accounts.map((acc: any) => {
       const employeeAttendances = attendances.filter((a: any) => a.account_id === acc.id && a.check_in_validity === 'TRUE');
-      const employeeOvertimes = overtimes.filter((o: any) => o.account_id === acc.id);
+      const employeeOvertimes = overtimes.filter((o: any) => o.account_id === acc.id && o.check_out);
       const employeeLeaves = leaves.filter((l: any) => l.account_id === acc.id);
       const employeeAnnualLeaves = annualLeaves.filter((l: any) => l.account_id === acc.id);
       const employeePermissions = permissions.filter((p: any) => p.account_id === acc.id);
@@ -138,7 +138,14 @@ const AttendanceReportMain: React.FC = () => {
         location: acc.location?.name || '-',
         present,
         overtime: employeeOvertimes.length,
-        overtime_minutes: employeeOvertimes.reduce((sum: number, o: any) => sum + (o.duration_minutes || 0), 0),
+        overtime_minutes: employeeOvertimes.reduce((sum: number, o: any) => {
+          if (o.duration_minutes) return sum + o.duration_minutes;
+          if (o.check_in && o.check_out) {
+            const diff = new Date(o.check_out).getTime() - new Date(o.check_in).getTime();
+            return sum + Math.floor(diff / 60000);
+          }
+          return sum;
+        }, 0),
         leave,
         annual_leave,
         permission,
@@ -164,14 +171,12 @@ const AttendanceReportMain: React.FC = () => {
     if (!processedData.length) return null;
 
     const present = processedData.reduce((sum, d) => sum + d.present, 0);
-    const overtime = processedData.reduce((sum, d) => sum + d.overtime, 0);
     const leave = processedData.reduce((sum, d) => sum + d.leave + d.annual_leave + d.maternity_leave, 0);
     const permission = processedData.reduce((sum, d) => sum + d.permission, 0);
     const absent = processedData.reduce((sum, d) => sum + d.absent, 0);
 
     return [
       { name: 'Hadir', value: present, color: '#006E62' },
-      { name: 'Lembur', value: overtime, color: '#f59e0b' },
       { name: 'Cuti', value: leave, color: '#10b981' },
       { name: 'Izin', value: permission, color: '#6366f1' },
       { name: 'Absen', value: absent, color: '#ef4444' }
@@ -200,7 +205,7 @@ const AttendanceReportMain: React.FC = () => {
     return days.map(day => {
       const dateStr = format(day, 'yyyy-MM-dd');
       const count = reportData.attendances.filter((a: any) => 
-        a.created_at.startsWith(dateStr) && 
+        a.check_in.startsWith(dateStr) && 
         a.check_in_validity === 'TRUE'
       ).length;
       return {
