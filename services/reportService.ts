@@ -222,7 +222,7 @@ export const reportService = {
       { data: holidays }
     ] = await Promise.all([
       supabase.from('accounts').select('id, full_name, internal_nik'),
-      supabase.from('attendances').select('*').gte('check_in', startDate).lte('check_in', endDate),
+      supabase.from('attendances').select('*').gte('check_in', `${startDate}T00:00:00Z`).lte('check_in', `${endDate}T23:59:59Z`),
       supabase.from('account_leave_requests').select('*').eq('status', 'approved').gte('start_date', startDate).lte('end_date', endDate),
       supabase.from('account_annual_leaves').select('*').eq('status', 'approved').gte('start_date', startDate).lte('end_date', endDate),
       supabase.from('account_permission_requests').select('*').eq('status', 'approved').gte('start_date', startDate).lte('end_date', endDate),
@@ -309,16 +309,18 @@ export const reportService = {
     let mlQuery = supabase.from('account_maternity_leaves').select('*').eq('status', 'approved');
 
     if (startDate) {
-      attQuery = attQuery.gte('check_in', startDate);
-      otQuery = otQuery.gte('check_in', startDate);
+      const startIso = `${startDate}T00:00:00Z`;
+      attQuery = attQuery.gte('check_in', startIso);
+      otQuery = otQuery.gte('check_in', startIso);
       lQuery = lQuery.gte('start_date', startDate);
       alQuery = alQuery.gte('start_date', startDate);
       pQuery = pQuery.gte('start_date', startDate);
       mlQuery = mlQuery.gte('start_date', startDate);
     }
     if (endDate) {
-      attQuery = attQuery.lte('check_in', endDate);
-      otQuery = otQuery.lte('check_in', endDate);
+      const endIso = `${endDate}T23:59:59Z`;
+      attQuery = attQuery.lte('check_in', endIso);
+      otQuery = otQuery.lte('check_in', endIso);
       lQuery = lQuery.lte('end_date', endDate);
       alQuery = alQuery.lte('end_date', endDate);
       pQuery = pQuery.lte('end_date', endDate);
