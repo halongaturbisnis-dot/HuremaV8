@@ -238,11 +238,12 @@ export const reportService = {
     const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
     return accounts.map(acc => {
-      const accAttendances = (attendances || []).filter(a => a.account_id === acc.id);
+      const accAttendances = (attendances || []).filter(a => a.account_id === acc.id && a.check_in_validity === 'TRUE');
       const accLeaves = (leaves || []).filter(l => l.account_id === acc.id);
       const accAnnualLeaves = (annualLeaves || []).filter(l => l.account_id === acc.id);
       const accPermissions = (permissions || []).filter(p => p.account_id === acc.id);
       const accMaternity = (maternityLeaves || []).filter(m => m.account_id === acc.id);
+      const accOvertimes = (overtimes || []).filter(o => o.account_id === acc.id);
       const accDispensations = (dispensations || []).filter(d => d.account_id === acc.id);
 
       const present = accAttendances.length;
@@ -250,7 +251,7 @@ export const reportService = {
       const lateMinutes = accAttendances.reduce((sum, a) => sum + (a.late_minutes || 0), 0);
       const earlyDeparture = accAttendances.filter(a => a.early_leave_minutes > 0).length;
       const earlyDepartureMinutes = accAttendances.reduce((sum, a) => sum + (a.early_leave_minutes || 0), 0);
-      const noClockOut = accAttendances.filter(a => !a.check_out).length;
+      const noClockOut = accAttendances.filter(a => !a.check_out || a.check_out_validity === 'FALSE' || a.check_out_validity === 'DENY').length;
       
       const leave = accLeaves.length + accAnnualLeaves.length;
       const maternityLeave = accMaternity.length;

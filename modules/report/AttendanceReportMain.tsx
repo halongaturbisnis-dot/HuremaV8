@@ -112,7 +112,7 @@ const AttendanceReportMain: React.FC = () => {
     }).length;
 
     return accounts.map((acc: any) => {
-      const employeeAttendances = attendances.filter((a: any) => a.account_id === acc.id);
+      const employeeAttendances = attendances.filter((a: any) => a.account_id === acc.id && a.check_in_validity === 'TRUE');
       const employeeOvertimes = overtimes.filter((o: any) => o.account_id === acc.id);
       const employeeLeaves = leaves.filter((l: any) => l.account_id === acc.id);
       const employeeAnnualLeaves = annualLeaves.filter((l: any) => l.account_id === acc.id);
@@ -199,7 +199,10 @@ const AttendanceReportMain: React.FC = () => {
 
     return days.map(day => {
       const dateStr = format(day, 'yyyy-MM-dd');
-      const count = reportData.attendances.filter((a: any) => a.created_at.startsWith(dateStr)).length;
+      const count = reportData.attendances.filter((a: any) => 
+        a.created_at.startsWith(dateStr) && 
+        a.check_in_validity === 'TRUE'
+      ).length;
       return {
         date: format(day, 'dd MMM', { locale: id }),
         count
@@ -574,7 +577,9 @@ const AttendanceReportMain: React.FC = () => {
                   }).map((day, i) => {
                     const dateStr = format(day, 'yyyy-MM-dd');
                     const isPresent = reportData?.attendances.some((a: any) => 
-                      a.account_id === selectedEmployee && a.check_in.startsWith(dateStr)
+                      a.account_id === selectedEmployee && 
+                      a.check_in.startsWith(dateStr) &&
+                      a.check_in_validity === 'TRUE'
                     );
                     const isOnLeave = [
                       ...reportData?.leaves,
