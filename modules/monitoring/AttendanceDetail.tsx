@@ -249,7 +249,7 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                         <div>
                           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Alasan Presensi Luar</p>
                           <p className="text-[11px] text-gray-600 italic leading-tight">
-                            {attendance.late_reason || 'Tidak ada alasan'}
+                            {attendance.check_in_reason || 'Tidak ada alasan'}
                           </p>
                         </div>
                       </div>
@@ -380,7 +380,7 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                         <div>
                           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Alasan Presensi Luar</p>
                           <p className="text-[11px] text-gray-600 italic leading-tight">
-                            {attendance.early_departure_reason || 'Tidak ada alasan'}
+                            {attendance.check_out_reason || 'Tidak ada alasan'}
                           </p>
                         </div>
                       </div>
