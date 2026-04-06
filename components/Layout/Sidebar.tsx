@@ -111,6 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
         .on('postgres_changes', { event: '*', schema: 'public', table: 'account_compensation_logs' }, fetchUnread)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'dispensation_requests' }, fetchUnread)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'account_submissions' }, fetchUnread)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'attendances' }, fetchUnread)
         .subscribe();
 
       // Refresh every 5 minutes as fallback
