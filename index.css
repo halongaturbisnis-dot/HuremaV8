@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
+.leaflet-control-attribution {
+  display: none !important;
+}
+
 /* Prevent auto-zoom on mobile inputs */
 @media screen and (max-width: 768px) {
   input, textarea, select {

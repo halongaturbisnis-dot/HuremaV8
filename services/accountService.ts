@@ -63,7 +63,7 @@ export const accountService = {
       .from('accounts')
       .select(`
         *,
-        location:locations(name)
+        location:locations(*)
       `, { count: 'exact' })
       .not('access_code', 'ilike', '%SPADMIN%');
 

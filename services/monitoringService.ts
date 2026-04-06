@@ -138,7 +138,8 @@ export const monitoringService = {
       const accWithInfo = { 
         ...acc, 
         schedule_name: schedule?.name || acc.schedule_type,
-        today_rule: rule 
+        today_rule: rule,
+        schedule: schedule
       };
 
       // PRIORITY HIERARCHY: One user = One primary category

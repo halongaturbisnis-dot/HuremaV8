@@ -173,6 +173,7 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
               
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="p-4 space-y-4">
+                  {/* 1. Maps */}
                   <div className="h-48 rounded-xl overflow-hidden border border-gray-100 shadow-inner relative">
                     {attendance.in_latitude && attendance.in_longitude && account.location?.latitude ? (
                       <PresenceMap 
@@ -187,20 +188,21 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-3">
+                  {/* 2. Alamat Presensi */}
+                  <div className="pt-1">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                      <MapPin size={10} /> Alamat Presensi
+                    </p>
+                    <p className="text-[11px] text-gray-600 leading-relaxed font-medium">{attendance.in_address || 'Alamat tidak terdeteksi'}</p>
+                  </div>
+
+                  <div className="space-y-3 pt-2 border-t border-gray-50">
+                    {/* 3. Waktu Masuk / Pulang | Jarak */}
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Waktu Masuk</p>
                         <p className="text-sm font-bold text-[#006E62]">{formatTimeOnly(attendance.check_in)}</p>
                       </div>
-                      <div>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Status</p>
-                        <p className={`text-xs font-bold ${attendance.late_minutes > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                          {attendance.status_in} {attendance.late_minutes > 0 ? `(${attendance.late_minutes} Menit)` : ''}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jarak</p>
                         <p className="text-sm font-bold text-gray-700">
@@ -209,74 +211,82 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                             : '-'}
                         </p>
                       </div>
+                    </div>
+
+                    {/* 4. Status Masuk / Pulang | Alasan */}
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jenis Presensi</p>
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${attendance.check_in_type === 'Reguler' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                            {attendance.check_in_type || 'Reguler'}
-                          </span>
-                          {attendance.check_in_type !== 'Reguler' && (
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Status Masuk</p>
+                        <p className={`text-xs font-bold ${attendance.late_minutes > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                          {attendance.status_in} {attendance.late_minutes > 0 ? `(${attendance.late_minutes} Menit)` : ''}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Alasan</p>
+                        <p className="text-[11px] text-gray-600 italic leading-tight">
+                          {attendance.late_minutes > 0 ? (attendance.late_reason || 'Tidak ada alasan') : 'Tepat Waktu'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 5. Jenis Presensi Luar | Alasan Presensi Luar */}
+                    {attendance.check_in_type !== 'Reguler' && (
+                      <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-50">
+                        <div>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jenis Presensi Luar</p>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-50 text-amber-600">
+                              {attendance.check_in_type}
+                            </span>
                             <div className="group relative">
                               {getStatusIcon(attendance.check_in_status)}
                               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                                 {getStatusTooltip(attendance.check_in_status)}
                               </div>
                             </div>
-                          )}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Alasan Presensi Luar</p>
+                          <p className="text-[11px] text-gray-600 italic leading-tight">
+                            {attendance.late_reason || 'Tidak ada alasan'}
+                          </p>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
+                  {/* 6. Foto */}
                   <div className="pt-3 border-t border-gray-50">
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
-                      <MapPin size={10} /> Alamat Presensi
-                    </p>
-                    <p className="text-[11px] text-gray-600 leading-relaxed font-medium">{attendance.in_address || 'Alamat tidak terdeteksi'}</p>
-                  </div>
-
-                  <div className="pt-3 border-t border-gray-50 flex gap-4">
-                    <div className="flex-1">
-                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Foto Verifikasi</p>
-                      <div className="aspect-video rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center relative group">
-                        {attendance.in_photo_id ? (
-                          <a 
-                            href={googleDriveService.getViewerUrl(attendance.in_photo_id.split('|')[0])} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="block w-full h-full"
-                          >
-                            <img 
-                              src={googleDriveService.getFileUrl(attendance.in_photo_id)} 
-                              alt="Foto Masuk" 
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                              referrerPolicy="no-referrer"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                const id = attendance.in_photo_id?.split('|')[0];
-                                if (id && !target.src.includes('lh3')) {
-                                  target.src = `https://lh3.googleusercontent.com/d/${id}=s1600`;
-                                }
-                              }}
-                            />
-                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <Eye size={20} className="text-white" />
-                            </div>
-                          </a>
-                        ) : (
-                          <User size={24} className="text-gray-200" />
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Alasan</p>
-                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 italic text-[11px] text-gray-600 min-h-[60px]">
-                        {attendance.check_in_type !== 'Reguler' ? (
-                          attendance.late_reason || 'Tidak ada alasan'
-                        ) : (
-                          attendance.late_minutes > 0 ? attendance.late_reason || 'Terlambat tanpa alasan' : 'Tepat Waktu'
-                        )}
-                      </div>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Foto Verifikasi</p>
+                    <div className="aspect-video rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center relative group">
+                      {attendance.in_photo_id ? (
+                        <a 
+                          href={googleDriveService.getViewerUrl(attendance.in_photo_id.split('|')[0])} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="block w-full h-full"
+                        >
+                          <img 
+                            src={googleDriveService.getFileUrl(attendance.in_photo_id)} 
+                            alt="Foto Masuk" 
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              const id = attendance.in_photo_id?.split('|')[0];
+                              if (id && !target.src.includes('lh3')) {
+                                target.src = `https://lh3.googleusercontent.com/d/${id}=s1600`;
+                              }
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Eye size={20} className="text-white" />
+                          </div>
+                        </a>
+                      ) : (
+                        <User size={24} className="text-gray-200" />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -292,6 +302,7 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
               
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="p-4 space-y-4">
+                  {/* 1. Maps */}
                   <div className="h-48 rounded-xl overflow-hidden border border-gray-100 shadow-inner relative">
                     {attendance.out_latitude && attendance.out_longitude && account.location?.latitude ? (
                       <PresenceMap 
@@ -308,20 +319,21 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-3">
+                  {/* 2. Alamat Presensi */}
+                  <div className="pt-1">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                      <MapPin size={10} /> Alamat Presensi
+                    </p>
+                    <p className="text-[11px] text-gray-600 leading-relaxed font-medium">{attendance.out_address || 'Alamat tidak terdeteksi'}</p>
+                  </div>
+
+                  <div className="space-y-3 pt-2 border-t border-gray-50">
+                    {/* 3. Waktu Masuk / Pulang | Jarak */}
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Waktu Pulang</p>
                         <p className="text-sm font-bold text-red-600">{formatTimeOnly(attendance.check_out)}</p>
                       </div>
-                      <div>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Status</p>
-                        <p className={`text-xs font-bold ${attendance.early_departure_minutes > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                          {attendance.status_out || '-'} {attendance.early_departure_minutes > 0 ? `(${attendance.early_departure_minutes} Menit)` : ''}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jarak</p>
                         <p className="text-sm font-bold text-gray-700">
@@ -330,74 +342,82 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                             : '-'}
                         </p>
                       </div>
+                    </div>
+
+                    {/* 4. Status Masuk / Pulang | Alasan */}
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jenis Presensi</p>
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${attendance.check_out_type === 'Reguler' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                            {attendance.check_out_type || 'Reguler'}
-                          </span>
-                          {attendance.check_out_type && attendance.check_out_type !== 'Reguler' && (
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Status Pulang</p>
+                        <p className={`text-xs font-bold ${attendance.early_departure_minutes > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                          {attendance.status_out || '-'} {attendance.early_departure_minutes > 0 ? `(${attendance.early_departure_minutes} Menit)` : ''}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Alasan</p>
+                        <p className="text-[11px] text-gray-600 italic leading-tight">
+                          {attendance.early_departure_minutes > 0 ? (attendance.early_departure_reason || 'Tidak ada alasan') : (attendance.check_out ? 'Sesuai Jadwal' : '-')}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 5. Jenis Presensi Luar | Alasan Presensi Luar */}
+                    {attendance.check_out_type && attendance.check_out_type !== 'Reguler' && (
+                      <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-50">
+                        <div>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jenis Presensi Luar</p>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-50 text-amber-600">
+                              {attendance.check_out_type}
+                            </span>
                             <div className="group relative">
                               {getStatusIcon(attendance.check_out_status)}
                               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                                 {getStatusTooltip(attendance.check_out_status)}
                               </div>
                             </div>
-                          )}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Alasan Presensi Luar</p>
+                          <p className="text-[11px] text-gray-600 italic leading-tight">
+                            {attendance.early_departure_reason || 'Tidak ada alasan'}
+                          </p>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
+                  {/* 6. Foto */}
                   <div className="pt-3 border-t border-gray-50">
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
-                      <MapPin size={10} /> Alamat Presensi
-                    </p>
-                    <p className="text-[11px] text-gray-600 leading-relaxed font-medium">{attendance.out_address || 'Alamat tidak terdeteksi'}</p>
-                  </div>
-
-                  <div className="pt-3 border-t border-gray-50 flex gap-4">
-                    <div className="flex-1">
-                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Foto Verifikasi</p>
-                      <div className="aspect-video rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center relative group">
-                        {attendance.out_photo_id ? (
-                          <a 
-                            href={googleDriveService.getViewerUrl(attendance.out_photo_id.split('|')[0])} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="block w-full h-full"
-                          >
-                            <img 
-                              src={googleDriveService.getFileUrl(attendance.out_photo_id)} 
-                              alt="Foto Pulang" 
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                              referrerPolicy="no-referrer"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                const id = attendance.out_photo_id?.split('|')[0];
-                                if (id && !target.src.includes('lh3')) {
-                                  target.src = `https://lh3.googleusercontent.com/d/${id}=s1600`;
-                                }
-                              }}
-                            />
-                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <Eye size={20} className="text-white" />
-                            </div>
-                          </a>
-                        ) : (
-                          <User size={24} className="text-gray-200" />
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Alasan</p>
-                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 italic text-[11px] text-gray-600 min-h-[60px]">
-                        {attendance.check_out_type && attendance.check_out_type !== 'Reguler' ? (
-                          attendance.early_departure_reason || 'Tidak ada alasan'
-                        ) : (
-                          attendance.early_departure_minutes > 0 ? attendance.early_departure_reason || 'Pulang awal tanpa alasan' : 'Sesuai Jadwal'
-                        )}
-                      </div>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Foto Verifikasi</p>
+                    <div className="aspect-video rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center relative group">
+                      {attendance.out_photo_id ? (
+                        <a 
+                          href={googleDriveService.getViewerUrl(attendance.out_photo_id.split('|')[0])} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="block w-full h-full"
+                        >
+                          <img 
+                            src={googleDriveService.getFileUrl(attendance.out_photo_id)} 
+                            alt="Foto Pulang" 
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              const id = attendance.out_photo_id?.split('|')[0];
+                              if (id && !target.src.includes('lh3')) {
+                                target.src = `https://lh3.googleusercontent.com/d/${id}=s1600`;
+                              }
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Eye size={20} className="text-white" />
+                          </div>
+                        </a>
+                      ) : (
+                        <User size={24} className="text-gray-200" />
+                      )}
                     </div>
                   </div>
                 </div>
