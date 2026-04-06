@@ -76,8 +76,8 @@ const DailyMonitoring: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Karyawan</th>
-                {type !== 'present' && <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jabatan</th>}
+                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Karyawan</th>
+                {(type !== 'present' && type !== 'notPresentYet') && <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jabatan</th>}
                 <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Jadwal</th>
                 
                 {type === 'present' && (
@@ -112,6 +112,8 @@ const DailyMonitoring: React.FC = () => {
                     if (type === 'present') {
                       setSelectedAttendance(item.attendance);
                       setSelectedAccountForAttendance(item);
+                    } else if (type === 'notPresentYet') {
+                      setSelectedAccountId(item.id);
                     }
                   }}
                 >
@@ -134,7 +136,7 @@ const DailyMonitoring: React.FC = () => {
                       </div>
                     </div>
                   </td>
-                  {type !== 'present' && (
+                  {(type !== 'present' && type !== 'notPresentYet') && (
                     <td className="px-4 py-3">
                       <p className="text-xs text-gray-600 font-medium">{item.position}</p>
                       <p className="text-[10px] text-gray-400 uppercase">{item.grade}</p>
@@ -254,19 +256,21 @@ const DailyMonitoring: React.FC = () => {
 
                   <td className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center gap-1">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (type === 'present') {
-                            setSelectedAttendance(item.attendance);
-                            setSelectedAccountForAttendance(item);
-                          }
-                        }}
-                        className="p-2 hover:bg-gray-100 text-gray-400 hover:text-[#006E62] transition-colors rounded-lg"
-                        title="Lihat Detail Presensi"
-                      >
-                        <Eye size={16} />
-                      </button>
+                      {type !== 'notPresentYet' && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (type === 'present') {
+                              setSelectedAttendance(item.attendance);
+                              setSelectedAccountForAttendance(item);
+                            }
+                          }}
+                          className="p-2 hover:bg-gray-100 text-gray-400 hover:text-[#006E62] transition-colors rounded-lg"
+                          title="Lihat Detail Presensi"
+                        >
+                          <Eye size={16} />
+                        </button>
+                      )}
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();

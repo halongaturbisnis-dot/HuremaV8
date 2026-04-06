@@ -255,40 +255,6 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                       </div>
                     )}
                   </div>
-
-                  {/* 6. Foto */}
-                  <div className="pt-3 border-t border-gray-50">
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Foto Verifikasi</p>
-                    <div className="aspect-video rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center relative group">
-                      {attendance.in_photo_id ? (
-                        <a 
-                          href={googleDriveService.getViewerUrl(attendance.in_photo_id.split('|')[0])} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="block w-full h-full"
-                        >
-                          <img 
-                            src={googleDriveService.getFileUrl(attendance.in_photo_id)} 
-                            alt="Foto Masuk" 
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            referrerPolicy="no-referrer"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              const id = attendance.in_photo_id?.split('|')[0];
-                              if (id && !target.src.includes('lh3')) {
-                                target.src = `https://lh3.googleusercontent.com/d/${id}=s1600`;
-                              }
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <Eye size={20} className="text-white" />
-                          </div>
-                        </a>
-                      ) : (
-                        <User size={24} className="text-gray-200" />
-                      )}
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
@@ -386,40 +352,81 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                  {/* 6. Foto */}
-                  <div className="pt-3 border-t border-gray-50">
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Foto Verifikasi</p>
-                    <div className="aspect-video rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center relative group">
-                      {attendance.out_photo_id ? (
-                        <a 
-                          href={googleDriveService.getViewerUrl(attendance.out_photo_id.split('|')[0])} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="block w-full h-full"
-                        >
-                          <img 
-                            src={googleDriveService.getFileUrl(attendance.out_photo_id)} 
-                            alt="Foto Pulang" 
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            referrerPolicy="no-referrer"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              const id = attendance.out_photo_id?.split('|')[0];
-                              if (id && !target.src.includes('lh3')) {
-                                target.src = `https://lh3.googleusercontent.com/d/${id}=s1600`;
-                              }
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <Eye size={20} className="text-white" />
-                          </div>
-                        </a>
-                      ) : (
-                        <User size={24} className="text-gray-200" />
-                      )}
-                    </div>
-                  </div>
+          {/* Photo Verification Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Photo Check In */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="p-4">
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Foto Verifikasi Masuk</p>
+                <div className="aspect-video rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center relative group">
+                  {attendance.in_photo_id ? (
+                    <a 
+                      href={googleDriveService.getViewerUrl(attendance.in_photo_id.split('|')[0])} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="block w-full h-full"
+                    >
+                      <img 
+                        src={googleDriveService.getFileUrl(attendance.in_photo_id)} 
+                        alt="Foto Masuk" 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          const id = attendance.in_photo_id?.split('|')[0];
+                          if (id && !target.src.includes('lh3')) {
+                            target.src = `https://lh3.googleusercontent.com/d/${id}=s1600`;
+                          }
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Eye size={20} className="text-white" />
+                      </div>
+                    </a>
+                  ) : (
+                    <User size={24} className="text-gray-200" />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Photo Check Out */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="p-4">
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Foto Verifikasi Pulang</p>
+                <div className="aspect-video rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center relative group">
+                  {attendance.out_photo_id ? (
+                    <a 
+                      href={googleDriveService.getViewerUrl(attendance.out_photo_id.split('|')[0])} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="block w-full h-full"
+                    >
+                      <img 
+                        src={googleDriveService.getFileUrl(attendance.out_photo_id)} 
+                        alt="Foto Pulang" 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          const id = attendance.out_photo_id?.split('|')[0];
+                          if (id && !target.src.includes('lh3')) {
+                            target.src = `https://lh3.googleusercontent.com/d/${id}=s1600`;
+                          }
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Eye size={20} className="text-white" />
+                      </div>
+                    </a>
+                  ) : (
+                    <User size={24} className="text-gray-200" />
+                  )}
                 </div>
               </div>
             </div>

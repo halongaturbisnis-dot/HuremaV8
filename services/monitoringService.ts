@@ -24,7 +24,7 @@ export const monitoringService = {
     const dayOfWeek = daysMap[dayStr];
 
     // 1. Fetch all active accounts
-    const accounts = await accountService.getAll();
+    const accounts = await accountService.getAll(undefined, undefined, '', 'aktif');
 
     // 2. Fetch all schedules and their rules
     const schedules = await scheduleService.getAll();
