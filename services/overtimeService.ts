@@ -31,16 +31,14 @@ export const overtimeService = {
 
   /**
    * Memastikan user tidak sedang dalam sesi lembur (Mutual Exclusion)
+   * Mengecek secara global apakah ada sesi yang belum di-checkout
    */
-  async isOvertimeSessionActive(accountId: string, timeZone?: string): Promise<boolean> {
-    const startOfToday = timeUtils.getStartOfLocalDayInUTC(timeZone);
+  async isOvertimeSessionActive(accountId: string): Promise<boolean> {
     const { data, error } = await supabase
       .from('overtimes')
-      .select('id, check_in, check_out')
+      .select('id')
       .eq('account_id', accountId)
-      .gte('created_at', startOfToday)
       .is('check_out', null)
-      .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
     
@@ -72,6 +70,19 @@ export const overtimeService = {
     
     if (error) throw error;
     return data as Overtime;
+  },
+
+  async getActiveOvertime(accountId: string) {
+    const { data, error } = await supabase
+      .from('overtimes')
+      .select('*')
+      .eq('account_id', accountId)
+      .is('check_out', null)
+      .limit(1)
+      .maybeSingle();
+    
+    if (error) return null;
+    return data as Overtime | null;
   },
 
   async getRecentHistory(accountId: string, limit = 31) {

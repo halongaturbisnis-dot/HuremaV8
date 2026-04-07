@@ -139,10 +139,19 @@ export const presenceService = {
 
   /**
    * Memastikan user tidak sedang dalam sesi kerja reguler (Mutual Exclusion)
+   * Mengecek secara global apakah ada sesi yang belum di-checkout
    */
-  async isRegularSessionActive(accountId: string, timeZone?: string): Promise<boolean> {
-    const attendance = await this.getTodayAttendance(accountId, timeZone);
-    return !!(attendance && attendance.check_in && !attendance.check_out);
+  async isRegularSessionActive(accountId: string): Promise<boolean> {
+    const { data, error } = await supabase
+      .from('attendances')
+      .select('id')
+      .eq('account_id', accountId)
+      .is('check_out', null)
+      .limit(1)
+      .maybeSingle();
+    
+    if (error) return false;
+    return !!data;
   },
 
   /**
@@ -190,6 +199,19 @@ export const presenceService = {
     
     if (error) throw error;
     return data as Attendance;
+  },
+
+  async getActiveAttendance(accountId: string) {
+    const { data, error } = await supabase
+      .from('attendances')
+      .select('*')
+      .eq('account_id', accountId)
+      .is('check_out', null)
+      .limit(1)
+      .maybeSingle();
+    
+    if (error) return null;
+    return data as Attendance | null;
   },
 
   async getRecentHistory(accountId: string, limit = 31) {

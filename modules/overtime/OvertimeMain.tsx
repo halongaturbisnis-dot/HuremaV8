@@ -21,6 +21,7 @@ const OvertimeMain: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'capture' | 'history'>('capture');
   const [account, setAccount] = useState<Account | null>(null);
   const [todayOT, setTodayOT] = useState<Overtime | null>(null);
+  const [activeOT, setActiveOT] = useState<Overtime | null>(null);
   const [recentLogs, setRecentLogs] = useState<Overtime[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -75,11 +76,13 @@ const OvertimeMain: React.FC = () => {
   useEffect(() => {
     if (currentAccountId && detectedTz) {
       const refreshData = async () => {
-        const [ot, isRegActive] = await Promise.all([
+        const [ot, activeOvertime, isRegActive] = await Promise.all([
           overtimeService.getTodayOvertime(currentAccountId, detectedTz),
-          presenceService.isRegularSessionActive(currentAccountId, detectedTz)
+          overtimeService.getActiveOvertime(currentAccountId),
+          presenceService.isRegularSessionActive(currentAccountId)
         ]);
         setTodayOT(ot);
+        setActiveOT(activeOvertime);
         setIsRegularActive(isRegActive);
       };
       refreshData();
@@ -90,15 +93,17 @@ const OvertimeMain: React.FC = () => {
     if (!currentAccountId) return;
     try {
       setIsLoading(true);
-      const [acc, ot, history, isRegActive, sTime] = await Promise.all([
+      const [acc, ot, activeOvertime, history, isRegActive, sTime] = await Promise.all([
         accountService.getById(currentAccountId),
         overtimeService.getTodayOvertime(currentAccountId, detectedTz),
+        overtimeService.getActiveOvertime(currentAccountId),
         overtimeService.getRecentHistory(currentAccountId),
-        presenceService.isRegularSessionActive(currentAccountId, detectedTz),
+        presenceService.isRegularSessionActive(currentAccountId),
         presenceService.getServerTime()
       ]);
       setAccount(acc as any);
       setTodayOT(ot);
+      setActiveOT(activeOvertime);
       setRecentLogs(history);
       setIsRegularActive(isRegActive);
       setServerTime(sTime);
@@ -209,8 +214,7 @@ const OvertimeMain: React.FC = () => {
     try {
       setIsCapturing(true);
       
-      const currentOT = todayOT;
-      const isCurrentlyCheckingOut = !!currentOT && !currentOT.check_out;
+      const isCurrentlyCheckingOut = !!activeOT;
 
       const [address, photoId, otPolicy] = await Promise.all([
         currentAddress || presenceService.getReverseGeocode(coords.lat, coords.lng),
@@ -231,11 +235,11 @@ const OvertimeMain: React.FC = () => {
           reason: otReason
         });
       } else {
-        if (!currentOT?.id) {
+        if (!activeOT?.id) {
           throw new Error("ID referensi lembur tidak ditemukan. Harap muat ulang halaman.");
         }
 
-        const start = new Date(currentOT.check_in!);
+        const start = new Date(activeOT.check_in!);
         const diffMs = serverTime.getTime() - start.getTime();
         const diffMins = Math.max(0, Math.floor(diffMs / 60000));
         
@@ -244,7 +248,7 @@ const OvertimeMain: React.FC = () => {
         const s = Math.floor((diffMs % 60000) / 1000);
         const durationFormatted = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 
-        await overtimeService.checkOut(currentOT.id, {
+        await overtimeService.checkOut(activeOT.id, {
           check_out: currentTimeStr,
           out_latitude: coords.lat,
           out_longitude: coords.lng,
@@ -259,14 +263,14 @@ const OvertimeMain: React.FC = () => {
           await submissionService.create({
             account_id: account.id,
             type: 'Lembur',
-            description: `Lembur pada ${new Date(currentOT.check_in!).toLocaleDateString('id-ID')}. Kegiatan: ${otReason}`,
+            description: `Lembur pada ${new Date(activeOT.check_in!).toLocaleDateString('id-ID')}. Kegiatan: ${otReason}`,
             file_id: photoId,
             submission_data: {
-              overtime_id: currentOT.id,
-              date: currentOT.check_in!.split('T')[0],
+              overtime_id: activeOT.id,
+              date: activeOT.check_in!.split('T')[0],
               duration: durationFormatted,
               minutes: diffMins,
-              check_in: currentOT.check_in,
+              check_in: activeOT.check_in,
               check_out: currentTimeStr
             }
           });
@@ -522,7 +526,7 @@ const OvertimeMain: React.FC = () => {
                   </button>
                 </div>
               </div>
-            ) : isRegularActive ? (
+            ) : (isRegularActive && !activeOT) ? (
               <div className="bg-white rounded-3xl border border-gray-100 p-16 flex flex-col items-center justify-center shadow-sm text-center">
                 <div className="w-28 h-28 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mb-10 shadow-xl ring-8 ring-rose-50/50">
                    <AlertCircle size={56} />
@@ -536,7 +540,7 @@ const OvertimeMain: React.FC = () => {
                    <Timer size={56} />
                 </div>
                 <h3 className="text-3xl font-black text-gray-800 tracking-tight">
-                   {!!todayOT && !todayOT.check_out ? 'Selesaikan Lembur?' : 'Mulai Lembur Sekarang?'}
+                   {activeOT ? 'Selesaikan Lembur?' : 'Mulai Lembur Sekarang?'}
                 </h3>
                 <p className="text-sm text-gray-400 mt-3 max-w-xs font-medium">
                   {!isBlockedByLocation 

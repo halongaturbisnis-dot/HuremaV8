@@ -23,6 +23,7 @@ const PresenceMain: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'capture' | 'history'>('capture');
   const [account, setAccount] = useState<Account | null>(null);
   const [todayAttendance, setTodayAttendance] = useState<Attendance | null>(null);
+  const [activeAttendance, setActiveAttendance] = useState<Attendance | null>(null);
   const [recentLogs, setRecentLogs] = useState<Attendance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -93,11 +94,13 @@ const PresenceMain: React.FC = () => {
   useEffect(() => {
     if (currentAccountId && detectedTz) {
       const refreshData = async () => {
-        const [attendance, isOTActive] = await Promise.all([
+        const [attendance, activeAtt, isOTActive] = await Promise.all([
           presenceService.getTodayAttendance(currentAccountId, detectedTz),
-          overtimeService.isOvertimeSessionActive(currentAccountId, detectedTz)
+          presenceService.getActiveAttendance(currentAccountId),
+          overtimeService.isOvertimeSessionActive(currentAccountId)
         ]);
         setTodayAttendance(attendance);
+        setActiveAttendance(activeAtt);
         setIsOvertimeActive(isOTActive);
       };
       refreshData();
@@ -108,15 +111,17 @@ const PresenceMain: React.FC = () => {
     if (!currentAccountId) return;
     try {
       setIsLoading(true);
-      const [acc, attendance, history, isOTActive, sTime] = await Promise.all([
+      const [acc, attendance, activeAtt, history, isOTActive, sTime] = await Promise.all([
         accountService.getById(currentAccountId),
         presenceService.getTodayAttendance(currentAccountId, detectedTz),
+        presenceService.getActiveAttendance(currentAccountId),
         presenceService.getRecentHistory(currentAccountId),
-        overtimeService.isOvertimeSessionActive(currentAccountId, detectedTz),
+        overtimeService.isOvertimeSessionActive(currentAccountId),
         presenceService.getServerTime()
       ]);
       setAccount(acc as any);
       setTodayAttendance(attendance);
+      setActiveAttendance(activeAtt);
       setRecentLogs(history);
       setIsOvertimeActive(isOTActive);
       setServerTime(sTime);
@@ -256,7 +261,7 @@ const PresenceMain: React.FC = () => {
       setCheckOutReason('');
     }
   };
-  const isCheckOut = !!todayAttendance && !todayAttendance.check_out;
+  const isCheckOut = !!activeAttendance;
   
   // Resolve Effective Schedule for Status Calculation
   let effectiveSchedule = account?.schedule;
@@ -327,12 +332,12 @@ const PresenceMain: React.FC = () => {
         };
         await presenceService.checkIn(payload);
       } else {
-        if (!todayAttendance?.id) {
+        if (!activeAttendance?.id) {
           throw new Error("ID referensi presensi tidak ditemukan. Harap muat ulang halaman.");
         }
 
         // Hitung durasi kerja (work_duration)
-        const start = new Date(todayAttendance.check_in!);
+        const start = new Date(activeAttendance.check_in!);
         const diffMs = serverTime.getTime() - start.getTime();
         const h = Math.floor(diffMs / 3600000);
         const m = Math.floor((diffMs % 3600000) / 60000);
@@ -353,7 +358,7 @@ const PresenceMain: React.FC = () => {
           check_out_validity: isOutOfRangeRequested ? 'FALSE' : 'TRUE',
           work_duration: durationFormatted
         };
-        await presenceService.checkOut(todayAttendance.id, payload);
+        await presenceService.checkOut(activeAttendance.id, payload);
       }
 
       // Tahap 3: Finalisasi UI (hanya setelah simpan DB sukses)
@@ -531,16 +536,24 @@ const PresenceMain: React.FC = () => {
                   <p className="text-xs text-gray-500 leading-relaxed font-medium">Sesuai kebijakan manajemen, sistem presensi dinonaktifkan selama periode libur ini. Nikmati waktu istirahat Anda.</p>
                 </div>
               </div>
-            ) : (!todayAttendance || !todayAttendance.check_out) ? (
+            ) : (!activeAttendance && todayAttendance && todayAttendance.check_out) ? (
+              <div className="bg-white rounded-2xl border border-gray-100 p-20 flex flex-col items-center justify-center shadow-sm text-center">
+                <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center text-[#006E62] mb-6 animate-pulse">
+                  <ShieldCheck size={48} />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800">Selesai!</h3>
+                <p className="text-sm text-gray-500 mt-2 max-w-xs">Terima kasih, Anda telah menyelesaikan presensi masuk dan pulang untuk hari ini.</p>
+              </div>
+            ) : (
               <div className="bg-white rounded-2xl border border-gray-100 p-8 flex flex-col items-center justify-center shadow-sm text-center">
                 <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 shadow-xl transition-all duration-500 ${!isBlockedByLocation ? 'bg-emerald-50 text-[#006E62]' : 'bg-rose-50 text-rose-500'}`}>
                    {account.schedule_type === 'Shift Dinamis' ? <RefreshCw size={40} className={isFetchingShifts ? 'animate-spin' : ''} /> : <Fingerprint size={40} />}
                 </div>
                 <h3 className="text-xl font-bold text-gray-800">
-                   {!!todayAttendance && !todayAttendance.check_out ? 'Waktunya Pulang?' : 'Siap Bekerja Hari Ini?'}
+                   {isCheckOut ? 'Waktunya Pulang?' : 'Siap Bekerja Hari Ini?'}
                 </h3>
                 
-                {isOvertimeActive && !todayAttendance && (
+                {isOvertimeActive && !isCheckOut && (
                   <div className="mt-4 p-4 bg-rose-50 border border-rose-100 rounded-xl flex gap-3 items-center animate-pulse">
                     <AlertCircle size={20} className="text-rose-500 shrink-0" />
                     <p className="text-[10px] text-rose-600 font-bold leading-tight uppercase tracking-tight text-left">Selesaikan sesi lembur Anda terlebih dahulu sebelum memulai presensi reguler.</p>
@@ -588,10 +601,10 @@ const PresenceMain: React.FC = () => {
                 </p>
                 
                 <button 
-                  disabled={(isBlockedByLocation && !isOutOfRangeRequested) || isCapturing || !landmarker || (account.schedule_type === 'Shift Dinamis' && !todayAttendance && !selectedShift) || (isOvertimeActive && !todayAttendance)}
+                  disabled={(isBlockedByLocation && !isOutOfRangeRequested) || isCapturing || !landmarker || (account.schedule_type === 'Shift Dinamis' && !isCheckOut && !selectedShift) || (isOvertimeActive && !isCheckOut)}
                   onClick={() => setIsCameraActive(true)}
                   className={`mt-8 flex items-center gap-3 px-12 py-4 rounded-2xl font-bold uppercase text-xs tracking-widest shadow-lg transition-all ${
-                    (!isBlockedByLocation || isOutOfRangeRequested) && !isCapturing && landmarker && (account.schedule_type !== 'Shift Dinamis' || !!todayAttendance || !!selectedShift) && !(isOvertimeActive && !todayAttendance)
+                    (!isBlockedByLocation || isOutOfRangeRequested) && !isCapturing && landmarker && (account.schedule_type !== 'Shift Dinamis' || isCheckOut || !!selectedShift) && !(isOvertimeActive && !isCheckOut)
                     ? 'bg-[#006E62] text-white hover:bg-[#005a50] hover:scale-105 active:scale-95' 
                     : 'bg-gray-100 text-gray-300 cursor-not-allowed shadow-none'
                   }`}
@@ -599,14 +612,6 @@ const PresenceMain: React.FC = () => {
                   {isAiLoading ? <Loader2 className="animate-spin" size={18} /> : <Camera size={18} />}
                   {isCapturing ? 'MEMPROSES...' : (isAiLoading ? 'MENYIAPKAN...' : 'VERIFIKASI')}
                 </button>
-              </div>
-            ) : (
-              <div className="bg-white rounded-2xl border border-gray-100 p-20 flex flex-col items-center justify-center shadow-sm text-center">
-                <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center text-[#006E62] mb-6 animate-pulse">
-                  <ShieldCheck size={48} />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-800">Selesai!</h3>
-                <p className="text-sm text-gray-500 mt-2 max-w-xs">Terima kasih, Anda telah menyelesaikan presensi masuk dan pulang untuk hari ini.</p>
               </div>
             )}
           </div>
