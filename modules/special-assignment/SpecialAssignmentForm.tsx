@@ -139,6 +139,7 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const currentUser = authService.getCurrentUser();
     
     // Validasi Judul
     if (!formData.title?.trim()) {
@@ -228,7 +229,7 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
               <h2 className="text-2xl font-black text-gray-800 tracking-tight">
                 {assignment ? 'Edit Penugasan' : 'Penugasan Baru'}
               </h2>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1">Konfigurasi Jadwal & Lokasi Prioritas</p>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1">Konfigurasi Penugasan Khusus</p>
             </div>
           </div>
           <button 
@@ -550,7 +551,7 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
         <div className="p-8 border-t border-gray-50 bg-gray-50/50 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 text-amber-600">
             <AlertCircle size={16} />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Penugasan ini memiliki prioritas tertinggi</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">Penugasan ini akan mempengaruhi skema presensi karyawan</span>
           </div>
           
           <div className="flex gap-4">
