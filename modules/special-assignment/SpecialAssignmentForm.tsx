@@ -4,7 +4,9 @@ import Swal from 'sweetalert2';
 import { specialAssignmentService } from '../../services/specialAssignmentService';
 import { accountService } from '../../services/accountService';
 import { scheduleService } from '../../services/scheduleService';
-import { Account, Schedule, SpecialAssignment } from '../../types';
+import { locationService } from '../../services/locationService';
+import { authService } from '../../services/authService';
+import { Account, Schedule, SpecialAssignment, Location } from '../../types';
 import PresenceMap from '../presence/PresenceMap';
 
 interface SpecialAssignmentFormProps {
@@ -30,11 +32,14 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [searchAccount, setSearchAccount] = useState('');
   const [useCustomSchedule, setUseCustomSchedule] = useState(!!assignment?.custom_check_in);
+  const [locationMode, setLocationMode] = useState<'master' | 'custom'>(assignment?.location_name ? 'custom' : 'master');
+  const [coordinateInput, setCoordinateInput] = useState(`${assignment?.latitude || -6.200000}, ${assignment?.longitude || 106.816666}`);
 
   useEffect(() => {
     fetchData();
@@ -43,12 +48,14 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const [accs, schs] = await Promise.all([
-        accountService.getAll(),
-        scheduleService.getAll()
+      const [accs, schs, locs] = await Promise.all([
+        accountService.getAll(undefined, undefined, '', 'aktif'),
+        scheduleService.getAll(),
+        locationService.getAll()
       ]);
       setAccounts(accs);
-      setSchedules(schs);
+      setSchedules(schs.filter(s => s.type === 1 || s.type === 2));
+      setLocations(locs);
 
       if (assignment?.id) {
         const linkedAccounts = await specialAssignmentService.getLinkedAccounts(assignment.id);
@@ -58,6 +65,38 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
       console.error('Error fetching data:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCoordinateChange = (val: string) => {
+    setCoordinateInput(val);
+    const parts = val.split(',').map(p => p.trim());
+    if (parts.length === 2) {
+      const lat = parseFloat(parts[0]);
+      const lng = parseFloat(parts[1]);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }));
+      }
+    }
+  };
+
+  const handleLocationChange = (lat: number, lng: number) => {
+    setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }));
+    setCoordinateInput(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+  };
+
+  const handleMasterLocationSelect = (locId: string) => {
+    if (!locId) return;
+    const loc = locations.find(l => l.id === locId);
+    if (loc) {
+      setFormData(prev => ({
+        ...prev,
+        location_name: loc.name,
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        radius: loc.radius
+      }));
+      setCoordinateInput(`${loc.latitude}, ${loc.longitude}`);
     }
   };
 
@@ -262,16 +301,65 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
                 </div>
 
                 <div className="space-y-4">
-                  <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Nama Lokasi *</label>
-                    <input 
-                      type="text"
-                      required
-                      value={formData.location_name}
-                      onChange={(e) => setFormData({...formData, location_name: e.target.value})}
-                      placeholder="Contoh: Kantor Cabang Bandung"
-                      className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
-                    />
+                  <div className="flex p-1 bg-gray-50 rounded-2xl border border-gray-100">
+                    <button
+                      type="button"
+                      onClick={() => setLocationMode('master')}
+                      className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                        locationMode === 'master' ? 'bg-white text-[#006E62] shadow-sm' : 'text-gray-400'
+                      }`}
+                    >
+                      Daftar Lokasi
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLocationMode('custom')}
+                      className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                        locationMode === 'custom' ? 'bg-white text-[#006E62] shadow-sm' : 'text-gray-400'
+                      }`}
+                    >
+                      Lokasi Baru
+                    </button>
+                  </div>
+
+                  {locationMode === 'master' ? (
+                    <div>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Pilih Lokasi Master</label>
+                      <select 
+                        onChange={(e) => handleMasterLocationSelect(e.target.value)}
+                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
+                      >
+                        <option value="">-- Pilih Lokasi --</option>
+                        {locations.map(loc => (
+                          <option key={loc.id} value={loc.id}>{loc.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Nama Lokasi Baru *</label>
+                      <input 
+                        type="text"
+                        required
+                        value={formData.location_name}
+                        onChange={(e) => setFormData({...formData, location_name: e.target.value})}
+                        placeholder="Contoh: Kantor Cabang Bandung"
+                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Koordinat (Lat, Lng)</label>
+                      <input 
+                        type="text"
+                        value={coordinateInput}
+                        onChange={(e) => handleCoordinateChange(e.target.value)}
+                        placeholder="-6.200000, 106.816666"
+                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
+                      />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
@@ -313,6 +401,8 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
                       officeLat={formData.latitude!} 
                       officeLng={formData.longitude!} 
                       radius={formData.radius!}
+                      isDraggable={true}
+                      onLocationChange={handleLocationChange}
                     />
                   </div>
                   <p className="text-[9px] text-gray-400 font-medium italic">* Lokasi ini akan menjadi titik presensi utama selama periode penugasan.</p>
@@ -352,11 +442,20 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black ${
-                            selectedAccountIds.includes(acc.id) ? 'bg-[#006E62] text-white' : 'bg-gray-100 text-gray-400'
-                          }`}>
-                            {acc.full_name.charAt(0)}
-                          </div>
+                          {acc.photo_url ? (
+                            <img 
+                              src={acc.photo_url} 
+                              alt={acc.full_name}
+                              referrerPolicy="no-referrer"
+                              className="w-8 h-8 rounded-lg object-cover shadow-sm"
+                            />
+                          ) : (
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black ${
+                              selectedAccountIds.includes(acc.id) ? 'bg-[#006E62] text-white' : 'bg-gray-100 text-gray-400'
+                            }`}>
+                              {acc.full_name.charAt(0)}
+                            </div>
+                          )}
                           <div className="text-left">
                             <p className="text-[10px] font-bold text-gray-700">{acc.full_name}</p>
                             <p className="text-[9px] text-gray-400 font-medium">{acc.internal_nik}</p>
