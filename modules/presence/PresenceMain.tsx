@@ -36,6 +36,8 @@ const PresenceMain: React.FC = () => {
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
   const [distance, setDistance] = useState<number | null>(null);
   const [activeHoliday, setActiveHoliday] = useState<any>(null);
+  const [activeSpecialSchedule, setActiveSpecialSchedule] = useState<any>(null);
+  const [activeLeave, setActiveLeave] = useState<any>(null);
   const [activeSpecialAssignment, setActiveSpecialAssignment] = useState<SpecialAssignment | null>(null);
   const [isOvertimeActive, setIsOvertimeActive] = useState(false);
   const [detectedTz, setDetectedTz] = useState<string>(timeUtils.getLocalTimeZone());
@@ -131,6 +133,10 @@ const PresenceMain: React.FC = () => {
       const specialAssignment = await specialAssignmentService.getActiveForAccount(currentAccountId, dateStr);
       setActiveSpecialAssignment(specialAssignment);
 
+      // Cek status Cuti/Libur Mandiri
+      const leaveStatus = await presenceService.checkLeaveStatus(currentAccountId, sTime);
+      setActiveLeave(leaveStatus);
+
       // Tarik daftar shift jika akun bertipe DINAMIS (Cek via schedule_type)
       if (acc && acc.schedule_type === 'Shift Dinamis' && acc.location_id) {
         setIsFetchingShifts(true);
@@ -140,10 +146,14 @@ const PresenceMain: React.FC = () => {
         setIsFetchingShifts(false);
       }
 
-      // Cek apakah hari ini Libur Khusus (Type 3) di lokasi user
+      // Cek apakah hari ini Libur Khusus (Type 3) atau Hari Kerja Khusus (Type 4) di lokasi user
       if (acc && acc.location_id) {
-        const holiday = await presenceService.checkHolidayStatus(currentAccountId, acc.location_id, sTime);
+        const [holiday, specialSchedule] = await Promise.all([
+          presenceService.checkHolidayStatus(currentAccountId, acc.location_id, sTime),
+          presenceService.checkSpecialScheduleStatus(currentAccountId, acc.location_id, sTime)
+        ]);
         setActiveHoliday(holiday);
+        setActiveSpecialSchedule(specialSchedule);
       }
     } catch (error) {
       console.error(error);
@@ -265,7 +275,15 @@ const PresenceMain: React.FC = () => {
   const isCheckOut = !!activeAttendance;
   
   // Resolve Effective Schedule for Status Calculation
+  // HIERARCHY: 
+  // 1. Penugasan Khusus (SPECIAL)
+  // 2. Hari Kerja Khusus (TYPE 4)
+  // 3. Libur Kerja Khusus (TYPE 3) -> handled via activeHoliday UI
+  // 4. Libur Mandiri (LEAVE) -> handled via activeLeave UI
+  // 5. Jadwal Reguler (Fixed/Shift/Fleksibel)
+  
   let effectiveSchedule = account?.schedule;
+  
   if (activeSpecialAssignment) {
     if (activeSpecialAssignment.custom_check_in || activeSpecialAssignment.custom_check_out) {
       effectiveSchedule = {
@@ -284,6 +302,8 @@ const PresenceMain: React.FC = () => {
         }]
       } as any;
     }
+  } else if (activeSpecialSchedule) {
+    effectiveSchedule = activeSpecialSchedule;
   } else if (account?.schedule_type === 'Shift Dinamis' && selectedShift) {
     effectiveSchedule = selectedShift;
   }
@@ -431,7 +451,7 @@ const PresenceMain: React.FC = () => {
   }
   
   const scheduleRule = displaySchedule?.rules?.find(r => r.day_of_week === todayDay);
-  const isHolidayToday = account.schedule_type !== 'Fleksibel' && !activeSpecialAssignment && (!!activeHoliday || !!scheduleRule?.is_holiday);
+  const isHolidayToday = account.schedule_type !== 'Fleksibel' && !activeSpecialAssignment && !activeSpecialSchedule && (!!activeHoliday || !!scheduleRule?.is_holiday);
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -446,6 +466,21 @@ const PresenceMain: React.FC = () => {
           </div>
           <div className="px-3 py-1 bg-amber-200/50 rounded-full text-[9px] font-black text-amber-800 uppercase tracking-widest">
             Prioritas Utama
+          </div>
+        </div>
+      )}
+
+      {activeSpecialSchedule && !activeSpecialAssignment && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-top duration-500">
+          <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 shrink-0">
+            <CalendarClock size={24} />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Hari Kerja Khusus</h4>
+            <p className="text-[10px] text-emerald-600 font-medium">{activeSpecialSchedule.name}</p>
+          </div>
+          <div className="px-3 py-1 bg-emerald-200/50 rounded-full text-[9px] font-black text-emerald-800 uppercase tracking-widest">
+            Jadwal Khusus
           </div>
         </div>
       )}
@@ -522,6 +557,21 @@ const PresenceMain: React.FC = () => {
                   </button>
                 </div>
               </div>
+            ) : activeLeave ? (
+              <div className="bg-white rounded-2xl border border-gray-100 p-20 flex flex-col items-center justify-center shadow-sm text-center">
+                <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 mb-6 animate-pulse">
+                  <CalendarClock size={48} />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800">
+                  Sedang {activeLeave.type}
+                </h3>
+                <p className="text-sm text-amber-600 font-bold mt-2 max-w-xs uppercase tracking-tight">
+                  "{activeLeave.data.description || 'Izin Disetujui'}"
+                </p>
+                <div className="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <p className="text-xs text-gray-500 leading-relaxed font-medium">Status Anda saat ini sedang dalam masa {activeLeave.type.toLowerCase()}. Sistem presensi diistirahatkan untuk Anda.</p>
+                </div>
+              </div>
             ) : isHolidayToday ? (
               <div className="bg-white rounded-2xl border border-gray-100 p-12 flex flex-col items-center justify-center shadow-sm text-center">
                 <div className="w-24 h-24 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mb-8 shadow-xl">
@@ -561,7 +611,7 @@ const PresenceMain: React.FC = () => {
                 </h3>
                 
                 {/* LOGIKA KHUSUS SHIFT DINAMIS: PILEH JADWAL (Cek via schedule_type) */}
-                {account.schedule_type === 'Shift Dinamis' && !todayAttendance && (
+                {account.schedule_type === 'Shift Dinamis' && !todayAttendance && !activeSpecialAssignment && !activeSpecialSchedule && (
                   <div className="mt-6 w-full max-w-sm space-y-3">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-left mb-2">Pilih Shift Kerja Hari Ini:</p>
                     {isFetchingShifts ? (

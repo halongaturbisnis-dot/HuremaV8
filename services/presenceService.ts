@@ -175,6 +175,84 @@ export const presenceService = {
     return activeHoliday || null;
   },
 
+  /**
+   * Cek apakah hari ini Hari Kerja Khusus (Tipe 4) di lokasi user
+   */
+  async checkSpecialScheduleStatus(accountId: string, locationId: string, checkDate: Date) {
+    const dateStr = checkDate.toISOString().split('T')[0];
+    
+    const { data, error } = await supabase
+      .from('schedules')
+      .select('*, schedule_rules(*), schedule_locations!inner(location_id)')
+      .eq('type', 4) // Hari Kerja Khusus
+      .eq('schedule_locations.location_id', locationId)
+      .lte('start_date', dateStr)
+      .gte('end_date', dateStr);
+
+    if (error) return null;
+    
+    // Filter out if user is excluded
+    const activeSpecial = data?.find(s => !s.excluded_account_ids?.includes(accountId));
+    return activeSpecial || null;
+  },
+
+  /**
+   * Cek apakah hari ini user sedang Cuti/Izin/Libur Mandiri yang disetujui
+   */
+  async checkLeaveStatus(accountId: string, checkDate: Date) {
+    const dateStr = checkDate.toISOString().split('T')[0];
+    
+    // Cek Annual Leaves
+    const { data: annual } = await supabase
+      .from('account_annual_leaves')
+      .select('*')
+      .eq('account_id', accountId)
+      .eq('status', 'approved')
+      .lte('start_date', dateStr)
+      .gte('end_date', dateStr)
+      .maybeSingle();
+    
+    if (annual) return { type: 'Cuti Tahunan', data: annual };
+
+    // Cek Leave Requests (Libur Mandiri)
+    const { data: leave } = await supabase
+      .from('account_leave_requests')
+      .select('*')
+      .eq('account_id', accountId)
+      .eq('status', 'approved')
+      .lte('start_date', dateStr)
+      .gte('end_date', dateStr)
+      .maybeSingle();
+    
+    if (leave) return { type: 'Libur Mandiri', data: leave };
+
+    // Cek Permission Requests
+    const { data: perm } = await supabase
+      .from('account_permission_requests')
+      .select('*')
+      .eq('account_id', accountId)
+      .eq('status', 'approved')
+      .lte('start_date', dateStr)
+      .gte('end_date', dateStr)
+      .maybeSingle();
+    
+    if (perm) return { type: 'Izin', data: perm };
+
+    // Cek Maternity Leaves
+    const { data: mat } = await supabase
+      .from('account_maternity_leaves')
+      .select('*')
+      .eq('account_id', accountId)
+      .eq('status', 'approved')
+      .lte('start_date', dateStr)
+      .gte('end_date', dateStr)
+      .maybeSingle();
+    
+    if (mat) return { type: 'Cuti Melahirkan', data: mat };
+
+    return null;
+  },
+
   async checkIn(input: Partial<AttendanceInput>) {
     const sanitized = sanitizePayload(input);
     const { data, error } = await supabase

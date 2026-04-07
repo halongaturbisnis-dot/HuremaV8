@@ -87,8 +87,9 @@ export const monitoringService = {
     // 9. Fetch active Special Assignments
     const specialAssignments = await specialAssignmentService.getActiveForDate(dateStr);
 
-    // 10. Fetch Libur Khusus (Holiday) from schedules
+    // 10. Fetch Libur Khusus (Holiday - Type 3) and Hari Kerja Khusus (Type 4) from schedules
     const holidaySchedules = schedules.filter(s => s.type === 3 && dateStr >= (s.start_date || '') && dateStr <= (s.end_date || ''));
+    const specialWorkSchedules = schedules.filter(s => s.type === 4 && dateStr >= (s.start_date || '') && dateStr <= (s.end_date || ''));
 
     // Map data for easy lookup
     const attendanceMap = new Map(attendances?.map(a => [a.account_id, a]));
@@ -146,15 +147,26 @@ export const monitoringService = {
         !(hs.excluded_account_ids || []).includes(acc.id)
       );
 
+      const specialWorkSchedule = specialWorkSchedules.find(sws => 
+        sws.location_ids?.includes(acc.location_id) && 
+        !(sws.excluded_account_ids || []).includes(acc.id)
+      );
+
       let isHoliday = isWeekendOrHolidayRule || isSpecialHoliday;
+      
+      // Hari Kerja Khusus (Type 4) overrides holiday status
+      if (specialWorkSchedule) {
+        isHoliday = false;
+      }
 
       // Attach schedule info for UI
       let scheduleName = schedule?.name || acc.schedule_type;
       let isSpecial = false;
 
-      // OVERRIDE WITH SPECIAL ASSIGNMENT
+      // HIERARCHY OVERRIDE
+      // 1. Penugasan Khusus (Highest)
       if (specialAssignment) {
-        isHoliday = false; // Must work if assigned
+        isHoliday = false; 
         isSpecial = true;
         scheduleName = specialAssignment.title;
         if (specialAssignment.custom_check_in || specialAssignment.custom_check_out) {
@@ -163,6 +175,16 @@ export const monitoringService = {
             check_out_time: specialAssignment.custom_check_out,
             is_holiday: false
           } as any;
+        }
+      } 
+      // 2. Hari Kerja Khusus (Type 4)
+      else if (specialWorkSchedule) {
+        isSpecial = true;
+        scheduleName = specialWorkSchedule.name;
+        // Use rule from special work schedule for today
+        const swsRule = specialWorkSchedule.rules?.find((r: any) => r.day_of_week === dayOfWeek);
+        if (swsRule) {
+          rule = swsRule;
         }
       }
 
@@ -175,11 +197,15 @@ export const monitoringService = {
       };
 
       // PRIORITY HIERARCHY: One user = One primary category
-      // 1. Present (Check-in)
+      // 1. Present (Check-in) - Always highest priority for monitoring
       if (attendance) {
         results.present.push({ ...accWithInfo, attendance });
       } 
-      // 2. On Leave / Permission / Maternity (Approved)
+      // 2. Mandatory Work (Penugasan / Hari Kerja Khusus)
+      else if (specialAssignment || specialWorkSchedule) {
+        results.notPresentYet.push(accWithInfo);
+      }
+      // 3. Approved Leave (Annual / Maternity / Permission)
       else if (annualLeave) {
         results.onAnnualLeave.push({ ...accWithInfo, annualLeave });
       } else if (maternityLeave) {
@@ -187,13 +213,13 @@ export const monitoringService = {
       } else if (permission) {
         results.onPermission.push({ ...accWithInfo, permission });
       } 
-      // 3. Holiday (Mandiri / Special / Weekend)
+      // 4. Holiday (Mandiri / Special / Weekend)
       else if (leaveRequest) {
         results.onLeaveMandiri.push({ ...accWithInfo, leaveRequest });
       } else if (isHoliday) {
         results.onHoliday.push(accWithInfo);
       } 
-      // 4. Not Present Yet (Must work but no check-in)
+      // 5. Not Present Yet (Regular Work Day)
       else {
         results.notPresentYet.push(accWithInfo);
       }
