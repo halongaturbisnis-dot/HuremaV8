@@ -92,6 +92,22 @@ const PresenceMap: React.FC<PresenceMapProps> = ({
       } else if (isDraggable) {
         mapRef.current.setView([officeLat, officeLng]);
       }
+
+      // Update draggable state
+      if (mapRef.current.officeMarker) {
+        if (isDraggable) {
+          mapRef.current.officeMarker.dragging.enable();
+          mapRef.current.officeMarker.on('dragend', (e: any) => {
+            const { lat, lng } = e.target.getLatLng();
+            onLocationChange?.(lat, lng);
+          });
+          mapRef.current.officeMarker.setTooltipContent("Geser untuk atur lokasi");
+        } else {
+          mapRef.current.officeMarker.dragging.disable();
+          mapRef.current.officeMarker.off('dragend');
+          mapRef.current.officeMarker.setTooltipContent("Lokasi Seharusnya");
+        }
+      }
     }
 
     return () => {

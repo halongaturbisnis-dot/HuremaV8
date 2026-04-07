@@ -5,6 +5,7 @@ import { specialAssignmentService } from '../../services/specialAssignmentServic
 import { accountService } from '../../services/accountService';
 import { scheduleService } from '../../services/scheduleService';
 import { locationService } from '../../services/locationService';
+import { presenceService } from '../../services/presenceService';
 import { authService } from '../../services/authService';
 import { Account, Schedule, SpecialAssignment, Location } from '../../types';
 import PresenceMap from '../presence/PresenceMap';
@@ -40,10 +41,31 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
   const [useCustomSchedule, setUseCustomSchedule] = useState(!!assignment?.custom_check_in);
   const [locationMode, setLocationMode] = useState<'master' | 'custom'>(assignment?.location_name ? 'custom' : 'master');
   const [coordinateInput, setCoordinateInput] = useState(`${assignment?.latitude || -6.200000}, ${assignment?.longitude || 106.816666}`);
+  const [currentAddress, setCurrentAddress] = useState<string>('');
+  const [isFetchingAddress, setIsFetchingAddress] = useState(false);
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (formData.latitude && formData.longitude) {
+      fetchAddress(formData.latitude, formData.longitude);
+    }
+  }, [formData.latitude, formData.longitude]);
+
+  const fetchAddress = async (lat: number, lng: number) => {
+    try {
+      setIsFetchingAddress(true);
+      const addr = await presenceService.getReverseGeocode(lat, lng);
+      setCurrentAddress(addr);
+    } catch (error) {
+      console.error('Error fetching address:', error);
+      setCurrentAddress('Gagal mengambil alamat');
+    } finally {
+      setIsFetchingAddress(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -323,9 +345,10 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
                   </div>
 
                   {locationMode === 'master' ? (
-                    <div>
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Pilih Lokasi Master</label>
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Pilih Lokasi Master *</label>
                       <select 
+                        required={locationMode === 'master'}
                         onChange={(e) => handleMasterLocationSelect(e.target.value)}
                         className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
                       >
@@ -336,60 +359,58 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
                       </select>
                     </div>
                   ) : (
-                    <div>
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Nama Lokasi Baru *</label>
-                      <input 
-                        type="text"
-                        required
-                        value={formData.location_name}
-                        onChange={(e) => setFormData({...formData, location_name: e.target.value})}
-                        placeholder="Contoh: Kantor Cabang Bandung"
-                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
-                      />
+                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Nama Lokasi Baru *</label>
+                        <input 
+                          type="text"
+                          required={locationMode === 'custom'}
+                          value={formData.location_name}
+                          onChange={(e) => setFormData({...formData, location_name: e.target.value})}
+                          placeholder="Contoh: Kantor Cabang Bandung"
+                          className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Koordinat (Lat, Lng)</label>
+                        <input 
+                          type="text"
+                          value={coordinateInput}
+                          onChange={(e) => handleCoordinateChange(e.target.value)}
+                          placeholder="-6.200000, 106.816666"
+                          className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
+                        />
+                      </div>
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-4">
                     <div>
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Koordinat (Lat, Lng)</label>
-                      <input 
-                        type="text"
-                        value={coordinateInput}
-                        onChange={(e) => handleCoordinateChange(e.target.value)}
-                        placeholder="-6.200000, 106.816666"
-                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
-                      />
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Alamat Terdeteksi</label>
+                      <div className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-medium text-gray-500 min-h-[3.5rem] flex items-center">
+                        {isFetchingAddress ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="animate-spin" size={12} />
+                            <span>Mencari alamat...</span>
+                          </div>
+                        ) : (
+                          currentAddress || 'Koordinat belum ditentukan'
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="col-span-1">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Latitude</label>
-                      <input 
-                        type="number"
-                        step="any"
-                        value={formData.latitude}
-                        onChange={(e) => setFormData({...formData, latitude: parseFloat(e.target.value)})}
-                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Longitude</label>
-                      <input 
-                        type="number"
-                        step="any"
-                        value={formData.longitude}
-                        onChange={(e) => setFormData({...formData, longitude: parseFloat(e.target.value)})}
-                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
-                      />
-                    </div>
-                    <div className="col-span-1">
+                    <div>
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Radius (m)</label>
                       <input 
                         type="number"
                         value={formData.radius}
+                        readOnly={locationMode === 'master'}
                         onChange={(e) => setFormData({...formData, radius: parseInt(e.target.value)})}
-                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
+                        className={`w-full p-4 rounded-2xl text-xs font-medium transition-all border ${
+                          locationMode === 'master' 
+                            ? 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed' 
+                            : 'bg-gray-50 border-gray-100 focus:ring-2 focus:ring-[#006E62] focus:border-transparent'
+                        }`}
                       />
                     </div>
                   </div>
@@ -401,7 +422,7 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
                       officeLat={formData.latitude!} 
                       officeLng={formData.longitude!} 
                       radius={formData.radius!}
-                      isDraggable={true}
+                      isDraggable={locationMode === 'custom'}
                       onLocationChange={handleLocationChange}
                     />
                   </div>
