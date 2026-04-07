@@ -22,6 +22,25 @@ export const timeUtils = {
   },
 
   /**
+   * Returns the start of today (00:00:00) in WIB, converted to UTC ISO string
+   * This is useful for querying Supabase created_at columns
+   */
+  getStartOfWIBDayInUTC(): string {
+    const wibDate = this.getCurrentWIBDate();
+    const year = wibDate.getUTCFullYear();
+    const month = wibDate.getUTCMonth();
+    const date = wibDate.getUTCDate();
+    
+    // Create a date object for 00:00:00 WIB today
+    // Since getCurrentWIBDate already shifted the time, we can just use its components
+    const startOfWibUTC = new Date(Date.UTC(year, month, date, 0, 0, 0, 0));
+    
+    // Subtract 7 hours to get the actual UTC time for 00:00 WIB
+    const actualUTC = new Date(startOfWibUTC.getTime() - (7 * 60 * 60 * 1000));
+    return actualUTC.toISOString();
+  },
+
+  /**
    * Converts a UTC date string or Date object to a WIB Date object
    */
   toWIBDate(date: string | Date): Date {

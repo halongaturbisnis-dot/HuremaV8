@@ -5,6 +5,7 @@ import { Fingerprint, Clock, MapPin, History, AlertCircle, Map as MapIcon, Camer
 import Swal from 'sweetalert2';
 import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { presenceService } from '../../services/presenceService';
+import { overtimeService } from '../../services/overtimeService';
 import { accountService } from '../../services/accountService';
 import { scheduleService } from '../../services/scheduleService';
 import { specialAssignmentService } from '../../services/specialAssignmentService';
@@ -33,6 +34,7 @@ const PresenceMain: React.FC = () => {
   const [distance, setDistance] = useState<number | null>(null);
   const [activeHoliday, setActiveHoliday] = useState<any>(null);
   const [activeSpecialAssignment, setActiveSpecialAssignment] = useState<SpecialAssignment | null>(null);
+  const [isOvertimeActive, setIsOvertimeActive] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   
@@ -79,15 +81,17 @@ const PresenceMain: React.FC = () => {
     if (!currentAccountId) return;
     try {
       setIsLoading(true);
-      const [acc, attendance, history, sTime] = await Promise.all([
+      const [acc, attendance, history, isOTActive, sTime] = await Promise.all([
         accountService.getById(currentAccountId),
         presenceService.getTodayAttendance(currentAccountId),
         presenceService.getRecentHistory(currentAccountId),
+        overtimeService.isOvertimeSessionActive(currentAccountId),
         presenceService.getServerTime()
       ]);
       setAccount(acc as any);
       setTodayAttendance(attendance);
       setRecentLogs(history);
+      setIsOvertimeActive(isOTActive);
       setServerTime(sTime);
 
       const dateStr = sTime.toISOString().split('T')[0];
@@ -299,6 +303,15 @@ const PresenceMain: React.FC = () => {
         if (!todayAttendance?.id) {
           throw new Error("ID referensi presensi tidak ditemukan. Harap muat ulang halaman.");
         }
+
+        // Hitung durasi kerja (work_duration)
+        const start = new Date(todayAttendance.check_in!);
+        const diffMs = serverTime.getTime() - start.getTime();
+        const h = Math.floor(diffMs / 3600000);
+        const m = Math.floor((diffMs % 3600000) / 60000);
+        const s = Math.floor((diffMs % 60000) / 1000);
+        const durationFormatted = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
         const payload: any = {
           check_out: currentTimeStr,
           out_latitude: submissionCoords?.lat,
@@ -310,7 +323,8 @@ const PresenceMain: React.FC = () => {
           early_departure_reason: reason,
           check_out_type: isOutOfRangeRequested ? checkOutType : 'Reguler',
           check_out_reason: isOutOfRangeRequested ? checkOutReason : null,
-          check_out_validity: isOutOfRangeRequested ? 'FALSE' : 'TRUE'
+          check_out_validity: isOutOfRangeRequested ? 'FALSE' : 'TRUE',
+          work_duration: durationFormatted
         };
         await presenceService.checkOut(todayAttendance.id, payload);
       }
@@ -500,6 +514,13 @@ const PresenceMain: React.FC = () => {
                    {!!todayAttendance && !todayAttendance.check_out ? 'Waktunya Pulang?' : 'Siap Bekerja Hari Ini?'}
                 </h3>
                 
+                {isOvertimeActive && !todayAttendance && (
+                  <div className="mt-4 p-4 bg-rose-50 border border-rose-100 rounded-xl flex gap-3 items-center animate-pulse">
+                    <AlertCircle size={20} className="text-rose-500 shrink-0" />
+                    <p className="text-[10px] text-rose-600 font-bold leading-tight uppercase tracking-tight text-left">Selesaikan sesi lembur Anda terlebih dahulu sebelum memulai presensi reguler.</p>
+                  </div>
+                )}
+                
                 {/* LOGIKA KHUSUS SHIFT DINAMIS: PILEH JADWAL (Cek via schedule_type) */}
                 {account.schedule_type === 'Shift Dinamis' && !todayAttendance && (
                   <div className="mt-6 w-full max-w-sm space-y-3">
@@ -541,10 +562,10 @@ const PresenceMain: React.FC = () => {
                 </p>
                 
                 <button 
-                  disabled={(isBlockedByLocation && !isOutOfRangeRequested) || isCapturing || !landmarker || (account.schedule_type === 'Shift Dinamis' && !todayAttendance && !selectedShift)}
+                  disabled={(isBlockedByLocation && !isOutOfRangeRequested) || isCapturing || !landmarker || (account.schedule_type === 'Shift Dinamis' && !todayAttendance && !selectedShift) || (isOvertimeActive && !todayAttendance)}
                   onClick={() => setIsCameraActive(true)}
                   className={`mt-8 flex items-center gap-3 px-12 py-4 rounded-2xl font-bold uppercase text-xs tracking-widest shadow-lg transition-all ${
-                    (!isBlockedByLocation || isOutOfRangeRequested) && !isCapturing && landmarker && (account.schedule_type !== 'Shift Dinamis' || !!todayAttendance || !!selectedShift)
+                    (!isBlockedByLocation || isOutOfRangeRequested) && !isCapturing && landmarker && (account.schedule_type !== 'Shift Dinamis' || !!todayAttendance || !!selectedShift) && !(isOvertimeActive && !todayAttendance)
                     ? 'bg-[#006E62] text-white hover:bg-[#005a50] hover:scale-105 active:scale-95' 
                     : 'bg-gray-100 text-gray-300 cursor-not-allowed shadow-none'
                   }`}

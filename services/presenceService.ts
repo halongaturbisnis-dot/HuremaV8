@@ -108,12 +108,12 @@ export const presenceService = {
   },
 
   async getTodayAttendance(accountId: string) {
-    const today = timeUtils.getTodayWIBString();
+    const startOfToday = timeUtils.getStartOfWIBDayInUTC();
     const { data, error } = await supabase
       .from('attendances')
       .select('*')
       .eq('account_id', accountId)
-      .gte('created_at', `${today}T00:00:00Z`)
+      .gte('created_at', startOfToday)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();

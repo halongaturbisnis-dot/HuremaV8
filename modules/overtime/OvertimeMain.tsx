@@ -503,7 +503,7 @@ const OvertimeMain: React.FC = () => {
                 <h3 className="text-3xl font-black text-gray-800 tracking-tight">Sesi Reguler Aktif</h3>
                 <p className="text-sm text-gray-400 mt-4 max-w-xs leading-relaxed font-medium">Sistem mendeteksi Anda masih berada dalam jam kerja reguler (Belum Check-Out). Lembur hanya bisa dimulai di luar jam sesi kerja reguler.</p>
               </div>
-            ) : (!todayOT || !todayOT.check_out) ? (
+            ) : (
               <div className="bg-white rounded-3xl border border-gray-100 p-16 flex flex-col items-center justify-center shadow-sm text-center">
                 <div className={`w-28 h-28 rounded-full flex items-center justify-center mb-10 shadow-xl transition-all duration-700 ring-8 ${!isBlockedByLocation ? 'bg-amber-50 text-amber-600 ring-amber-50/50' : 'bg-rose-50 text-rose-500 ring-rose-50/50'}`}>
                    <Timer size={56} />
@@ -528,14 +528,6 @@ const OvertimeMain: React.FC = () => {
                   {isAiLoading ? <Loader2 className="animate-spin" size={20} /> : <Camera size={20} />}
                   {isCapturing ? 'MEMPROSES...' : (isAiLoading ? 'MENYIAPKAN...' : 'VERIFIKASI')}
                 </button>
-              </div>
-            ) : (
-              <div className="bg-white rounded-3xl border border-gray-100 p-24 flex flex-col items-center justify-center shadow-sm text-center animate-in zoom-in duration-700">
-                <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 mb-8 ring-8 ring-emerald-50/50">
-                  <ShieldCheck size={56} />
-                </div>
-                <h3 className="text-3xl font-black text-gray-800 tracking-tight">Selesai!</h3>
-                <p className="text-sm text-gray-400 mt-3 max-w-xs font-medium">Terima kasih, Anda telah menyelesaikan presensi lembur untuk hari ini.</p>
               </div>
             )}
           </div>

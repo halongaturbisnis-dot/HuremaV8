@@ -1,5 +1,6 @@
 
 import { supabase } from '../lib/supabase';
+import { timeUtils } from '../lib/timeUtils';
 import { Overtime, OvertimeInput } from '../types';
 
 const sanitizePayload = (payload: any) => {
@@ -14,18 +15,37 @@ const sanitizePayload = (payload: any) => {
 
 export const overtimeService = {
   async getTodayOvertime(accountId: string) {
-    const today = new Date().toISOString().split('T')[0];
+    const startOfToday = timeUtils.getStartOfWIBDayInUTC();
     const { data, error } = await supabase
       .from('overtimes')
       .select('*')
       .eq('account_id', accountId)
-      .gte('created_at', `${today}T00:00:00Z`)
+      .gte('created_at', startOfToday)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
     
     if (error) throw error;
     return data as Overtime | null;
+  },
+
+  /**
+   * Memastikan user tidak sedang dalam sesi lembur (Mutual Exclusion)
+   */
+  async isOvertimeSessionActive(accountId: string): Promise<boolean> {
+    const startOfToday = timeUtils.getStartOfWIBDayInUTC();
+    const { data, error } = await supabase
+      .from('overtimes')
+      .select('id, check_in, check_out')
+      .eq('account_id', accountId)
+      .gte('created_at', startOfToday)
+      .is('check_out', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (error) return false;
+    return !!data;
   },
 
   async checkIn(input: Partial<OvertimeInput>) {
