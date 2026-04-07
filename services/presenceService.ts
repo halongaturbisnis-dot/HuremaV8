@@ -1,5 +1,6 @@
 
 import { supabase } from '../lib/supabase';
+import { timeUtils } from '../lib/timeUtils';
 import { Attendance, AttendanceInput, Account, Schedule, ScheduleRule } from '../types';
 
 const sanitizePayload = (payload: any) => {
@@ -107,7 +108,7 @@ export const presenceService = {
   },
 
   async getTodayAttendance(accountId: string) {
-    const today = new Date().toISOString().split('T')[0];
+    const today = timeUtils.getTodayWIBString();
     const { data, error } = await supabase
       .from('attendances')
       .select('*')

@@ -3,6 +3,7 @@ import { Plus, Search, Filter, Calendar, MapPin, Users, Edit2, Trash2, ShieldChe
 import Swal from 'sweetalert2';
 import { specialAssignmentService } from '../../services/specialAssignmentService';
 import { SpecialAssignment } from '../../types';
+import { timeUtils } from '../../lib/timeUtils';
 import SpecialAssignmentForm from './SpecialAssignmentForm';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 
@@ -66,10 +67,15 @@ const SpecialAssignmentMain: React.FC = () => {
   };
 
   const getStatus = (start: string, end: string) => {
-    const now = new Date();
+    const now = timeUtils.getCurrentWIBDate();
     now.setHours(0, 0, 0, 0);
+    
+    // Convert start/end strings to WIB date objects for comparison
     const startDate = new Date(start);
+    startDate.setHours(0, 0, 0, 0);
+    
     const endDate = new Date(end);
+    endDate.setHours(0, 0, 0, 0);
     
     if (now < startDate) return 'upcoming';
     if (now > endDate) return 'expired';

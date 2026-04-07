@@ -474,7 +474,7 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
                         type="number"
                         value={formData.radius}
                         readOnly={locationMode === 'master'}
-                        onChange={(e) => setFormData({...formData, radius: parseInt(e.target.value)})}
+                        onChange={(e) => setFormData({...formData, radius: parseInt(e.target.value) || 0})}
                         className={`w-full p-4 rounded-2xl text-xs font-medium transition-all border ${
                           locationMode === 'master' 
                             ? 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed' 

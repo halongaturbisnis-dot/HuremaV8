@@ -30,7 +30,7 @@ const AssignmentMap: React.FC<AssignmentMapProps> = ({
         color: '#006E62',
         fillColor: '#006E62',
         fillOpacity: 0.1,
-        radius: radius
+        radius: radius || 0
       }).addTo(mapRef.current);
 
       // Marker
@@ -70,7 +70,7 @@ const AssignmentMap: React.FC<AssignmentMapProps> = ({
       
       if (mapRef.current.officeCircle) {
         mapRef.current.officeCircle.setLatLng([lat, lng]);
-        mapRef.current.officeCircle.setRadius(radius);
+        mapRef.current.officeCircle.setRadius(radius || 0);
       }
 
       mapRef.current.setView([lat, lng]);

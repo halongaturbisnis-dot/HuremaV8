@@ -235,8 +235,8 @@ const PresenceMain: React.FC = () => {
         id: 'SPECIAL',
         name: activeSpecialAssignment.title,
         type: 1,
-        tolerance_minutes: 0,
-        tolerance_checkin_minutes: 0,
+        tolerance_minutes: activeSpecialAssignment.custom_early_tolerance || 0,
+        tolerance_checkin_minutes: activeSpecialAssignment.custom_late_tolerance || 0,
         rules: [{
           id: 'SPECIAL_RULE',
           schedule_id: 'SPECIAL',
@@ -371,6 +371,8 @@ const PresenceMain: React.FC = () => {
   if (activeSpecialAssignment && (activeSpecialAssignment.custom_check_in || activeSpecialAssignment.custom_check_out)) {
     displaySchedule = {
       name: activeSpecialAssignment.title,
+      tolerance_minutes: activeSpecialAssignment.custom_early_tolerance || 0,
+      tolerance_checkin_minutes: activeSpecialAssignment.custom_late_tolerance || 0,
       rules: [{
         day_of_week: todayDay,
         check_in_time: activeSpecialAssignment.custom_check_in,
