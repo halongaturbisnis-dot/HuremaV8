@@ -144,7 +144,7 @@ const DailyMonitoring: React.FC = () => {
                   )}
                   <td className="px-4 py-3 text-center">
                     <div className="flex flex-col items-center gap-1">
-                      <span className="px-2 py-0.5 bg-[#006E62] text-white text-[10px] font-bold rounded uppercase">
+                      <span className={`px-2 py-0.5 text-white text-[10px] font-bold rounded uppercase ${item.is_special_assignment ? 'bg-amber-600' : 'bg-[#006E62]'}`}>
                         {item.schedule_name}
                       </span>
                       <p className="text-[10px] text-gray-500 font-medium">

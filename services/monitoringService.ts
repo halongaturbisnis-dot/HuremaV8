@@ -2,6 +2,7 @@
 import { supabase } from '../lib/supabase';
 import { accountService } from './accountService';
 import { scheduleService } from './scheduleService';
+import { specialAssignmentService } from './specialAssignmentService';
 
 export const monitoringService = {
   async getDailyMonitoringData(date: Date = new Date()) {
@@ -82,7 +83,10 @@ export const monitoringService = {
       .lte('start_date', dateStr)
       .gte('end_date', dateStr);
 
-    // 9. Fetch Libur Khusus (Holiday) from schedules
+    // 9. Fetch active Special Assignments
+    const specialAssignments = await specialAssignmentService.getActiveForDate(dateStr);
+
+    // 10. Fetch Libur Khusus (Holiday) from schedules
     const holidaySchedules = schedules.filter(s => s.type === 3 && dateStr >= (s.start_date || '') && dateStr <= (s.end_date || ''));
 
     // Map data for easy lookup
@@ -93,6 +97,14 @@ export const monitoringService = {
     const permissionMap = new Map(permissions?.map(p => [p.account_id, p]));
     const maternityLeaveMap = new Map(maternityLeaves?.map(m => [m.account_id, m]));
     const scheduleMap = new Map(schedules.map(s => [s.id, s]));
+
+    // Map special assignments to accounts
+    const accountSpecialAssignmentMap = new Map();
+    specialAssignments.forEach(sa => {
+      sa.accounts?.forEach((acc: any) => {
+        accountSpecialAssignmentMap.set(acc.account_id, sa);
+      });
+    });
 
     const results = {
       present: [] as any[],
@@ -112,10 +124,11 @@ export const monitoringService = {
       const leaveRequest = leaveRequestMap.get(acc.id);
       const permission = permissionMap.get(acc.id);
       const maternityLeave = maternityLeaveMap.get(acc.id);
+      const specialAssignment = accountSpecialAssignmentMap.get(acc.id);
 
       // Check if it's a holiday for this user
       const schedule = scheduleMap.get(acc.schedule_id);
-      const rule = schedule?.rules?.find(r => r.day_of_week === dayOfWeek);
+      let rule = schedule?.rules?.find(r => r.day_of_week === dayOfWeek);
       
       // FIX: For Fleksibel/Dinamis, if no rule is found, it's NOT a holiday by default.
       // It's only a holiday if explicitly marked as is_holiday.
@@ -132,14 +145,32 @@ export const monitoringService = {
         !(hs.excluded_account_ids || []).includes(acc.id)
       );
 
-      const isHoliday = isWeekendOrHolidayRule || isSpecialHoliday;
+      let isHoliday = isWeekendOrHolidayRule || isSpecialHoliday;
 
       // Attach schedule info for UI
+      let scheduleName = schedule?.name || acc.schedule_type;
+      let isSpecial = false;
+
+      // OVERRIDE WITH SPECIAL ASSIGNMENT
+      if (specialAssignment) {
+        isHoliday = false; // Must work if assigned
+        isSpecial = true;
+        scheduleName = specialAssignment.title;
+        if (specialAssignment.custom_check_in || specialAssignment.custom_check_out) {
+          rule = {
+            check_in_time: specialAssignment.custom_check_in,
+            check_out_time: specialAssignment.custom_check_out,
+            is_holiday: false
+          } as any;
+        }
+      }
+
       const accWithInfo = { 
         ...acc, 
-        schedule_name: schedule?.name || acc.schedule_type,
+        schedule_name: scheduleName,
         today_rule: rule,
-        schedule: schedule
+        schedule: schedule,
+        is_special_assignment: isSpecial
       };
 
       // PRIORITY HIERARCHY: One user = One primary category

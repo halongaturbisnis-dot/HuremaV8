@@ -38,6 +38,20 @@ export const specialAssignmentService = {
     return data;
   },
 
+  async getActiveForDate(date: string): Promise<any[]> {
+    const { data, error } = await supabase
+      .from('special_assignments')
+      .select(`
+        *,
+        accounts:special_assignment_accounts(account_id)
+      `)
+      .lte('start_date', date)
+      .gte('end_date', date);
+
+    if (error) throw error;
+    return data || [];
+  },
+
   async getLinkedAccounts(assignmentId: string): Promise<any[]> {
     const { data, error } = await supabase
       .from('special_assignment_accounts')
