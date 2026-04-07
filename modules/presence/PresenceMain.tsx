@@ -7,9 +7,10 @@ import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { presenceService } from '../../services/presenceService';
 import { accountService } from '../../services/accountService';
 import { scheduleService } from '../../services/scheduleService';
+import { specialAssignmentService } from '../../services/specialAssignmentService';
 import { authService } from '../../services/authService';
 import { googleDriveService } from '../../services/googleDriveService';
-import { Account, Attendance, Schedule, ScheduleRule } from '../../types';
+import { Account, Attendance, Schedule, ScheduleRule, SpecialAssignment } from '../../types';
 import PresenceCamera from './PresenceCamera';
 import PresenceMap from './PresenceMap';
 import PresenceHistory from './PresenceHistory';
@@ -31,6 +32,7 @@ const PresenceMain: React.FC = () => {
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
   const [distance, setDistance] = useState<number | null>(null);
   const [activeHoliday, setActiveHoliday] = useState<any>(null);
+  const [activeSpecialAssignment, setActiveSpecialAssignment] = useState<SpecialAssignment | null>(null);
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   
@@ -87,6 +89,10 @@ const PresenceMain: React.FC = () => {
       setTodayAttendance(attendance);
       setRecentLogs(history);
       setServerTime(sTime);
+
+      const dateStr = sTime.toISOString().split('T')[0];
+      const specialAssignment = await specialAssignmentService.getActiveForAccount(currentAccountId, dateStr);
+      setActiveSpecialAssignment(specialAssignment);
 
       // Tarik daftar shift jika akun bertipe DINAMIS (Cek via schedule_type)
       if (acc && acc.schedule_type === 'Shift Dinamis' && acc.location_id) {
@@ -163,14 +169,22 @@ const PresenceMain: React.FC = () => {
   };
 
   useEffect(() => {
-    if (coords && account?.location) {
-      const d = presenceService.calculateDistance(
-        coords.lat, coords.lng,
-        account.location.latitude, account.location.longitude
-      );
-      setDistance(d);
+    if (coords) {
+      if (activeSpecialAssignment) {
+        const d = presenceService.calculateDistance(
+          coords.lat, coords.lng,
+          activeSpecialAssignment.latitude, activeSpecialAssignment.longitude
+        );
+        setDistance(d);
+      } else if (account?.location) {
+        const d = presenceService.calculateDistance(
+          coords.lat, coords.lng,
+          account.location.latitude, account.location.longitude
+        );
+        setDistance(d);
+      }
     }
-  }, [coords, account]);
+  }, [coords, account, activeSpecialAssignment]);
 
   useEffect(() => {
     if (coords && !currentAddress && !isFetchingAddress) {
@@ -212,8 +226,33 @@ const PresenceMain: React.FC = () => {
     }
   };
   const isCheckOutStatus = !!todayAttendance && !todayAttendance.check_out;
-  const scheduleResult = (account && account.schedule) 
-    ? presenceService.calculateStatus(serverTime, account.schedule, isCheckOutStatus ? 'OUT' : 'IN')
+  
+  // Resolve Effective Schedule for Status Calculation
+  let effectiveSchedule = account?.schedule;
+  if (activeSpecialAssignment) {
+    if (activeSpecialAssignment.custom_check_in || activeSpecialAssignment.custom_check_out) {
+      effectiveSchedule = {
+        id: 'SPECIAL',
+        name: activeSpecialAssignment.title,
+        type: 1,
+        tolerance_minutes: 0,
+        tolerance_checkin_minutes: 0,
+        rules: [{
+          id: 'SPECIAL_RULE',
+          schedule_id: 'SPECIAL',
+          day_of_week: serverTime.getDay(),
+          check_in_time: activeSpecialAssignment.custom_check_in,
+          check_out_time: activeSpecialAssignment.custom_check_out,
+          is_holiday: false
+        }]
+      } as any;
+    }
+  } else if (account?.schedule_type === 'Shift Dinamis' && selectedShift) {
+    effectiveSchedule = selectedShift;
+  }
+
+  const scheduleResult = effectiveSchedule 
+    ? presenceService.calculateStatus(serverTime, effectiveSchedule, isCheckOutStatus ? 'OUT' : 'IN')
     : { status: 'Tepat Waktu' };
   const isLateOrEarly = scheduleResult.status === 'Terlambat' || scheduleResult.status === 'Pulang Cepat';
 
@@ -321,19 +360,48 @@ const PresenceMain: React.FC = () => {
   const isLimited = isCheckOut 
     ? account.is_presence_limited_checkout === true 
     : account.is_presence_limited_checkin === true;
-  const isWithinRadius = distance !== null && distance <= (account?.location?.radius || 100);
+  
+  const effectiveRadius = activeSpecialAssignment ? activeSpecialAssignment.radius : (account?.location?.radius || 100);
+  const isWithinRadius = distance !== null && distance <= effectiveRadius;
   const isBlockedByLocation = isLimited && !isWithinRadius;
   const todayDay = serverTime.getDay();
   
   // Resolve Rule untuk UI Tampilan Jadwal
   let displaySchedule = account.schedule;
-  if (account.schedule_type === 'Shift Dinamis') displaySchedule = selectedShift || undefined;
+  if (activeSpecialAssignment && (activeSpecialAssignment.custom_check_in || activeSpecialAssignment.custom_check_out)) {
+    displaySchedule = {
+      name: activeSpecialAssignment.title,
+      rules: [{
+        day_of_week: todayDay,
+        check_in_time: activeSpecialAssignment.custom_check_in,
+        check_out_time: activeSpecialAssignment.custom_check_out,
+        is_holiday: false
+      }]
+    } as any;
+  } else if (account.schedule_type === 'Shift Dinamis') {
+    displaySchedule = selectedShift || undefined;
+  }
   
   const scheduleRule = displaySchedule?.rules?.find(r => r.day_of_week === todayDay);
-  const isHolidayToday = account.schedule_type !== 'Fleksibel' && (!!activeHoliday || !!scheduleRule?.is_holiday);
+  const isHolidayToday = account.schedule_type !== 'Fleksibel' && !activeSpecialAssignment && (!!activeHoliday || !!scheduleRule?.is_holiday);
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
+      {activeSpecialAssignment && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-top duration-500">
+          <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 shrink-0">
+            <ShieldCheck size={24} />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider">Penugasan Khusus Aktif</h4>
+            <p className="text-[10px] text-amber-600 font-medium">{activeSpecialAssignment.title} • {activeSpecialAssignment.location_name}</p>
+          </div>
+          <div className="px-3 py-1 bg-amber-200/50 rounded-full text-[9px] font-black text-amber-800 uppercase tracking-widest">
+            Prioritas Utama
+          </div>
+        </div>
+      )}
+
       <div className="hidden md:flex bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex-col md:flex-row justify-between items-center gap-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-[#006E62]/10 rounded-xl flex items-center justify-center text-[#006E62]">
@@ -508,14 +576,14 @@ const PresenceMain: React.FC = () => {
                   </div>
                </div>
                
-               {account?.location && coords ? (
+               {((activeSpecialAssignment) || (account?.location)) && coords ? (
                  <div className="space-y-4">
                     <PresenceMap 
                       userLat={coords.lat} 
                       userLng={coords.lng} 
-                      officeLat={account.location.latitude} 
-                      officeLng={account.location.longitude}
-                      radius={account.location.radius}
+                      officeLat={activeSpecialAssignment ? activeSpecialAssignment.latitude : account.location.latitude} 
+                      officeLng={activeSpecialAssignment ? activeSpecialAssignment.longitude : account.location.longitude}
+                      radius={effectiveRadius}
                     />
                     
                     <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
@@ -539,13 +607,13 @@ const PresenceMain: React.FC = () => {
                        </div>
                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
                           <span className="text-gray-400 font-bold uppercase block mb-1">Maks Radius</span>
-                          <span className="text-sm font-bold text-gray-700">{account.location.radius}m</span>
+                          <span className="text-sm font-bold text-gray-700">{effectiveRadius}m</span>
                        </div>
                     </div>
                     {isBlockedByLocation && (
                       <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl flex gap-3 items-start animate-pulse">
                          <AlertCircle size={16} className="text-rose-500 shrink-0 mt-0.5" />
-                         <p className="text-[10px] text-rose-600 font-bold leading-tight uppercase tracking-tight">Lokasi anda berada di luar radius jangkauan lokasi {account.location.name}</p>
+                         <p className="text-[10px] text-rose-600 font-bold leading-tight uppercase tracking-tight">Lokasi anda berada di luar radius jangkauan lokasi {activeSpecialAssignment ? activeSpecialAssignment.location_name : account.location.name}</p>
                       </div>
                     )}
 

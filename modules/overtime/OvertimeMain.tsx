@@ -5,11 +5,12 @@ import { FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
 import { overtimeService } from '../../services/overtimeService';
 import { presenceService } from '../../services/presenceService';
 import { accountService } from '../../services/accountService';
+import { specialAssignmentService } from '../../services/specialAssignmentService';
 import { authService } from '../../services/authService';
 import { googleDriveService } from '../../services/googleDriveService';
 import { settingsService } from '../../services/settingsService';
 import { submissionService } from '../../services/submissionService';
-import { Account, Overtime } from '../../types';
+import { Account, Overtime, SpecialAssignment } from '../../types';
 import PresenceCamera from '../presence/PresenceCamera';
 import PresenceMap from '../presence/PresenceMap';
 import OvertimeHistory from './OvertimeHistory';
@@ -29,6 +30,7 @@ const OvertimeMain: React.FC = () => {
   const [currentAddress, setCurrentAddress] = useState<string | null>(null);
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
   const [distance, setDistance] = useState<number | null>(null);
+  const [activeSpecialAssignment, setActiveSpecialAssignment] = useState<SpecialAssignment | null>(null);
   const [landmarker, setLandmarker] = useState<any>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
@@ -73,6 +75,10 @@ const OvertimeMain: React.FC = () => {
       setRecentLogs(history);
       setIsRegularActive(isRegActive);
       setServerTime(sTime);
+
+      const dateStr = sTime.toISOString().split('T')[0];
+      const specialAssignment = await specialAssignmentService.getActiveForAccount(currentAccountId, dateStr);
+      setActiveSpecialAssignment(specialAssignment);
     } catch (error) {
       console.error(error);
     } finally {
@@ -119,14 +125,22 @@ const OvertimeMain: React.FC = () => {
   };
 
   useEffect(() => {
-    if (coords && account?.location) {
-      const d = presenceService.calculateDistance(
-        coords.lat, coords.lng,
-        account.location.latitude, account.location.longitude
-      );
-      setDistance(d);
+    if (coords) {
+      if (activeSpecialAssignment) {
+        const d = presenceService.calculateDistance(
+          coords.lat, coords.lng,
+          activeSpecialAssignment.latitude, activeSpecialAssignment.longitude
+        );
+        setDistance(d);
+      } else if (account?.location) {
+        const d = presenceService.calculateDistance(
+          coords.lat, coords.lng,
+          account.location.latitude, account.location.longitude
+        );
+        setDistance(d);
+      }
     }
-  }, [coords, account]);
+  }, [coords, account, activeSpecialAssignment]);
 
   useEffect(() => {
     if (coords && !currentAddress && !isFetchingAddress) {
@@ -274,11 +288,27 @@ const OvertimeMain: React.FC = () => {
   const isLimited = isCheckOut 
     ? account.is_presence_limited_ot_out === true 
     : account.is_presence_limited_ot_in === true;
-  const isWithinRadius = distance !== null && distance <= (account?.location?.radius || 100);
+  const effectiveRadius = activeSpecialAssignment ? activeSpecialAssignment.radius : (account?.location?.radius || 100);
+  const isWithinRadius = distance !== null && distance <= effectiveRadius;
   const isBlockedByLocation = isLimited && !isWithinRadius;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      {activeSpecialAssignment && (
+        <div className="bg-amber-50 border border-amber-200 rounded-3xl p-6 flex items-center gap-6 animate-in slide-in-from-top duration-500 shadow-sm">
+          <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 shrink-0 shadow-inner">
+            <ShieldCheck size={32} />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-xs font-black text-amber-800 uppercase tracking-[0.2em] mb-1">Penugasan Khusus Aktif</h4>
+            <p className="text-[11px] text-amber-600 font-bold uppercase tracking-widest">{activeSpecialAssignment.title} • {activeSpecialAssignment.location_name}</p>
+          </div>
+          <div className="px-4 py-2 bg-amber-200/50 rounded-xl text-[10px] font-black text-amber-800 uppercase tracking-[0.2em] shadow-sm">
+            Prioritas Utama
+          </div>
+        </div>
+      )}
+
       {/* Desktop Header - Hidden on Mobile */}
       <div className="hidden md:flex bg-white rounded-3xl border border-gray-100 p-8 shadow-sm justify-between items-center gap-8">
         <div className="flex items-center gap-6">
@@ -326,14 +356,14 @@ const OvertimeMain: React.FC = () => {
                 </div>
              </div>
              
-             {account?.location && coords ? (
+             {((activeSpecialAssignment) || (account?.location)) && coords ? (
                <div className="space-y-6">
                   <PresenceMap 
                     userLat={coords.lat} 
                     userLng={coords.lng} 
-                    officeLat={account.location.latitude} 
-                    officeLng={account.location.longitude}
-                    radius={account.location.radius}
+                    officeLat={activeSpecialAssignment ? activeSpecialAssignment.latitude : account.location.latitude} 
+                    officeLng={activeSpecialAssignment ? activeSpecialAssignment.longitude : account.location.longitude}
+                    radius={effectiveRadius}
                   />
                   
                   <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
@@ -357,14 +387,14 @@ const OvertimeMain: React.FC = () => {
                      </div>
                      <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] block mb-1.5">Maks Radius</span>
-                        <span className="text-sm font-black text-amber-600">{account.location.radius}m</span>
+                        <span className="text-sm font-black text-amber-600">{effectiveRadius}m</span>
                      </div>
                   </div>
                   
                   {isBlockedByLocation && (
                     <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex gap-4 items-start animate-pulse">
                        <AlertCircle size={20} className="text-rose-500 shrink-0 mt-0.5" />
-                       <p className="text-[10px] text-rose-600 font-black leading-tight uppercase tracking-widest">Presensi Lembur dikunci. Anda berada diluar zona yang diizinkan.</p>
+                       <p className="text-[10px] text-rose-600 font-black leading-tight uppercase tracking-widest">Presensi Lembur dikunci. Anda berada diluar zona yang diizinkan ({activeSpecialAssignment ? activeSpecialAssignment.location_name : account.location.name}).</p>
                     </div>
                   )}
                </div>

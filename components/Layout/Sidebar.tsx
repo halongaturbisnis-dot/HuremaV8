@@ -139,7 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
     }
   };
 
-  const isMasterActive = ['master_app', 'location', 'schedule', 'account', 'admin_settings'].includes(activeTab);
+  const isMasterActive = ['master_app', 'location', 'schedule', 'account', 'admin_settings', 'special_assignment'].includes(activeTab);
   const isSubmissionActive = ['leave', 'overtime', 'permission', 'annual_leave', 'maternity_leave', 'out_of_range_submission', 'admin_dispensation'].includes(activeTab);
   const isPerformanceActive = ['kpi', 'key_activity', 'sales_report'].includes(activeTab);
   const isFinanceActive = ['salary_scheme', 'salary_adjustment', 'payroll', 'reimbursement', 'early_salary', 'compensation'].includes(activeTab);
@@ -224,6 +224,15 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
                   id="schedule" 
                   icon={CalendarClock} 
                   label="Manajemen Jadwal" 
+                  indent 
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  isCollapsed={isCollapsed}
+                />
+                <NavItem 
+                  id="special_assignment" 
+                  icon={ShieldCheck} 
+                  label="Penugasan Khusus" 
                   indent 
                   activeTab={activeTab}
                   setActiveTab={setActiveTab}

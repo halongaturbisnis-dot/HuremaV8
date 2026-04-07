@@ -41,6 +41,7 @@ const ReportMainModule = lazy(() => import('./modules/report/ReportMainModule'))
 const FinanceReportMain = lazy(() => import('./modules/report/FinanceReportMain'));
 const MasterMain = lazy(() => import('./modules/settings/MasterMain'));
 const AdminSettingsModule = lazy(() => import('./modules/settings/AdminSettingsModule'));
+const SpecialAssignmentMain = lazy(() => import('./modules/special-assignment/SpecialAssignmentMain'));
 const DailyMonitoring = lazy(() => import('./modules/monitoring/DailyMonitoring'));
 const Login = lazy(() => import('./modules/auth/Login'));
 
@@ -53,7 +54,7 @@ const App: React.FC = () => {
   const currentUser = authService.getCurrentUser();
   const isAdminInitial = currentUser?.role === 'admin' || currentUser?.is_hr_admin || currentUser?.is_performance_admin || currentUser?.is_finance_admin;
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'location' | 'account' | 'schedule' | 'document' | 'settings' | 'presence' | 'overtime' | 'submission' | 'leave' | 'annual_leave' | 'permission' | 'maternity_leave' | 'master_app' | 'admin_settings' | 'kpi' | 'key_activity' | 'sales_report' | 'feedback' | 'lapor' | 'rapat' | 'pengumuman' | 'salary_scheme' | 'salary_adjustment' | 'payroll' | 'my_payslip' | 'reimbursement' | 'early_salary' | 'compensation' | 'employee_of_the_period' | 'dispensation' | 'admin_dispensation' | 'attendance_report' | 'finance_report' | 'employee_report' | 'daily_monitoring' | 'out_of_range_submission'>(
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'location' | 'account' | 'schedule' | 'document' | 'settings' | 'presence' | 'overtime' | 'submission' | 'leave' | 'annual_leave' | 'permission' | 'maternity_leave' | 'master_app' | 'admin_settings' | 'kpi' | 'key_activity' | 'sales_report' | 'feedback' | 'lapor' | 'rapat' | 'pengumuman' | 'salary_scheme' | 'salary_adjustment' | 'payroll' | 'my_payslip' | 'reimbursement' | 'early_salary' | 'compensation' | 'employee_of_the_period' | 'dispensation' | 'admin_dispensation' | 'attendance_report' | 'finance_report' | 'employee_report' | 'daily_monitoring' | 'out_of_range_submission' | 'special_assignment'>(
     (window.innerWidth < 768) 
       ? 'dashboard' 
       : (isAdminInitial ? 'master_app' : 'presence')
@@ -223,6 +224,8 @@ const App: React.FC = () => {
             <div className="p-4"><FinanceReportMain /></div>
           ) : activeTab === 'master_app' ? (
             <div className="p-4"><MasterMain /></div>
+          ) : activeTab === 'special_assignment' ? (
+            <div className="p-4"><SpecialAssignmentMain /></div>
           ) : activeTab === 'settings' ? (
             <div className="p-4">{isAdmin ? <AdminSettingsModule /> : <AccountMain user={user} setUser={setUser} isSelfProfile={true} />}</div>
           ) : (
@@ -491,6 +494,8 @@ const App: React.FC = () => {
               <FinanceReportMain />
             ) : activeTab === 'master_app' ? (
               <MasterMain />
+            ) : activeTab === 'special_assignment' ? (
+              <SpecialAssignmentMain />
             ) : activeTab === 'admin_settings' ? (
               <AdminSettingsModule />
             ) : activeTab === 'daily_monitoring' ? (

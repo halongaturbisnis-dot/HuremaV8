@@ -1118,3 +1118,33 @@ export interface CompensationSummary {
   count: number;
   items: Compensation[];
 }
+
+export interface SpecialAssignment {
+  id: string;
+  title: string;
+  description?: string;
+  start_date: string;
+  end_date: string;
+  location_name: string;
+  latitude: number;
+  longitude: number;
+  radius: number;
+  schedule_id?: string | null;
+  custom_check_in?: string | null;
+  custom_check_out?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
+  // Join properties
+  accounts?: {
+    id: string;
+    full_name: string;
+    internal_nik: string;
+  }[];
+}
+
+export interface SpecialAssignmentAccount {
+  id: string;
+  assignment_id: string;
+  account_id: string;
+}
