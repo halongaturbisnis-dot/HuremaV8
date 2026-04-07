@@ -14,8 +14,8 @@ const sanitizePayload = (payload: any) => {
 };
 
 export const overtimeService = {
-  async getTodayOvertime(accountId: string) {
-    const startOfToday = timeUtils.getStartOfLocalDayInUTC();
+  async getTodayOvertime(accountId: string, timeZone?: string) {
+    const startOfToday = timeUtils.getStartOfLocalDayInUTC(timeZone);
     const { data, error } = await supabase
       .from('overtimes')
       .select('*')
@@ -32,8 +32,8 @@ export const overtimeService = {
   /**
    * Memastikan user tidak sedang dalam sesi lembur (Mutual Exclusion)
    */
-  async isOvertimeSessionActive(accountId: string): Promise<boolean> {
-    const startOfToday = timeUtils.getStartOfLocalDayInUTC();
+  async isOvertimeSessionActive(accountId: string, timeZone?: string): Promise<boolean> {
+    const startOfToday = timeUtils.getStartOfLocalDayInUTC(timeZone);
     const { data, error } = await supabase
       .from('overtimes')
       .select('id, check_in, check_out')

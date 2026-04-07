@@ -53,25 +53,40 @@ export const presenceService = {
   },
 
   /**
-   * Menghitung keterlambatan atau pulang cepat berdasarkan jadwal
+   * Menghitung keterlambatan atau pulang cepat berdasarkan jadwal (Timezone Aware)
    */
-  calculateStatus(currentTime: Date, schedule: Schedule, type: 'IN' | 'OUT'): { status: string, minutes: number } {
+  calculateStatus(currentTime: Date, schedule: Schedule, type: 'IN' | 'OUT', timeZone?: string): { status: string, minutes: number } {
     // Mode Fleksibel Bypass
     if (schedule.id === 'FLEKSIBEL') {
       return { status: 'Tepat Waktu', minutes: 0 };
     }
 
-    const dayOfWeek = currentTime.getDay();
+    const tz = timeZone || timeUtils.getLocalTimeZone();
+    
+    // Get current time components in the target timezone
+    const localTimeStr = currentTime.toLocaleString('en-US', { 
+      timeZone: tz, 
+      hour12: false,
+      weekday: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    // localTimeStr format: "Mon, 08:30"
+    const [dayStr, timePart] = localTimeStr.split(', ');
+    const daysMap: { [key: string]: number } = { 'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6 };
+    const dayOfWeek = daysMap[dayStr];
+    
     const rule = schedule.rules?.find(r => r.day_of_week === dayOfWeek);
-
     if (!rule || rule.is_holiday) return { status: 'Tepat Waktu', minutes: 0 };
 
+    const [h, m] = timePart.split(':').map(Number);
+    const currentTotalMins = h * 60 + m;
+    
     const [targetH, targetM] = (type === 'IN' ? rule.check_in_time : rule.check_out_time || '00:00:00').split(':').map(Number);
-    const targetDate = new Date(currentTime);
-    targetDate.setHours(targetH, targetM, 0, 0);
+    const targetTotalMins = targetH * 60 + targetM;
 
-    const diffMs = currentTime.getTime() - targetDate.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
+    const diffMins = currentTotalMins - targetTotalMins;
 
     if (type === 'IN') {
       const tolerance = schedule.tolerance_checkin_minutes || 0;
@@ -107,8 +122,8 @@ export const presenceService = {
     return R * c; // Distance in meters
   },
 
-  async getTodayAttendance(accountId: string) {
-    const startOfToday = timeUtils.getStartOfLocalDayInUTC();
+  async getTodayAttendance(accountId: string, timeZone?: string) {
+    const startOfToday = timeUtils.getStartOfLocalDayInUTC(timeZone);
     const { data, error } = await supabase
       .from('attendances')
       .select('*')
@@ -125,8 +140,8 @@ export const presenceService = {
   /**
    * Memastikan user tidak sedang dalam sesi kerja reguler (Mutual Exclusion)
    */
-  async isRegularSessionActive(accountId: string): Promise<boolean> {
-    const attendance = await this.getTodayAttendance(accountId);
+  async isRegularSessionActive(accountId: string, timeZone?: string): Promise<boolean> {
+    const attendance = await this.getTodayAttendance(accountId, timeZone);
     return !!(attendance && attendance.check_in && !attendance.check_out);
   },
 

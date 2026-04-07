@@ -11,6 +11,7 @@ import { scheduleService } from '../../services/scheduleService';
 import { specialAssignmentService } from '../../services/specialAssignmentService';
 import { authService } from '../../services/authService';
 import { googleDriveService } from '../../services/googleDriveService';
+import { timeUtils } from '../../lib/timeUtils';
 import { Account, Attendance, Schedule, ScheduleRule, SpecialAssignment } from '../../types';
 import PresenceCamera from './PresenceCamera';
 import PresenceMap from './PresenceMap';
@@ -35,6 +36,7 @@ const PresenceMain: React.FC = () => {
   const [activeHoliday, setActiveHoliday] = useState<any>(null);
   const [activeSpecialAssignment, setActiveSpecialAssignment] = useState<SpecialAssignment | null>(null);
   const [isOvertimeActive, setIsOvertimeActive] = useState(false);
+  const [detectedTz, setDetectedTz] = useState<string>(timeUtils.getLocalTimeZone());
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   
@@ -77,15 +79,40 @@ const PresenceMain: React.FC = () => {
     };
   }, [currentAccountId, photoPreviewUrl]);
 
+  // Update timezone based on coordinates
+  useEffect(() => {
+    if (coords) {
+      const tz = timeUtils.getTimeZoneFromCoords(coords.lat, coords.lng);
+      if (tz !== detectedTz) {
+        setDetectedTz(tz);
+      }
+    }
+  }, [coords, detectedTz]);
+
+  // Re-fetch today's data if timezone changes
+  useEffect(() => {
+    if (currentAccountId && detectedTz) {
+      const refreshData = async () => {
+        const [attendance, isOTActive] = await Promise.all([
+          presenceService.getTodayAttendance(currentAccountId, detectedTz),
+          overtimeService.isOvertimeSessionActive(currentAccountId, detectedTz)
+        ]);
+        setTodayAttendance(attendance);
+        setIsOvertimeActive(isOTActive);
+      };
+      refreshData();
+    }
+  }, [currentAccountId, detectedTz]);
+
   const fetchInitialData = async () => {
     if (!currentAccountId) return;
     try {
       setIsLoading(true);
       const [acc, attendance, history, isOTActive, sTime] = await Promise.all([
         accountService.getById(currentAccountId),
-        presenceService.getTodayAttendance(currentAccountId),
+        presenceService.getTodayAttendance(currentAccountId, detectedTz),
         presenceService.getRecentHistory(currentAccountId),
-        overtimeService.isOvertimeSessionActive(currentAccountId),
+        overtimeService.isOvertimeSessionActive(currentAccountId, detectedTz),
         presenceService.getServerTime()
       ]);
       setAccount(acc as any);
@@ -229,7 +256,7 @@ const PresenceMain: React.FC = () => {
       setCheckOutReason('');
     }
   };
-  const isCheckOutStatus = !!todayAttendance && !todayAttendance.check_out;
+  const isCheckOut = !!todayAttendance && !todayAttendance.check_out;
   
   // Resolve Effective Schedule for Status Calculation
   let effectiveSchedule = account?.schedule;
@@ -256,7 +283,7 @@ const PresenceMain: React.FC = () => {
   }
 
   const scheduleResult = effectiveSchedule 
-    ? presenceService.calculateStatus(serverTime, effectiveSchedule, isCheckOutStatus ? 'OUT' : 'IN')
+    ? presenceService.calculateStatus(serverTime, effectiveSchedule, isCheckOut ? 'OUT' : 'IN', detectedTz)
     : { status: 'Tepat Waktu' };
   const isLateOrEarly = scheduleResult.status === 'Terlambat' || scheduleResult.status === 'Pulang Cepat';
 
@@ -269,7 +296,7 @@ const PresenceMain: React.FC = () => {
     }
 
     // Validasi alasan presensi luar
-    if (isOutOfRangeRequested && (isCheckOutStatus ? !checkOutReason.trim() : !checkInReason.trim())) {
+    if (isOutOfRangeRequested && (isCheckOut ? !checkOutReason.trim() : !checkInReason.trim())) {
       return Swal.fire('Peringatan', 'Alasan presensi luar wajib diisi.', 'warning');
     }
 
@@ -280,7 +307,7 @@ const PresenceMain: React.FC = () => {
       const photoId = await googleDriveService.uploadFile(capturedPhoto as File);
       const address = currentAddress || 'Lokasi tidak diketahui';
       const currentTimeStr = serverTime.toISOString();
-      const isCurrentlyCheckingOut = !!todayAttendance && !todayAttendance.check_out;
+      const isCurrentlyCheckingOut = isCheckOut;
       const submissionCoords = lockedCoords || coords;
 
       if (!isCurrentlyCheckingOut) {
@@ -370,7 +397,6 @@ const PresenceMain: React.FC = () => {
     );
   }
 
-  const isCheckOut = !!todayAttendance && !todayAttendance.check_out;
   const isLimited = isCheckOut 
     ? account.is_presence_limited_checkout === true 
     : account.is_presence_limited_checkin === true;
@@ -692,7 +718,7 @@ const PresenceMain: React.FC = () => {
                </div>
                <div className="text-center py-4 relative z-10">
                   <div className="text-5xl font-sans font-bold text-gray-800 tracking-tighter">
-                    {serverTime.toLocaleTimeString('id-ID', { hour12: false }).replace(/\./g, ':')}
+                    {serverTime.toLocaleTimeString('id-ID', { hour12: false, timeZone: detectedTz }).replace(/\./g, ':')}
                   </div>
                   <div className="text-[11px] font-bold text-[#006E62] uppercase tracking-widest mt-2">
                     {serverTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}

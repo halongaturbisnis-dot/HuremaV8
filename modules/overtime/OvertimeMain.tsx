@@ -10,6 +10,7 @@ import { authService } from '../../services/authService';
 import { googleDriveService } from '../../services/googleDriveService';
 import { settingsService } from '../../services/settingsService';
 import { submissionService } from '../../services/submissionService';
+import { timeUtils } from '../../lib/timeUtils';
 import { Account, Overtime, SpecialAssignment } from '../../types';
 import PresenceCamera from '../presence/PresenceCamera';
 import PresenceMap from '../presence/PresenceMap';
@@ -35,6 +36,7 @@ const OvertimeMain: React.FC = () => {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  const [detectedTz, setDetectedTz] = useState<string>(timeUtils.getLocalTimeZone());
   const [otReason, setOtReason] = useState('');
   const watchId = useRef<number | null>(null);
 
@@ -59,15 +61,40 @@ const OvertimeMain: React.FC = () => {
     };
   }, [currentAccountId, photoPreviewUrl]);
 
+  // Update timezone based on coordinates
+  useEffect(() => {
+    if (coords) {
+      const tz = timeUtils.getTimeZoneFromCoords(coords.lat, coords.lng);
+      if (tz !== detectedTz) {
+        setDetectedTz(tz);
+      }
+    }
+  }, [coords, detectedTz]);
+
+  // Re-fetch today's data if timezone changes
+  useEffect(() => {
+    if (currentAccountId && detectedTz) {
+      const refreshData = async () => {
+        const [ot, isRegActive] = await Promise.all([
+          overtimeService.getTodayOvertime(currentAccountId, detectedTz),
+          presenceService.isRegularSessionActive(currentAccountId, detectedTz)
+        ]);
+        setTodayOT(ot);
+        setIsRegularActive(isRegActive);
+      };
+      refreshData();
+    }
+  }, [currentAccountId, detectedTz]);
+
   const fetchInitialData = async () => {
     if (!currentAccountId) return;
     try {
       setIsLoading(true);
       const [acc, ot, history, isRegActive, sTime] = await Promise.all([
         accountService.getById(currentAccountId),
-        overtimeService.getTodayOvertime(currentAccountId),
+        overtimeService.getTodayOvertime(currentAccountId, detectedTz),
         overtimeService.getRecentHistory(currentAccountId),
-        presenceService.isRegularSessionActive(currentAccountId),
+        presenceService.isRegularSessionActive(currentAccountId, detectedTz),
         presenceService.getServerTime()
       ]);
       setAccount(acc as any);
@@ -410,7 +437,7 @@ const OvertimeMain: React.FC = () => {
           <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
              <div className="text-center py-6">
                 <div className="text-6xl font-sans font-black text-gray-800 tracking-tighter">
-                  {serverTime.toLocaleTimeString('id-ID', { hour12: false })}
+                  {serverTime.toLocaleTimeString('id-ID', { hour12: false, timeZone: detectedTz })}
                 </div>
                 <div className="text-[11px] font-black text-amber-500 uppercase tracking-[0.2em] mt-4">
                   {serverTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
