@@ -24,9 +24,10 @@ const AttendanceHeatmap: React.FC<HeatmapProps> = ({ details, startDate, endDate
           const detail = details?.find(d => d.date === dateStr);
           
           let bgColor = 'bg-gray-100 text-gray-400';
-          if (detail?.status === 'present') bgColor = 'bg-[#006E62] text-white';
-          else if (detail?.status === 'leave' || detail?.status === 'permission') bgColor = 'bg-amber-100 text-amber-600';
-          else if (detail?.status === 'absent') bgColor = 'bg-rose-100 text-rose-600';
+          if (detail?.status === 'PRESENT') bgColor = 'bg-[#006E62] text-white';
+          else if (detail?.status === 'LEAVE' || detail?.status === 'PERMISSION' || detail?.status === 'MATERNITY') bgColor = 'bg-amber-100 text-amber-600';
+          else if (detail?.status === 'ABSENT') bgColor = 'bg-rose-100 text-rose-600';
+          else if (detail?.status === 'HOLIDAY' || detail?.status === 'WEEKEND') bgColor = 'bg-gray-50 text-gray-300';
 
           return (
             <div 

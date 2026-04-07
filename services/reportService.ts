@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { EmployeeReportData, AttendanceSummary, LeaveSummary, OvertimeSummary, PayrollSummary } from '../types';
+import { specialAssignmentService } from './specialAssignmentService';
+import { scheduleService } from './scheduleService';
 
 export const reportService = {
   async getEmployeeReportData(): Promise<EmployeeReportData> {
@@ -220,9 +222,11 @@ export const reportService = {
       { data: maternityLeaves },
       { data: overtimes },
       { data: dispensations },
-      { data: holidays }
+      { data: holidays },
+      schedules,
+      specialAssignments
     ] = await Promise.all([
-      supabase.from('accounts').select('id, full_name, internal_nik'),
+      supabase.from('accounts').select('id, full_name, internal_nik, schedule_id, location_id, schedule_type'),
       supabase.from('attendances').select('*').gte('check_in', `${startDate}T00:00:00Z`).lte('check_in', `${endDate}T23:59:59Z`),
       supabase.from('account_leave_requests').select('*').eq('status', 'approved').gte('start_date', startDate).lte('end_date', endDate),
       supabase.from('account_annual_leaves').select('*').eq('status', 'approved').gte('start_date', startDate).lte('end_date', endDate),
@@ -230,52 +234,129 @@ export const reportService = {
       supabase.from('account_maternity_leaves').select('*').eq('status', 'approved').gte('start_date', startDate).lte('end_date', endDate),
       supabase.from('overtimes').select('*').gte('check_in', `${startDate}T00:00:00Z`).lte('check_in', `${endDate}T23:59:59Z`),
       supabase.from('dispensation_requests').select('*').eq('status', 'APPROVED').gte('date', startDate).lte('date', endDate),
-      supabase.from('holidays').select('*').gte('date', startDate).lte('date', endDate)
+      supabase.from('holidays').select('*').gte('date', startDate).lte('date', endDate),
+      scheduleService.getAll(),
+      specialAssignmentService.getAssignmentsByRange(startDate, endDate)
     ]);
 
     if (!accounts) return [];
 
+    // Generate list of dates in range
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const dateList: string[] = [];
+    let curr = new Date(start);
+    while (curr <= end) {
+      dateList.push(curr.toISOString().split('T')[0]);
+      curr.setDate(curr.getDate() + 1);
+    }
+
+    const scheduleMap = new Map(schedules.map(s => [s.id, s]));
+    const holidaySchedules = (schedules || []).filter(s => s.type === 3);
 
     return accounts.map(acc => {
-      const accAttendances = (attendances || []).filter(a => a.account_id === acc.id && a.check_in_validity === 'TRUE');
-      const accLeaves = (leaves || []).filter(l => l.account_id === acc.id);
-      const accAnnualLeaves = (annualLeaves || []).filter(l => l.account_id === acc.id);
-      const accPermissions = (permissions || []).filter(p => p.account_id === acc.id);
-      const accMaternity = (maternityLeaves || []).filter(m => m.account_id === acc.id);
-      const accOvertimes = (overtimes || []).filter(o => o.account_id === acc.id && o.check_out);
-      const accDispensations = (dispensations || []).filter(d => d.account_id === acc.id);
+      let present = 0;
+      let late = 0;
+      let lateMinutes = 0;
+      let earlyDeparture = 0;
+      let earlyDepartureMinutes = 0;
+      let absent = 0;
+      let leave = 0;
+      let maternityLeave = 0;
+      let permission = 0;
+      let holiday = 0;
+      let specialHoliday = 0;
+      let noClockOut = 0;
+      let dispensationCount = 0;
+      const dailyDetails: any[] = [];
 
-      const present = accAttendances.length;
-      const late = accAttendances.filter(a => a.late_minutes > 0).length;
-      const lateMinutes = accAttendances.reduce((sum, a) => sum + (a.late_minutes || 0), 0);
-      const earlyDeparture = accAttendances.filter(a => a.early_leave_minutes > 0).length;
-      const earlyDepartureMinutes = accAttendances.reduce((sum, a) => sum + (a.early_leave_minutes || 0), 0);
-      const noClockOut = accAttendances.filter(a => !a.check_out || a.check_out_validity === 'FALSE' || a.check_out_validity === 'DENY').length;
-      
-      const leave = accLeaves.length + accAnnualLeaves.length;
-      const maternityLeave = accMaternity.length;
-      const permission = accPermissions.length;
-      const dispensationCount = accDispensations.length;
+      dateList.forEach(dateStr => {
+        const dateObj = new Date(dateStr);
+        // Use Jakarta day of week
+        const dayOfWeek = new Date(dateObj.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).getDay();
 
-      const overtimeCount = accOvertimes.length;
-      const overtimeMinutes = accOvertimes.reduce((sum, o) => {
-        if (o.duration_minutes) return sum + o.duration_minutes;
-        if (o.check_in && o.check_out) {
-          const diff = new Date(o.check_out).getTime() - new Date(o.check_in).getTime();
-          return sum + Math.floor(diff / 60000);
+        // 1. Check Attendance
+        const att = (attendances || []).find(a => a.account_id === acc.id && a.check_in.startsWith(dateStr));
+        
+        // 2. Check Special Assignment
+        const sa = (specialAssignments || []).find(s => s.accountIds.includes(acc.id) && dateStr >= s.start_date && dateStr <= s.end_date);
+
+        // 3. Check Leave/Permission
+        const hasLeave = (leaves || []).some(l => l.account_id === acc.id && dateStr >= l.start_date && dateStr <= l.end_date);
+        const hasAnnualLeave = (annualLeaves || []).some(l => l.account_id === acc.id && dateStr >= l.start_date && dateStr <= l.end_date);
+        const hasPermission = (permissions || []).some(p => p.account_id === acc.id && dateStr >= p.start_date && dateStr <= p.end_date);
+        const hasMaternity = (maternityLeaves || []).some(m => m.account_id === acc.id && dateStr >= m.start_date && dateStr <= m.end_date);
+        const hasDispensation = (dispensations || []).some(d => d.account_id === acc.id && d.date === dateStr);
+
+        // 4. Check Holiday
+        const schedule = scheduleMap.get(acc.schedule_id);
+        const rule = schedule?.rules?.find(r => r.day_of_week === dayOfWeek);
+        
+        let isWeekendOrHolidayRule = false;
+        if (acc.schedule_type === 'Tetap') {
+          isWeekendOrHolidayRule = !rule || rule.is_holiday;
+        } else {
+          isWeekendOrHolidayRule = rule?.is_holiday || false;
         }
-        return sum;
-      }, 0);
 
-      // Simple absent calculation: total days - (present + leave + maternity + permission + holidays)
-      // Note: This is a simplification and might need refinement based on actual work days
-      const holidayCount = (holidays || []).length;
-      const absent = Math.max(0, totalDays - (present + leave + maternityLeave + permission + holidayCount));
+        const isSpecHoliday = holidaySchedules.some(hs => 
+          dateStr >= (hs.start_date || '') && dateStr <= (hs.end_date || '') &&
+          hs.location_ids?.includes(acc.location_id) && 
+          !(hs.excluded_account_ids || []).includes(acc.id)
+        );
 
-      const attendanceRate = totalDays > 0 ? ((present + leave + maternityLeave + permission) / totalDays) * 100 : 0;
+        const isGlobalHoliday = (holidays || []).some(h => h.date === dateStr);
+        
+        // Special Assignment overrides holidays
+        const isHoliday = (isWeekendOrHolidayRule || isSpecHoliday || isGlobalHoliday) && !sa;
+
+        // Determine Status
+        let status: 'PRESENT' | 'ABSENT' | 'LEAVE' | 'MATERNITY' | 'PERMISSION' | 'HOLIDAY' | 'SPECIAL_HOLIDAY' | 'WEEKEND' = 'ABSENT';
+        if (att && att.check_in_validity === 'TRUE') {
+          present++;
+          status = 'PRESENT';
+          if (att.late_minutes > 0) late++;
+          lateMinutes += (att.late_minutes || 0);
+          if (att.early_leave_minutes > 0) earlyDeparture++;
+          earlyDepartureMinutes += (att.early_leave_minutes || 0);
+          if (!att.check_out || att.check_out_validity === 'FALSE' || att.check_out_validity === 'DENY') noClockOut++;
+        } else if (hasAnnualLeave || hasLeave) {
+          leave++;
+          status = 'LEAVE';
+        } else if (hasMaternity) {
+          maternityLeave++;
+          status = 'MATERNITY';
+        } else if (hasPermission) {
+          permission++;
+          status = 'PERMISSION';
+        } else if (sa) {
+          // If assigned but no attendance, it's absent (Mangkir)
+          absent++;
+          status = 'ABSENT';
+        } else if (isHoliday) {
+          holiday++;
+          status = 'HOLIDAY';
+        } else {
+          // If no attendance and not holiday/leave, it's absent
+          absent++;
+          status = 'ABSENT';
+        }
+
+        if (hasDispensation) dispensationCount++;
+
+        dailyDetails.push({
+          date: dateStr,
+          status,
+          isLate: att ? att.late_minutes > 0 : false,
+          isEarlyDeparture: att ? att.early_leave_minutes > 0 : false,
+          isNoClockOut: att ? (!att.check_out || att.check_out_validity === 'FALSE' || att.check_out_validity === 'DENY') : false
+        });
+      });
+
+      const totalDays = dateList.length;
+      // Attendance Rate: (Hadir + Cuti + Izin) / (Total Hari - Libur)
+      const workDays = totalDays - holiday;
+      const attendanceRate = workDays > 0 ? ((present + leave + maternityLeave + permission) / workDays) * 100 : 0;
 
       return {
         accountId: acc.id,
@@ -291,12 +372,12 @@ export const reportService = {
         leave,
         maternityLeave,
         permission,
-        holiday: holidayCount,
-        specialHoliday: 0,
+        holiday,
+        specialHoliday: 0, // We can refine this if needed
         noClockOut,
         dispensationCount,
         attendanceRate,
-        dailyDetails: [] // This would need a day-by-day map if required by heatmap
+        dailyDetails
       };
     });
   },

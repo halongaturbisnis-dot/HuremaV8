@@ -52,6 +52,23 @@ export const specialAssignmentService = {
     return data || [];
   },
 
+  async getAssignmentsByRange(startDate: string, endDate: string): Promise<any[]> {
+    const { data, error } = await supabase
+      .from('special_assignments')
+      .select(`
+        *,
+        accounts:special_assignment_accounts(account_id)
+      `)
+      .lte('start_date', endDate)
+      .gte('end_date', startDate);
+
+    if (error) throw error;
+    return (data || []).map(item => ({
+      ...item,
+      accountIds: item.accounts?.map((a: any) => a.account_id) || []
+    }));
+  },
+
   async getLinkedAccounts(assignmentId: string): Promise<any[]> {
     const { data, error } = await supabase
       .from('special_assignment_accounts')
