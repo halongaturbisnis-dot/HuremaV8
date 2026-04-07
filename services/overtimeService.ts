@@ -15,7 +15,7 @@ const sanitizePayload = (payload: any) => {
 
 export const overtimeService = {
   async getTodayOvertime(accountId: string) {
-    const startOfToday = timeUtils.getStartOfWIBDayInUTC();
+    const startOfToday = timeUtils.getStartOfLocalDayInUTC();
     const { data, error } = await supabase
       .from('overtimes')
       .select('*')
@@ -33,7 +33,7 @@ export const overtimeService = {
    * Memastikan user tidak sedang dalam sesi lembur (Mutual Exclusion)
    */
   async isOvertimeSessionActive(accountId: string): Promise<boolean> {
-    const startOfToday = timeUtils.getStartOfWIBDayInUTC();
+    const startOfToday = timeUtils.getStartOfLocalDayInUTC();
     const { data, error } = await supabase
       .from('overtimes')
       .select('id, check_in, check_out')

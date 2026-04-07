@@ -108,7 +108,7 @@ export const presenceService = {
   },
 
   async getTodayAttendance(accountId: string) {
-    const startOfToday = timeUtils.getStartOfWIBDayInUTC();
+    const startOfToday = timeUtils.getStartOfLocalDayInUTC();
     const { data, error } = await supabase
       .from('attendances')
       .select('*')

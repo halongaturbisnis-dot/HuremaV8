@@ -67,10 +67,10 @@ const SpecialAssignmentMain: React.FC = () => {
   };
 
   const getStatus = (start: string, end: string) => {
-    const now = timeUtils.getCurrentWIBDate();
+    const now = new Date();
     now.setHours(0, 0, 0, 0);
     
-    // Convert start/end strings to WIB date objects for comparison
+    // Convert start/end strings to local date objects for comparison
     const startDate = new Date(start);
     startDate.setHours(0, 0, 0, 0);
     

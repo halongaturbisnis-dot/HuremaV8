@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { timeUtils } from '../lib/timeUtils';
 import { EmployeeReportData, AttendanceSummary, LeaveSummary, OvertimeSummary, PayrollSummary } from '../types';
 import { specialAssignmentService } from './specialAssignmentService';
 import { scheduleService } from './scheduleService';
@@ -272,8 +273,8 @@ export const reportService = {
 
       dateList.forEach(dateStr => {
         const dateObj = new Date(dateStr);
-        // Use Jakarta day of week
-        const dayOfWeek = new Date(dateObj.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).getDay();
+        // Use Local day of week
+        const dayOfWeek = new Date(dateObj.toLocaleString('en-US', { timeZone: timeUtils.getLocalTimeZone() })).getDay();
 
         // 1. Check Attendance
         const att = (attendances || []).find(a => a.account_id === acc.id && a.check_in.startsWith(dateStr));

@@ -1,26 +1,27 @@
 
 import { supabase } from '../lib/supabase';
+import { timeUtils } from '../lib/timeUtils';
 import { accountService } from './accountService';
 import { scheduleService } from './scheduleService';
 import { specialAssignmentService } from './specialAssignmentService';
 
 export const monitoringService = {
   async getDailyMonitoringData(date: Date = new Date()) {
-    // Force Jakarta Timezone for calculations
-    const jakartaDateFormatter = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Jakarta',
+    // Use Local Timezone for calculations
+    const localDateFormatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timeUtils.getLocalTimeZone(),
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
     });
     
-    const jakartaDayFormatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: 'Asia/Jakarta',
+    const localDayFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timeUtils.getLocalTimeZone(),
       weekday: 'short'
     });
 
-    const dateStr = jakartaDateFormatter.format(date);
-    const dayStr = jakartaDayFormatter.format(date);
+    const dateStr = localDateFormatter.format(date);
+    const dayStr = localDayFormatter.format(date);
     const daysMap: { [key: string]: number } = { 'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6 };
     const dayOfWeek = daysMap[dayStr];
 
@@ -30,13 +31,13 @@ export const monitoringService = {
     // 2. Fetch all schedules and their rules
     const schedules = await scheduleService.getAll();
 
-    // 3. Fetch today's attendances (using Jakarta date range)
+    // 3. Fetch today's attendances (using Local date range)
     // We use gte/lte on created_at which is UTC, so we need to be careful.
     // However, the app usually stores date-only fields or we can query by date string if available.
     // Given the previous code used created_at with T00:00:00Z, let's stick to a more robust approach:
-    // Querying by the date part if possible, or calculating the UTC range for Jakarta's day.
-    const startOfDay = new Date(`${dateStr}T00:00:00+07:00`).toISOString();
-    const endOfDay = new Date(`${dateStr}T23:59:59+07:00`).toISOString();
+    // Querying by the date part if possible, or calculating the UTC range for Local's day.
+    const startOfDay = timeUtils.getStartOfLocalDayInUTC();
+    const endOfDay = new Date(new Date(startOfDay).getTime() + 24 * 60 * 60 * 1000 - 1000).toISOString();
 
     const { data: attendances } = await supabase
       .from('attendances')

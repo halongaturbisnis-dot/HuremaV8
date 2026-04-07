@@ -1,58 +1,46 @@
 /**
- * Utility for handling time boundaries and UTC offsets specifically for WIB (UTC+7)
+ * Utility for handling time boundaries and UTC offsets based on the user's local timezone
  */
 export const timeUtils = {
   /**
-   * Returns the current date in WIB (Asia/Jakarta) as a Date object
+   * Returns the current local timezone string (e.g., 'Asia/Jakarta', 'Asia/Jayapura')
    */
-  getCurrentWIBDate(): Date {
-    // Get current UTC time
+  getLocalTimeZone(): string {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  },
+
+  /**
+   * Returns today's date string in YYYY-MM-DD format based on local timezone
+   */
+  getTodayLocalString(): string {
     const now = new Date();
-    // Offset for WIB is +7 hours
-    const wibOffset = 7 * 60 * 60 * 1000;
-    return new Date(now.getTime() + wibOffset);
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   },
 
   /**
-   * Returns today's date string in YYYY-MM-DD format based on WIB
-   */
-  getTodayWIBString(): string {
-    const wibDate = this.getCurrentWIBDate();
-    return wibDate.toISOString().split('T')[0];
-  },
-
-  /**
-   * Returns the start of today (00:00:00) in WIB, converted to UTC ISO string
+   * Returns the start of today (00:00:00) in local time, converted to UTC ISO string
    * This is useful for querying Supabase created_at columns
    */
-  getStartOfWIBDayInUTC(): string {
-    const wibDate = this.getCurrentWIBDate();
-    const year = wibDate.getUTCFullYear();
-    const month = wibDate.getUTCMonth();
-    const date = wibDate.getUTCDate();
-    
-    // Create a date object for 00:00:00 WIB today
-    // Since getCurrentWIBDate already shifted the time, we can just use its components
-    const startOfWibUTC = new Date(Date.UTC(year, month, date, 0, 0, 0, 0));
-    
-    // Subtract 7 hours to get the actual UTC time for 00:00 WIB
-    const actualUTC = new Date(startOfWibUTC.getTime() - (7 * 60 * 60 * 1000));
-    return actualUTC.toISOString();
+  getStartOfLocalDayInUTC(): string {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return now.toISOString();
   },
 
   /**
-   * Converts a UTC date string or Date object to a WIB Date object
+   * Converts a date to a local Date object (standard JS Date handles this)
    */
-  toWIBDate(date: string | Date): Date {
-    const d = new Date(date);
-    const wibOffset = 7 * 60 * 60 * 1000;
-    return new Date(d.getTime() + wibOffset);
+  toLocalDate(date: string | Date): Date {
+    return new Date(date);
   },
 
   /**
-   * Checks if a given date string (YYYY-MM-DD) is today in WIB
+   * Checks if a given date string (YYYY-MM-DD) is today in local time
    */
-  isTodayWIB(dateStr: string): boolean {
-    return dateStr === this.getTodayWIBString();
+  isTodayLocal(dateStr: string): boolean {
+    return dateStr === this.getTodayLocalString();
   }
 };
