@@ -1132,6 +1132,8 @@ export interface SpecialAssignment {
   schedule_id?: string | null;
   custom_check_in?: string | null;
   custom_check_out?: string | null;
+  custom_late_tolerance?: number | null;
+  custom_early_tolerance?: number | null;
   created_at?: string;
   updated_at?: string;
   created_by?: string;

@@ -9,6 +9,7 @@ import { presenceService } from '../../services/presenceService';
 import { authService } from '../../services/authService';
 import { Account, Schedule, SpecialAssignment, Location } from '../../types';
 import AssignmentMap from './AssignmentMap';
+import AccountListItem from '../../components/Common/AccountListItem';
 
 interface SpecialAssignmentFormProps {
   assignment?: SpecialAssignment;
@@ -28,7 +29,9 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
     radius: assignment?.radius || 100,
     schedule_id: assignment?.schedule_id || null,
     custom_check_in: assignment?.custom_check_in || null,
-    custom_check_out: assignment?.custom_check_out || null
+    custom_check_out: assignment?.custom_check_out || null,
+    custom_late_tolerance: assignment?.custom_late_tolerance || 0,
+    custom_early_tolerance: assignment?.custom_early_tolerance || 0
   });
 
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -70,12 +73,24 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
   const fetchData = async () => {
     try {
       setIsLoading(true);
+      const currentUser = authService.getCurrentUser();
+      
       const [accs, schs, locs] = await Promise.all([
         accountService.getAll(undefined, undefined, '', 'aktif'),
         scheduleService.getAll(),
         locationService.getAll()
       ]);
-      setAccounts(accs);
+
+      // Filter accounts based on HR Admin scope
+      let filteredAccs = accs;
+      if (currentUser?.is_hr_admin && currentUser.hr_scope?.mode === 'limited') {
+        const allowedLocationIds = currentUser.hr_scope.location_ids || [];
+        filteredAccs = accs.filter(acc => 
+          acc.location_id && allowedLocationIds.includes(acc.location_id)
+        );
+      }
+
+      setAccounts(filteredAccs);
       setSchedules(schs.filter(s => s.type === 1 || s.type === 2));
       setLocations(locs);
 
@@ -162,7 +177,9 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
         ...formData,
         schedule_id: useCustomSchedule ? null : formData.schedule_id,
         custom_check_in: useCustomSchedule ? formData.custom_check_in : null,
-        custom_check_out: useCustomSchedule ? formData.custom_check_out : null
+        custom_check_out: useCustomSchedule ? formData.custom_check_out : null,
+        custom_late_tolerance: useCustomSchedule ? formData.custom_late_tolerance : null,
+        custom_early_tolerance: useCustomSchedule ? formData.custom_early_tolerance : null
       } as any;
 
       if (assignment?.id) {
@@ -347,6 +364,26 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
                           className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
                         />
                       </div>
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Toleransi Terlambat (Menit)</label>
+                        <input 
+                          type="number"
+                          min="0"
+                          value={formData.custom_late_tolerance || 0}
+                          onChange={(e) => setFormData({...formData, custom_late_tolerance: parseInt(e.target.value) || 0})}
+                          className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Toleransi Pulang (Menit)</label>
+                        <input 
+                          type="number"
+                          min="0"
+                          value={formData.custom_early_tolerance || 0}
+                          onChange={(e) => setFormData({...formData, custom_early_tolerance: parseInt(e.target.value) || 0})}
+                          className="w-full p-4 bg-white border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -400,46 +437,35 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
                       </select>
                     </div>
                   ) : (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div>
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Nama Lokasi Baru *</label>
-                        <input 
-                          type="text"
-                          required={locationMode === 'custom'}
-                          value={formData.location_name}
-                          onChange={(e) => setFormData({...formData, location_name: e.target.value})}
-                          placeholder="Contoh: Kantor Cabang Bandung"
-                          className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Koordinat (Lat, Lng)</label>
-                        <input 
-                          type="text"
-                          value={coordinateInput}
-                          onChange={(e) => handleCoordinateChange(e.target.value)}
-                          placeholder="-6.200000, 106.816666"
-                          className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
-                        />
-                      </div>
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Nama Lokasi Baru *</label>
+                      <input 
+                        type="text"
+                        required={locationMode === 'custom'}
+                        value={formData.location_name}
+                        onChange={(e) => setFormData({...formData, location_name: e.target.value})}
+                        placeholder="Contoh: Kantor Cabang Bandung"
+                        className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-medium focus:ring-2 focus:ring-[#006E62] focus:border-transparent transition-all"
+                      />
                     </div>
                   )}
 
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Alamat Terdeteksi</label>
-                      <div className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-medium text-gray-500 min-h-[3.5rem] flex items-center">
-                        {isFetchingAddress ? (
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="animate-spin" size={12} />
-                            <span>Mencari alamat...</span>
-                          </div>
-                        ) : (
-                          currentAddress || 'Koordinat belum ditentukan'
-                        )}
-                      </div>
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Koordinat (Lat, Lng)</label>
+                      <input 
+                        type="text"
+                        readOnly={locationMode === 'master'}
+                        value={coordinateInput}
+                        onChange={(e) => handleCoordinateChange(e.target.value)}
+                        placeholder="-6.200000, 106.816666"
+                        className={`w-full p-4 rounded-2xl text-xs font-medium transition-all border ${
+                          locationMode === 'master' 
+                            ? 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed' 
+                            : 'bg-gray-50 border-gray-100 focus:ring-2 focus:ring-[#006E62] focus:border-transparent'
+                        }`}
+                      />
                     </div>
-
                     <div>
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Radius (m)</label>
                       <input 
@@ -464,6 +490,20 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
                       isDraggable={locationMode === 'custom'}
                       onLocationChange={handleLocationChange}
                     />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Alamat Terdeteksi</label>
+                    <div className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-[10px] font-medium text-gray-500 min-h-[3.5rem] flex items-center">
+                      {isFetchingAddress ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="animate-spin" size={12} />
+                          <span>Mencari alamat...</span>
+                        </div>
+                      ) : (
+                        currentAddress || 'Koordinat belum ditentukan'
+                      )}
+                    </div>
                   </div>
                   <p className="text-[9px] text-gray-400 font-medium italic">* Lokasi ini akan menjadi titik presensi utama selama periode penugasan.</p>
                 </div>
@@ -491,42 +531,12 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
 
                   <div className="max-h-60 overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-gray-200">
                     {filteredAccounts.map(acc => (
-                      <button
+                      <AccountListItem 
                         key={acc.id}
-                        type="button"
+                        account={acc}
+                        isSelected={selectedAccountIds.includes(acc.id)}
                         onClick={() => toggleAccount(acc.id)}
-                        className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${
-                          selectedAccountIds.includes(acc.id)
-                            ? 'bg-[#006E62]/5 border-[#006E62]/20'
-                            : 'bg-white border-gray-100 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          {acc.photo_url ? (
-                            <img 
-                              src={acc.photo_url} 
-                              alt={acc.full_name}
-                              referrerPolicy="no-referrer"
-                              className="w-8 h-8 rounded-lg object-cover shadow-sm"
-                            />
-                          ) : (
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                              selectedAccountIds.includes(acc.id) ? 'bg-[#006E62] text-white' : 'bg-gray-100 text-gray-400'
-                            }`}>
-                              <User size={16} />
-                            </div>
-                          )}
-                          <div className="text-left">
-                            <p className="text-[10px] font-bold text-gray-700">{acc.full_name}</p>
-                            <p className="text-[9px] text-gray-400 font-medium">{acc.internal_nik}</p>
-                          </div>
-                        </div>
-                        {selectedAccountIds.includes(acc.id) && (
-                          <div className="w-5 h-5 bg-[#006E62] rounded-full flex items-center justify-center text-white">
-                            <Check size={12} />
-                          </div>
-                        )}
-                      </button>
+                      />
                     ))}
                   </div>
                 </div>
