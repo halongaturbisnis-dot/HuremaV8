@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS special_assignments (
     schedule_id UUID REFERENCES schedules(id),
     custom_check_in TIME,
     custom_check_out TIME,
+    custom_late_tolerance INTEGER DEFAULT 0,
+    custom_early_tolerance INTEGER DEFAULT 0,
     created_by UUID REFERENCES accounts(id),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()

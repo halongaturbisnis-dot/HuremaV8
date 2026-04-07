@@ -179,7 +179,8 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
         custom_check_in: useCustomSchedule ? formData.custom_check_in : null,
         custom_check_out: useCustomSchedule ? formData.custom_check_out : null,
         custom_late_tolerance: useCustomSchedule ? formData.custom_late_tolerance : null,
-        custom_early_tolerance: useCustomSchedule ? formData.custom_early_tolerance : null
+        custom_early_tolerance: useCustomSchedule ? formData.custom_early_tolerance : null,
+        created_by: currentUser?.id
       } as any;
 
       if (assignment?.id) {
