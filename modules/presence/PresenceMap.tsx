@@ -38,7 +38,7 @@ const PresenceMap: React.FC<PresenceMapProps> = ({ userLat, userLng, officeLat, 
       .addTo(mapRef.current);
 
       // User ACTUAL Location Marker (HERE()) - Red Static Pin
-      L.marker([userLat, userLng], {
+      mapRef.current.userMarker = L.marker([userLat, userLng], {
         icon: L.divIcon({ 
           className: 'bg-red-600 w-3 h-3 rounded-full border-2 border-white shadow-lg' 
         })
@@ -46,6 +46,15 @@ const PresenceMap: React.FC<PresenceMapProps> = ({ userLat, userLng, officeLat, 
       .bindTooltip("Lokasi Presensi", { permanent: true, direction: 'top', className: 'text-[9px] font-bold text-red-600 border-none shadow-none bg-white/80 px-1 rounded' })
       .addTo(mapRef.current);
 
+      const bounds = L.latLngBounds([[userLat, userLng], [officeLat, officeLng]]);
+      mapRef.current.fitBounds(bounds, { padding: [20, 20] });
+    } else {
+      // Update user marker position
+      if (mapRef.current.userMarker) {
+        mapRef.current.userMarker.setLatLng([userLat, userLng]);
+      }
+      
+      // Update bounds
       const bounds = L.latLngBounds([[userLat, userLng], [officeLat, officeLng]]);
       mapRef.current.fitBounds(bounds, { padding: [20, 20] });
     }
@@ -56,10 +65,10 @@ const PresenceMap: React.FC<PresenceMapProps> = ({ userLat, userLng, officeLat, 
         mapRef.current = null;
       }
     };
-  }, [userLat, userLng]);
+  }, [userLat, userLng, officeLat, officeLng, radius]);
 
   return (
-    <div id={containerId.current} className="w-full h-full rounded-lg border border-gray-100 shadow-inner overflow-hidden" />
+    <div id={containerId.current} className="w-full h-48 rounded-lg border border-gray-100 shadow-inner overflow-hidden" />
   );
 };
 

@@ -218,6 +218,7 @@ export const reportService = {
       { data: annualLeaves },
       { data: permissions },
       { data: maternityLeaves },
+      { data: overtimes },
       { data: dispensations },
       { data: holidays }
     ] = await Promise.all([
@@ -227,6 +228,7 @@ export const reportService = {
       supabase.from('account_annual_leaves').select('*').eq('status', 'approved').gte('start_date', startDate).lte('end_date', endDate),
       supabase.from('account_permission_requests').select('*').eq('status', 'approved').gte('start_date', startDate).lte('end_date', endDate),
       supabase.from('account_maternity_leaves').select('*').eq('status', 'approved').gte('start_date', startDate).lte('end_date', endDate),
+      supabase.from('overtimes').select('*').gte('check_in', `${startDate}T00:00:00Z`).lte('check_in', `${endDate}T23:59:59Z`),
       supabase.from('dispensation_requests').select('*').eq('status', 'APPROVED').gte('date', startDate).lte('date', endDate),
       supabase.from('holidays').select('*').gte('date', startDate).lte('date', endDate)
     ]);
