@@ -17,6 +17,7 @@ import PresenceCamera from './PresenceCamera';
 import PresenceMap from './PresenceMap';
 import PresenceHistory from './PresenceHistory';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
+import ProtectionOverlay from '../../components/ui/ProtectionOverlay';
 
 
 const PresenceMain: React.FC = () => {
@@ -545,20 +546,19 @@ const PresenceMain: React.FC = () => {
                 <p className="text-sm text-gray-500 mt-2 max-w-xs">Terima kasih, Anda telah menyelesaikan presensi masuk dan pulang untuk hari ini.</p>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-gray-100 p-8 flex flex-col items-center justify-center shadow-sm text-center">
+              <div className="relative bg-white rounded-2xl border border-gray-100 p-8 flex flex-col items-center justify-center shadow-sm text-center overflow-hidden">
+                {isOvertimeActive && !isCheckOut && (
+                  <ProtectionOverlay 
+                    title="Sesi Lembur Aktif"
+                    message="Selesaikan sesi lembur Anda terlebih dahulu sebelum memulai presensi reguler."
+                  />
+                )}
                 <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 shadow-xl transition-all duration-500 ${!isBlockedByLocation ? 'bg-emerald-50 text-[#006E62]' : 'bg-rose-50 text-rose-500'}`}>
                    {account.schedule_type === 'Shift Dinamis' ? <RefreshCw size={40} className={isFetchingShifts ? 'animate-spin' : ''} /> : <Fingerprint size={40} />}
                 </div>
                 <h3 className="text-xl font-bold text-gray-800">
                    {isCheckOut ? 'Waktunya Pulang?' : 'Siap Bekerja Hari Ini?'}
                 </h3>
-                
-                {isOvertimeActive && !isCheckOut && (
-                  <div className="mt-4 p-4 bg-rose-50 border border-rose-100 rounded-xl flex gap-3 items-center animate-pulse">
-                    <AlertCircle size={20} className="text-rose-500 shrink-0" />
-                    <p className="text-[10px] text-rose-600 font-bold leading-tight uppercase tracking-tight text-left">Selesaikan sesi lembur Anda terlebih dahulu sebelum memulai presensi reguler.</p>
-                  </div>
-                )}
                 
                 {/* LOGIKA KHUSUS SHIFT DINAMIS: PILEH JADWAL (Cek via schedule_type) */}
                 {account.schedule_type === 'Shift Dinamis' && !todayAttendance && (
