@@ -129,12 +129,12 @@ const PresenceMain: React.FC = () => {
       setIsOvertimeActive(isOTActive);
       setServerTime(sTime);
 
-      const dateStr = sTime.toISOString().split('T')[0];
+      const dateStr = timeUtils.getTodayLocalString(detectedTz);
       const specialAssignment = await specialAssignmentService.getActiveForAccount(currentAccountId, dateStr);
       setActiveSpecialAssignment(specialAssignment);
 
       // Cek status Cuti/Libur Mandiri
-      const leaveStatus = await presenceService.checkLeaveStatus(currentAccountId, sTime);
+      const leaveStatus = await presenceService.checkLeaveStatus(currentAccountId, sTime, detectedTz);
       setActiveLeave(leaveStatus);
 
       // Tarik daftar shift jika akun bertipe DINAMIS (Cek via schedule_type)
@@ -149,8 +149,8 @@ const PresenceMain: React.FC = () => {
       // Cek apakah hari ini Libur Khusus (Type 3) atau Hari Kerja Khusus (Type 4) di lokasi user
       if (acc && acc.location_id) {
         const [holiday, specialSchedule] = await Promise.all([
-          presenceService.checkHolidayStatus(currentAccountId, acc.location_id, sTime),
-          presenceService.checkSpecialScheduleStatus(currentAccountId, acc.location_id, sTime)
+          presenceService.checkHolidayStatus(currentAccountId, acc.location_id, sTime, detectedTz),
+          presenceService.checkSpecialScheduleStatus(currentAccountId, acc.location_id, sTime, detectedTz)
         ]);
         setActiveHoliday(holiday);
         setActiveSpecialSchedule(specialSchedule);
@@ -273,6 +273,7 @@ const PresenceMain: React.FC = () => {
     }
   };
   const isCheckOut = !!activeAttendance;
+  const todayDay = timeUtils.getDayIndexInTimeZone(serverTime, detectedTz);
   
   // Resolve Effective Schedule for Status Calculation
   // HIERARCHY: 
@@ -295,7 +296,7 @@ const PresenceMain: React.FC = () => {
         rules: [{
           id: 'SPECIAL_RULE',
           schedule_id: 'SPECIAL',
-          day_of_week: serverTime.getDay(),
+          day_of_week: todayDay,
           check_in_time: activeSpecialAssignment.custom_check_in,
           check_out_time: activeSpecialAssignment.custom_check_out,
           is_holiday: false
@@ -430,7 +431,6 @@ const PresenceMain: React.FC = () => {
   const effectiveRadius = activeSpecialAssignment ? activeSpecialAssignment.radius : (account?.location?.radius || 100);
   const isWithinRadius = distance !== null && distance <= effectiveRadius;
   const isBlockedByLocation = isLimited && !isWithinRadius;
-  const todayDay = serverTime.getDay();
   
   // Resolve Rule untuk UI Tampilan Jadwal
   let displaySchedule = account.schedule;
@@ -451,7 +451,15 @@ const PresenceMain: React.FC = () => {
   }
   
   const scheduleRule = displaySchedule?.rules?.find(r => r.day_of_week === todayDay);
-  const isHolidayToday = account.schedule_type !== 'Fleksibel' && !activeSpecialAssignment && !activeSpecialSchedule && (!!activeHoliday || !!scheduleRule?.is_holiday);
+  
+  // HIERARCHY:
+  // 1. Penugasan Khusus (Work)
+  // 2. Hari Kerja Khusus (Work)
+  // 3. Libur Kerja Khusus (Holiday)
+  // 4. Libur Mandiri (Leave)
+  
+  const isHolidayToday = !activeSpecialAssignment && !activeSpecialSchedule && (!!activeHoliday || (account.schedule_type !== 'Fleksibel' && !!scheduleRule?.is_holiday));
+  const isLeaveToday = !activeSpecialAssignment && !activeSpecialSchedule && !isHolidayToday && !!activeLeave;
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -557,21 +565,6 @@ const PresenceMain: React.FC = () => {
                   </button>
                 </div>
               </div>
-            ) : activeLeave ? (
-              <div className="bg-white rounded-2xl border border-gray-100 p-20 flex flex-col items-center justify-center shadow-sm text-center">
-                <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 mb-6 animate-pulse">
-                  <CalendarClock size={48} />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-800">
-                  Sedang {activeLeave.type}
-                </h3>
-                <p className="text-sm text-amber-600 font-bold mt-2 max-w-xs uppercase tracking-tight">
-                  "{activeLeave.data.description || 'Izin Disetujui'}"
-                </p>
-                <div className="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <p className="text-xs text-gray-500 leading-relaxed font-medium">Status Anda saat ini sedang dalam masa {activeLeave.type.toLowerCase()}. Sistem presensi diistirahatkan untuk Anda.</p>
-                </div>
-              </div>
             ) : isHolidayToday ? (
               <div className="bg-white rounded-2xl border border-gray-100 p-12 flex flex-col items-center justify-center shadow-sm text-center">
                 <div className="w-24 h-24 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mb-8 shadow-xl">
@@ -585,6 +578,21 @@ const PresenceMain: React.FC = () => {
                 </p>
                 <div className="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
                   <p className="text-xs text-gray-500 leading-relaxed font-medium">Sesuai kebijakan manajemen, sistem presensi dinonaktifkan selama periode libur ini. Nikmati waktu istirahat Anda.</p>
+                </div>
+              </div>
+            ) : isLeaveToday ? (
+              <div className="bg-white rounded-2xl border border-gray-100 p-20 flex flex-col items-center justify-center shadow-sm text-center">
+                <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 mb-6 animate-pulse">
+                  <CalendarClock size={48} />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800">
+                  Sedang {activeLeave?.type}
+                </h3>
+                <p className="text-sm text-amber-600 font-bold mt-2 max-w-xs uppercase tracking-tight">
+                  "{activeLeave?.data.description || 'Izin Disetujui'}"
+                </p>
+                <div className="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <p className="text-xs text-gray-500 leading-relaxed font-medium">Status Anda saat ini sedang dalam masa {activeLeave?.type.toLowerCase()}. Sistem presensi diistirahatkan untuk Anda.</p>
                 </div>
               </div>
             ) : (!activeAttendance && todayAttendance && todayAttendance.check_out) ? (

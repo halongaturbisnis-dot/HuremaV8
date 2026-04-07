@@ -157,8 +157,8 @@ export const presenceService = {
   /**
    * Cek apakah hari ini Libur Khusus (Tipe 3) di lokasi user
    */
-  async checkHolidayStatus(accountId: string, locationId: string, checkDate: Date) {
-    const dateStr = checkDate.toISOString().split('T')[0];
+  async checkHolidayStatus(accountId: string, locationId: string, checkDate: Date, timeZone?: string) {
+    const dateStr = timeUtils.getTodayLocalString(timeZone);
     
     const { data, error } = await supabase
       .from('schedules')
@@ -178,8 +178,8 @@ export const presenceService = {
   /**
    * Cek apakah hari ini Hari Kerja Khusus (Tipe 4) di lokasi user
    */
-  async checkSpecialScheduleStatus(accountId: string, locationId: string, checkDate: Date) {
-    const dateStr = checkDate.toISOString().split('T')[0];
+  async checkSpecialScheduleStatus(accountId: string, locationId: string, checkDate: Date, timeZone?: string) {
+    const dateStr = timeUtils.getTodayLocalString(timeZone);
     
     const { data, error } = await supabase
       .from('schedules')
@@ -199,8 +199,8 @@ export const presenceService = {
   /**
    * Cek apakah hari ini user sedang Cuti/Izin/Libur Mandiri yang disetujui
    */
-  async checkLeaveStatus(accountId: string, checkDate: Date) {
-    const dateStr = checkDate.toISOString().split('T')[0];
+  async checkLeaveStatus(accountId: string, checkDate: Date, timeZone?: string) {
+    const dateStr = timeUtils.getTodayLocalString(timeZone);
     
     // Cek Annual Leaves
     const { data: annual } = await supabase

@@ -75,5 +75,20 @@ export const timeUtils = {
    */
   isTodayLocal(dateStr: string, timeZone?: string): boolean {
     return dateStr === this.getTodayLocalString(timeZone);
+  },
+
+  /**
+   * Returns the day of the week index (0-6) for a specific date and timezone
+   */
+  getDayIndexInTimeZone(date: Date, timeZone?: string): number {
+    const tz = timeZone || this.getLocalTimeZone();
+    const dayStr = date.toLocaleString('en-US', { 
+      timeZone: tz, 
+      weekday: 'short' 
+    });
+    const daysMap: { [key: string]: number } = { 
+      'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6 
+    };
+    return daysMap[dayStr];
   }
 };
