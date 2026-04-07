@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, MapPin, Users, Calendar, Clock, ShieldCheck, Search, Check, Loader2, AlertCircle, Info } from 'lucide-react';
+import { X, Save, MapPin, Users, Calendar, Clock, ShieldCheck, Search, Check, Loader2, AlertCircle, Info, User } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { specialAssignmentService } from '../../services/specialAssignmentService';
 import { accountService } from '../../services/accountService';
@@ -8,7 +8,7 @@ import { locationService } from '../../services/locationService';
 import { presenceService } from '../../services/presenceService';
 import { authService } from '../../services/authService';
 import { Account, Schedule, SpecialAssignment, Location } from '../../types';
-import PresenceMap from '../presence/PresenceMap';
+import AssignmentMap from './AssignmentMap';
 
 interface SpecialAssignmentFormProps {
   assignment?: SpecialAssignment;
@@ -124,8 +124,36 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title || !formData.location_name || selectedAccountIds.length === 0) {
-      return Swal.fire('Peringatan', 'Harap lengkapi data wajib (Judul, Lokasi, dan Minimal 1 Karyawan).', 'warning');
+    
+    // Validasi Judul
+    if (!formData.title?.trim()) {
+      return Swal.fire('Peringatan', 'Judul Penugasan wajib diisi.', 'warning');
+    }
+
+    // Validasi Tanggal
+    if (!formData.start_date || !formData.end_date) {
+      return Swal.fire('Peringatan', 'Tanggal Mulai dan Tanggal Selesai wajib diisi.', 'warning');
+    }
+
+    // Validasi Jadwal
+    if (!useCustomSchedule && !formData.schedule_id) {
+      return Swal.fire('Peringatan', 'Harap pilih Master Jadwal atau gunakan Jadwal Kustom.', 'warning');
+    }
+    if (useCustomSchedule && (!formData.custom_check_in || !formData.custom_check_out)) {
+      return Swal.fire('Peringatan', 'Jam Masuk dan Jam Pulang pada Jadwal Kustom wajib diisi.', 'warning');
+    }
+
+    // Validasi Lokasi
+    if (locationMode === 'master' && !formData.location_name) {
+      return Swal.fire('Peringatan', 'Harap pilih Lokasi dari daftar master.', 'warning');
+    }
+    if (locationMode === 'custom' && !formData.location_name?.trim()) {
+      return Swal.fire('Peringatan', 'Nama Lokasi Baru wajib diisi.', 'warning');
+    }
+
+    // Validasi Akun
+    if (selectedAccountIds.length === 0) {
+      return Swal.fire('Peringatan', 'Minimal pilih 1 Karyawan untuk penugasan ini.', 'warning');
     }
 
     try {
@@ -261,15 +289,28 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
                 </div>
 
                 <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 space-y-6">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Gunakan Jadwal Kustom?</span>
-                    <button 
-                      type="button"
-                      onClick={() => setUseCustomSchedule(!useCustomSchedule)}
-                      className={`relative w-12 h-6 rounded-full transition-all duration-300 ${useCustomSchedule ? 'bg-[#006E62]' : 'bg-gray-200'}`}
-                    >
-                      <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${useCustomSchedule ? 'left-7' : 'left-1'}`}></div>
-                    </button>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block ml-1">Tipe Jadwal</label>
+                    <div className="flex p-1 bg-white rounded-2xl border border-gray-100">
+                      <button
+                        type="button"
+                        onClick={() => setUseCustomSchedule(false)}
+                        className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                          !useCustomSchedule ? 'bg-[#006E62] text-white shadow-md' : 'text-gray-400 hover:bg-gray-50'
+                        }`}
+                      >
+                        Daftar Jadwal
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setUseCustomSchedule(true)}
+                        className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                          useCustomSchedule ? 'bg-[#006E62] text-white shadow-md' : 'text-gray-400 hover:bg-gray-50'
+                        }`}
+                      >
+                        Jadwal Baru
+                      </button>
+                    </div>
                   </div>
 
                   {!useCustomSchedule ? (
@@ -416,11 +457,9 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
                   </div>
 
                   <div className="h-48 rounded-2xl overflow-hidden border border-gray-100">
-                    <PresenceMap 
-                      userLat={formData.latitude!} 
-                      userLng={formData.longitude!} 
-                      officeLat={formData.latitude!} 
-                      officeLng={formData.longitude!} 
+                    <AssignmentMap 
+                      lat={formData.latitude!} 
+                      lng={formData.longitude!} 
                       radius={formData.radius!}
                       isDraggable={locationMode === 'custom'}
                       onLocationChange={handleLocationChange}
@@ -471,10 +510,10 @@ const SpecialAssignmentForm: React.FC<SpecialAssignmentFormProps> = ({ assignmen
                               className="w-8 h-8 rounded-lg object-cover shadow-sm"
                             />
                           ) : (
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black ${
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                               selectedAccountIds.includes(acc.id) ? 'bg-[#006E62] text-white' : 'bg-gray-100 text-gray-400'
                             }`}>
-                              {acc.full_name.charAt(0)}
+                              <User size={16} />
                             </div>
                           )}
                           <div className="text-left">
