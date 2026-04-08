@@ -56,6 +56,23 @@ const PresenceMain: React.FC = () => {
   // State khusus Shift Dinamis
   const [dynamicShifts, setDynamicShifts] = useState<Schedule[]>([]);
   const [selectedShift, setSelectedShift] = useState<Schedule | null>(null);
+  
+  // Persist selected shift for dynamic shift users
+  useEffect(() => {
+    if (account?.schedule_type === 'Shift Dinamis') {
+      const savedShiftId = localStorage.getItem(`selected_shift_${account.id}`);
+      if (savedShiftId && !selectedShift && dynamicShifts.length > 0) {
+        const found = dynamicShifts.find(s => s.id === savedShiftId);
+        if (found) setSelectedShift(found);
+      }
+    }
+  }, [account?.id, dynamicShifts, account?.schedule_type]);
+
+  useEffect(() => {
+    if (selectedShift && account?.id) {
+      localStorage.setItem(`selected_shift_${account.id}`, selectedShift.id);
+    }
+  }, [selectedShift, account?.id]);
   const [isFetchingShifts, setIsFetchingShifts] = useState(false);
   const [landmarker, setLandmarker] = useState<any>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -339,9 +356,11 @@ const PresenceMain: React.FC = () => {
 
   const scheduleRule = resolveScheduleRule();
 
-  const scheduleResult = effectiveSchedule 
-    ? presenceService.calculateStatus(serverTime, effectiveSchedule, isCheckOut ? 'OUT' : 'IN', detectedTz)
+  // Ensure calculateStatus uses the resolved rule for special/dynamic cases
+  const scheduleResult = effectiveSchedule && scheduleRule
+    ? presenceService.calculateStatus(serverTime, { ...effectiveSchedule, rules: [scheduleRule] }, isCheckOut ? 'OUT' : 'IN', detectedTz)
     : { status: 'Tepat Waktu' };
+  
   const isLateOrEarly = scheduleResult.status === 'Terlambat' || scheduleResult.status === 'Pulang Cepat';
 
   const handleAttendance = async () => {
@@ -411,6 +430,7 @@ const PresenceMain: React.FC = () => {
           work_duration: durationFormatted
         };
         await presenceService.checkOut(activeAttendance.id, payload);
+        localStorage.removeItem(`selected_shift_${account.id}`);
       }
 
       // Tahap 3: Finalisasi UI (hanya setelah simpan DB sukses)
@@ -676,7 +696,7 @@ const PresenceMain: React.FC = () => {
 
           <div className="lg:col-span-5 order-1 lg:order-2 space-y-4 lg:space-y-6 w-full flex flex-col">
             {/* Status Geotag Card - Order 1 on Mobile */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-4 lg:p-6 shadow-sm order-1 lg:order-2">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 lg:p-6 shadow-sm order-1 lg:order-2 relative z-0">
                <div className="hidden lg:flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <MapPin size={16} className="text-[#006E62]" />
@@ -805,9 +825,11 @@ const PresenceMain: React.FC = () => {
                </div>
 
                 {/* LOGIKA KHUSUS SHIFT DINAMIS: PILEH JADWAL (Cek via schedule_type) */}
-                {account.schedule_type === 'Shift Dinamis' && !todayAttendance && !activeSpecialAssignment && !activeSpecialSchedule && (
+                {account.schedule_type === 'Shift Dinamis' && !activeSpecialAssignment && !activeSpecialSchedule && (
                   <div className="mt-6 w-full space-y-3">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-left mb-2">Pilih Shift Kerja Hari Ini:</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-left mb-2">
+                      {todayAttendance ? 'Shift Kerja Terpilih:' : 'Pilih Shift Kerja Hari Ini:'}
+                    </p>
                     {isFetchingShifts ? (
                       <div className="py-4 text-xs text-gray-400 italic">Mengambil daftar shift...</div>
                     ) : dynamicShifts.length === 0 ? (
@@ -817,8 +839,9 @@ const PresenceMain: React.FC = () => {
                         {dynamicShifts.map(s => (
                           <button 
                             key={s.id}
-                            onClick={() => setSelectedShift(s)}
-                            className={`flex items-center justify-between p-3 rounded-xl border transition-all text-left group ${selectedShift?.id === s.id ? 'border-[#006E62] bg-emerald-50' : 'border-gray-100 bg-white hover:border-[#006E62]'}`}
+                            onClick={() => !todayAttendance && setSelectedShift(s)}
+                            disabled={!!todayAttendance}
+                            className={`flex items-center justify-between p-3 rounded-xl border transition-all text-left group ${selectedShift?.id === s.id ? 'border-[#006E62] bg-emerald-50' : 'border-gray-100 bg-white hover:border-[#006E62]'} ${todayAttendance ? 'opacity-80 cursor-not-allowed' : ''}`}
                           >
                             <div className="flex-1">
                               <p className={`text-xs font-bold ${selectedShift?.id === s.id ? 'text-[#006E62]' : 'text-gray-700'}`}>{s.name}</p>
