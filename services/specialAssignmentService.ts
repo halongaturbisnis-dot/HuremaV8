@@ -38,6 +38,17 @@ export const specialAssignmentService = {
     return data;
   },
 
+  async getById(id: string): Promise<SpecialAssignment | null> {
+    const { data, error } = await supabase
+      .from('special_assignments')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  },
+
   async getActiveForDate(date: string): Promise<any[]> {
     const { data, error } = await supabase
       .from('special_assignments')

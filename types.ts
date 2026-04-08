@@ -183,6 +183,7 @@ export interface Attendance {
   check_in_validity: 'TRUE' | 'FALSE' | 'DENY' | null;
   check_out_validity: 'TRUE' | 'FALSE' | 'DENY' | null;
   schedule_id?: string | null;
+  special_assignment_id?: string | null;
   created_at?: string;
 }
 

@@ -139,7 +139,14 @@ const PresenceMain: React.FC = () => {
       setServerTime(sTime);
 
       const dateStr = timeUtils.getTodayLocalString(detectedTz);
-      const specialAssignment = await specialAssignmentService.getActiveForAccount(currentAccountId, dateStr);
+      
+      // HIERARCHY LOCKING: Jika ada absensi aktif, gunakan ID yang terkunci di DB
+      let specialAssignment = null;
+      if (activeAtt?.special_assignment_id) {
+        specialAssignment = await specialAssignmentService.getById(activeAtt.special_assignment_id);
+      } else {
+        specialAssignment = await specialAssignmentService.getActiveForAccount(currentAccountId, dateStr);
+      }
       setActiveSpecialAssignment(specialAssignment);
 
       // Cek status Cuti/Libur Mandiri
@@ -151,8 +158,15 @@ const PresenceMain: React.FC = () => {
         setIsFetchingShifts(true);
         const shifts = await scheduleService.getByLocation(acc.location_id);
         // MANDATORY: Hanya bertipe Shift Kerja (Type 2)
-        setDynamicShifts(shifts.filter((s: any) => s.type === 2));
+        const filteredShifts = shifts.filter((s: any) => s.type === 2);
+        setDynamicShifts(filteredShifts);
         setIsFetchingShifts(false);
+
+        // LOCKING: Jika ada schedule_id di activeAttendance, set sebagai selectedShift
+        if (activeAtt?.schedule_id) {
+          const lockedShift = filteredShifts.find((s: any) => s.id === activeAtt.schedule_id);
+          if (lockedShift) setSelectedShift(lockedShift);
+        }
       }
 
       // Cek apakah hari ini Libur Khusus (Type 3) atau Hari Kerja Khusus (Type 4) di lokasi user
@@ -162,7 +176,19 @@ const PresenceMain: React.FC = () => {
           presenceService.checkSpecialScheduleStatus(currentAccountId, acc.location_id, sTime, detectedTz)
         ]);
         setActiveHoliday(holiday);
-        setActiveSpecialSchedule(specialSchedule);
+        
+        // LOCKING: Jika ada schedule_id di activeAttendance dan bukan shift dinamis, 
+        // pastikan kita memuat jadwal tersebut sebagai activeSpecialSchedule jika tipenya 4
+        if (activeAtt?.schedule_id && acc.schedule_type !== 'Shift Dinamis') {
+          const lockedSchedule = await scheduleService.getById(activeAtt.schedule_id);
+          if (lockedSchedule.type === 4) {
+            setActiveSpecialSchedule(lockedSchedule);
+          } else {
+            setActiveSpecialSchedule(specialSchedule);
+          }
+        } else {
+          setActiveSpecialSchedule(specialSchedule);
+        }
       }
     } catch (error) {
       console.error(error);
@@ -292,16 +318,44 @@ const PresenceMain: React.FC = () => {
   // 4. Jadwal Reguler (Fixed/Shift/Fleksibel)
   
   const getEffectiveSchedule = () => {
+    // HIERARCHY LOCKING: Jika sedang check-in, gunakan mode yang tersimpan di DB
+    if (activeAttendance) {
+      if (activeAttendance.special_assignment_id && activeSpecialAssignment) {
+        return {
+          id: activeSpecialAssignment.id,
+          name: activeSpecialAssignment.title,
+          type: 1,
+          tolerance_minutes: activeSpecialAssignment.custom_early_tolerance || 0,
+          tolerance_checkin_minutes: activeSpecialAssignment.custom_late_tolerance || 0,
+          rules: [{
+            id: 'SPECIAL_RULE',
+            schedule_id: activeSpecialAssignment.id,
+            day_of_week: todayDay,
+            check_in_time: activeSpecialAssignment.custom_check_in,
+            check_out_time: activeSpecialAssignment.custom_check_out,
+            is_holiday: false
+          }]
+        } as any;
+      }
+      if (activeAttendance.schedule_id) {
+        if (account?.schedule_type === 'Shift Dinamis') return selectedShift;
+        if (activeSpecialSchedule && activeSpecialSchedule.id === activeAttendance.schedule_id) return activeSpecialSchedule;
+        return account?.schedule || null;
+      }
+      return account?.schedule || null; // Fleksibel
+    }
+
+    // NORMAL FLOW: Penentuan jadwal saat belum check-in
     if (activeSpecialAssignment && (activeSpecialAssignment.custom_check_in || activeSpecialAssignment.custom_check_out)) {
       return {
-        id: 'SPECIAL',
+        id: activeSpecialAssignment.id,
         name: activeSpecialAssignment.title,
         type: 1,
         tolerance_minutes: activeSpecialAssignment.custom_early_tolerance || 0,
         tolerance_checkin_minutes: activeSpecialAssignment.custom_late_tolerance || 0,
         rules: [{
           id: 'SPECIAL_RULE',
-          schedule_id: 'SPECIAL',
+          schedule_id: activeSpecialAssignment.id,
           day_of_week: todayDay,
           check_in_time: activeSpecialAssignment.custom_check_in,
           check_out_time: activeSpecialAssignment.custom_check_out,
@@ -379,6 +433,7 @@ const PresenceMain: React.FC = () => {
       const submissionCoords = lockedCoords || coords;
 
       if (!isCurrentlyCheckingOut) {
+        const isSpecial = !!activeSpecialAssignment;
         const payload: any = {
           account_id: account.id,
           check_in: currentTimeStr,
@@ -392,7 +447,8 @@ const PresenceMain: React.FC = () => {
           check_in_type: isOutOfRangeRequested ? checkInType : 'Reguler',
           check_in_reason: isOutOfRangeRequested ? checkInReason : null,
           check_in_validity: isOutOfRangeRequested ? 'FALSE' : 'TRUE',
-          schedule_id: effectiveSchedule?.id
+          schedule_id: isSpecial ? null : effectiveSchedule?.id,
+          special_assignment_id: isSpecial ? activeSpecialAssignment.id : null
         };
         await presenceService.checkIn(payload);
       } else {
