@@ -446,6 +446,8 @@ const PresenceMain: React.FC = () => {
         is_holiday: false
       }]
     } as any;
+  } else if (activeSpecialSchedule) {
+    displaySchedule = activeSpecialSchedule;
   } else if (account.schedule_type === 'Shift Dinamis') {
     displaySchedule = selectedShift || undefined;
   }
@@ -489,6 +491,21 @@ const PresenceMain: React.FC = () => {
           </div>
           <div className="px-3 py-1 bg-emerald-200/50 rounded-full text-[9px] font-black text-emerald-800 uppercase tracking-widest">
             Jadwal Khusus
+          </div>
+        </div>
+      )}
+
+      {activeHoliday && !activeSpecialAssignment && !activeSpecialSchedule && (
+        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-top duration-500">
+          <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center text-rose-500 shrink-0">
+            <Umbrella size={24} />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-xs font-bold text-rose-800 uppercase tracking-wider">Hari Libur Khusus</h4>
+            <p className="text-[10px] text-rose-600 font-medium">{activeHoliday.name}</p>
+          </div>
+          <div className="px-3 py-1 bg-rose-200/50 rounded-full text-[9px] font-black text-rose-800 uppercase tracking-widest">
+            Libur Nasional
           </div>
         </div>
       )}
@@ -542,7 +559,7 @@ const PresenceMain: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="w-full max-w-sm space-y-3">
+                <div className="w-full max-sm space-y-3">
                   <button 
                     disabled={isCapturing}
                     onClick={handleAttendance}
@@ -612,48 +629,16 @@ const PresenceMain: React.FC = () => {
                   />
                 )}
                 <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 shadow-xl transition-all duration-500 ${!isBlockedByLocation ? 'bg-emerald-50 text-[#006E62]' : 'bg-rose-50 text-rose-500'}`}>
-                   {account.schedule_type === 'Shift Dinamis' ? <RefreshCw size={40} className={isFetchingShifts ? 'animate-spin' : ''} /> : <Fingerprint size={40} />}
+                   <Fingerprint size={40} />
                 </div>
                 <h3 className="text-xl font-bold text-gray-800">
                    {isCheckOut ? 'Waktunya Pulang?' : 'Siap Bekerja Hari Ini?'}
                 </h3>
                 
-                {/* LOGIKA KHUSUS SHIFT DINAMIS: PILEH JADWAL (Cek via schedule_type) */}
-                {account.schedule_type === 'Shift Dinamis' && !todayAttendance && !activeSpecialAssignment && !activeSpecialSchedule && (
-                  <div className="mt-6 w-full max-w-sm space-y-3">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-left mb-2">Pilih Shift Kerja Hari Ini:</p>
-                    {isFetchingShifts ? (
-                      <div className="py-4 text-xs text-gray-400 italic">Mengambil daftar shift...</div>
-                    ) : dynamicShifts.length === 0 ? (
-                      <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-[10px] text-rose-600 font-bold">Tidak ada jadwal Shift Kerja (Type 2) tersedia di lokasi Anda.</div>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-1">
-                        {dynamicShifts.map(s => (
-                          <button 
-                            key={s.id}
-                            onClick={() => setSelectedShift(s)}
-                            className={`flex items-center justify-between p-3 rounded-xl border transition-all text-left group ${selectedShift?.id === s.id ? 'border-[#006E62] bg-emerald-50' : 'border-gray-100 bg-white hover:border-[#006E62]'}`}
-                          >
-                            <div className="flex-1">
-                              <p className={`text-xs font-bold ${selectedShift?.id === s.id ? 'text-[#006E62]' : 'text-gray-700'}`}>{s.name}</p>
-                              <p className="text-[9px] text-gray-400 uppercase font-bold">
-                                {s.rules?.find(r => r.day_of_week === todayDay)?.check_in_time?.slice(0,5)} - {s.rules?.find(r => r.day_of_week === todayDay)?.check_out_time?.slice(0,5)}
-                              </p>
-                            </div>
-                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${selectedShift?.id === s.id ? 'bg-[#006E62] border-[#006E62] text-white' : 'border-gray-200 group-hover:border-[#006E62]'}`}>
-                               {selectedShift?.id === s.id && <Check size={12} />}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 <p className="text-xs text-gray-400 mt-6 max-w-xs leading-tight">
                   {!isBlockedByLocation 
                     ? (account.schedule_type === 'Shift Dinamis' && !todayAttendance && !selectedShift 
-                        ? 'Silahkan pilih salah satu shift di atas untuk mengaktifkan tombol verifikasi.'
+                        ? 'Silahkan pilih salah satu shift di panel samping untuk mengaktifkan tombol verifikasi.'
                         : 'Klik tombol di bawah untuk verifikasi identitas AI dan mencatat lokasi Anda.')
                     : 'Akses presensi terkunci. Anda harus berada di area lokasi penempatan.'}
                 </p>
@@ -725,7 +710,7 @@ const PresenceMain: React.FC = () => {
                     {isBlockedByLocation && (
                       <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl flex gap-3 items-start animate-pulse">
                          <AlertCircle size={16} className="text-rose-500 shrink-0 mt-0.5" />
-                         <p className="text-[10px] text-rose-600 font-bold leading-tight uppercase tracking-tight">Lokasi anda berada di luar radius jangkauan lokasi {activeSpecialAssignment ? activeSpecialAssignment.location_name : account.location.name}</p>
+                         <p className="text-[10px] text-rose-600 font-bold leading-tight uppercase tracking-tight text-center flex-1">Lokasi anda berada di luar radius jangkauan lokasi {activeSpecialAssignment ? activeSpecialAssignment.location_name : account.location.name}</p>
                       </div>
                     )}
 
@@ -787,6 +772,13 @@ const PresenceMain: React.FC = () => {
                     {serverTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
                   </div>
 
+                  {isOvertimeActive && !isCheckOut && (
+                    <div className="mt-4 p-3 bg-orange-50 border border-orange-100 rounded-xl flex gap-3 items-start animate-pulse">
+                      <AlertCircle size={16} className="text-orange-500 shrink-0 mt-0.5" />
+                      <p className="text-[10px] text-orange-600 font-bold leading-tight uppercase tracking-tight text-center flex-1">Ada sesi lembur yang sedang aktif</p>
+                    </div>
+                  )}
+
                   {todayAttendance?.check_in && !todayAttendance.check_out && (
                     <div className="mt-8 p-3 bg-[#006E62]/5 rounded-2xl border border-emerald-100/50 animate-in fade-in zoom-in duration-700">
                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Durasi Kerja Berjalan</p>
@@ -796,6 +788,38 @@ const PresenceMain: React.FC = () => {
                     </div>
                   )}
                </div>
+
+                {/* LOGIKA KHUSUS SHIFT DINAMIS: PILEH JADWAL (Cek via schedule_type) */}
+                {account.schedule_type === 'Shift Dinamis' && !todayAttendance && !activeSpecialAssignment && !activeSpecialSchedule && (
+                  <div className="mt-6 w-full space-y-3">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-left mb-2">Pilih Shift Kerja Hari Ini:</p>
+                    {isFetchingShifts ? (
+                      <div className="py-4 text-xs text-gray-400 italic">Mengambil daftar shift...</div>
+                    ) : dynamicShifts.length === 0 ? (
+                      <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-[10px] text-rose-600 font-bold">Tidak ada jadwal Shift Kerja (Type 2) tersedia di lokasi Anda.</div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-1">
+                        {dynamicShifts.map(s => (
+                          <button 
+                            key={s.id}
+                            onClick={() => setSelectedShift(s)}
+                            className={`flex items-center justify-between p-3 rounded-xl border transition-all text-left group ${selectedShift?.id === s.id ? 'border-[#006E62] bg-emerald-50' : 'border-gray-100 bg-white hover:border-[#006E62]'}`}
+                          >
+                            <div className="flex-1">
+                              <p className={`text-xs font-bold ${selectedShift?.id === s.id ? 'text-[#006E62]' : 'text-gray-700'}`}>{s.name}</p>
+                              <p className="text-[9px] text-gray-400 uppercase font-bold">
+                                {s.rules?.find(r => r.day_of_week === todayDay)?.check_in_time?.slice(0,5)} - {s.rules?.find(r => r.day_of_week === todayDay)?.check_out_time?.slice(0,5)}
+                              </p>
+                            </div>
+                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${selectedShift?.id === s.id ? 'bg-[#006E62] border-[#006E62] text-white' : 'border-gray-200 group-hover:border-[#006E62]'}`}>
+                               {selectedShift?.id === s.id && <Check size={12} />}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                {isLateOrEarly && (
                  <div className="mt-4 p-4 bg-rose-50 rounded-xl border border-rose-100">
@@ -809,7 +833,7 @@ const PresenceMain: React.FC = () => {
                  </div>
                )}
 
-               {account.schedule_type !== 'Fleksibel' && (
+               {account.schedule_type !== 'Fleksibel' && (account.schedule_type !== 'Shift Dinamis' || !!selectedShift) && (
                  <div className="mt-4 lg:mt-8 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100/50 space-y-3">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-[#006E62] uppercase tracking-wider mb-2">
                       <CalendarClock size={14} /> {account.schedule_type === 'Shift Dinamis' ? 'Shift Terpilih' : 'Jadwal Hari Ini'}
@@ -834,11 +858,13 @@ const PresenceMain: React.FC = () => {
                )}
 
                <div className="mt-4 pt-4 lg:mt-6 lg:pt-6 border-t border-gray-50">
-                  <div className="flex justify-center mb-4">
-                    <span className="text-[10px] font-bold text-[#006E62] bg-[#006E62]/5 px-2 py-0.5 rounded uppercase tracking-tighter">
-                      {displaySchedule?.name || (account.schedule_type === 'Fleksibel' ? 'Fleksibel' : 'Reguler')}
-                    </span>
-                  </div>
+                  {(account.schedule_type !== 'Shift Dinamis' || !!selectedShift) && (
+                    <div className="flex justify-center mb-4">
+                      <span className="text-[10px] font-bold text-[#006E62] bg-[#006E62]/5 px-2 py-0.5 rounded uppercase tracking-tighter">
+                        {displaySchedule?.name || (account.schedule_type === 'Fleksibel' ? 'Fleksibel' : 'Reguler')}
+                      </span>
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center">
                       <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Status Masuk</p>
