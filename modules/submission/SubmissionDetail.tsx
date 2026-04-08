@@ -272,7 +272,9 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                     const isIN = submission.submission_data.presence_type === 'IN';
                     const time = isIN ? att?.check_in : att?.check_out;
                     const lateEarly = isIN ? att?.late_minutes : att?.early_departure_minutes;
-                    const reason = isIN ? att?.late_reason : att?.early_departure_reason;
+                    const reason = isIN 
+                      ? att?.late_reason 
+                      : (att?.status_out === 'Terlambat Pulang' ? att?.late_checkout_reason : att?.early_departure_reason);
                     
                     return (
                       <>
@@ -353,20 +355,22 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
               </div>
 
               {/* Tipe & Alasan Presensi Luar - Full Width at Bottom of Scroll Area */}
-              <div className="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm space-y-3">
-                <div className="flex items-center gap-2 pb-2 border-b border-amber-50">
-                  <AlertCircle size={14} className="text-amber-600" />
-                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Tipe & Alasan Khusus</span>
+              {submission.submission_data.location_type && submission.submission_data.location_type !== 'Reguler' && (
+                <div className="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm space-y-3">
+                  <div className="flex items-center gap-2 pb-2 border-b border-amber-50">
+                    <AlertCircle size={14} className="text-amber-600" />
+                    <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Jenis & Alasan Presensi Luar</span>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xs font-bold text-gray-800">
+                      {submission.submission_data.location_type === 'Tugas Luar' || submission.submission_data.location_type === 'WFH' || submission.submission_data.location_type === 'Ketemu Client' ? 'Luar Lokasi' : submission.submission_data.location_type}
+                    </p>
+                    <p className="text-xs text-gray-600 italic leading-relaxed bg-amber-50/30 p-3 rounded-lg border border-amber-50/50">
+                      "{submission.submission_data.reason || 'Tidak ada alasan yang diberikan'}"
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-xs font-bold text-gray-800">
-                    {submission.submission_data.full_attendance?.status_out === 'Terlambat Pulang' ? 'Terlambat Pulang' : (submission.submission_data.location_type === 'Tugas Luar' || submission.submission_data.location_type === 'WFH' || submission.submission_data.location_type === 'Ketemu Client' ? 'Luar Lokasi' : submission.submission_data.location_type)}
-                  </p>
-                  <p className="text-xs text-gray-600 italic leading-relaxed bg-amber-50/30 p-3 rounded-lg border border-amber-50/50">
-                    "{submission.submission_data.reason || (submission.submission_data.full_attendance?.status_out === 'Terlambat Pulang' ? submission.submission_data.full_attendance?.late_checkout_reason : 'Tidak ada alasan yang diberikan')}"
-                  </p>
-                </div>
-              </div>
+              )}
             </div>
           ) : (
             <div className="space-y-6">

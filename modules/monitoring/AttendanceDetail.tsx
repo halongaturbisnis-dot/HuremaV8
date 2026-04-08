@@ -248,13 +248,15 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Alasan</p>
                         <p className="text-[11px] text-gray-600 italic leading-tight">
-                          {attendance.late_minutes > 0 ? (attendance.late_reason || 'Tidak ada alasan') : (attendance.check_in_type !== 'Reguler' ? (attendance.check_in_reason || 'Presensi Luar') : 'Tepat Waktu')}
+                          {attendance.late_minutes > 0 
+                            ? (attendance.late_reason || 'Tidak ada alasan') 
+                            : (attendance.check_in ? 'Tepat Waktu' : '-')}
                         </p>
                       </div>
                     </div>
 
                     {/* 5. Jenis Presensi Luar | Alasan Presensi Luar */}
-                    {attendance.check_in_type !== 'Reguler' && (
+                    {attendance.check_in_type && attendance.check_in_type !== 'Reguler' && (
                       <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-50">
                         <div>
                           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jenis Presensi Luar</p>
@@ -347,7 +349,7 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                       </div>
                     </div>
 
-                    {/* 4. Status Masuk / Pulang | Alasan */}
+                    {/* 4. Status Pulang | Alasan */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Status Pulang</p>
@@ -358,23 +360,23 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Alasan</p>
                         <p className="text-[11px] text-gray-600 italic leading-tight">
-                          {attendance.early_departure_minutes > 0 
-                            ? (attendance.early_departure_reason || 'Tidak ada alasan') 
-                            : (attendance.status_out === 'Terlambat Pulang' 
-                                ? (attendance.late_checkout_reason || 'Terlambat Pulang') 
+                          {attendance.status_out === 'Terlambat Pulang'
+                            ? (attendance.late_checkout_reason || 'Tidak ada alasan')
+                            : (attendance.early_departure_minutes > 0 
+                                ? (attendance.early_departure_reason || 'Tidak ada alasan') 
                                 : (attendance.check_out ? 'Sesuai Jadwal' : '-'))}
                         </p>
                       </div>
                     </div>
 
                     {/* 5. Jenis Presensi Luar | Alasan Presensi Luar */}
-                    {(attendance.check_out_type && attendance.check_out_type !== 'Reguler') || attendance.status_out === 'Terlambat Pulang' ? (
+                    {attendance.check_out_type && attendance.check_out_type !== 'Reguler' ? (
                       <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-50">
                         <div>
-                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Status Verifikasi Pulang</p>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jenis Presensi Luar</p>
                           <div className="flex items-center gap-2">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${attendance.status_out === 'Terlambat Pulang' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>
-                              {attendance.status_out === 'Terlambat Pulang' ? 'Terlambat Pulang' : (attendance.check_out_type === 'Tugas Luar' || attendance.check_out_type === 'WFH' || attendance.check_out_type === 'Ketemu Client' ? 'Luar Lokasi' : attendance.check_out_type)}
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-50 text-amber-600">
+                              {attendance.check_out_type === 'Tugas Luar' || attendance.check_out_type === 'WFH' || attendance.check_out_type === 'Ketemu Client' ? 'Luar Lokasi' : attendance.check_out_type}
                             </span>
                             <div className="group relative">
                               {getStatusIcon(attendance.check_out_validity)}
@@ -385,9 +387,9 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                           </div>
                         </div>
                         <div>
-                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Alasan Khusus</p>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Alasan Presensi Luar</p>
                           <p className="text-[11px] text-gray-600 italic leading-tight">
-                            {attendance.status_out === 'Terlambat Pulang' ? (attendance.late_checkout_reason || 'Tidak ada alasan') : (attendance.check_out_reason || 'Tidak ada alasan')}
+                            {attendance.check_out_reason || 'Tidak ada alasan'}
                           </p>
                         </div>
                       </div>
