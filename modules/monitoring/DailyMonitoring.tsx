@@ -194,9 +194,9 @@ const DailyMonitoring: React.FC = () => {
                               )}
                             </span>
                           )}
-                          {item.attendance?.status_out === 'Telat Absen Pulang' && (
+                          {item.attendance?.status_out === 'Terlambat Pulang' && (
                             <span className="px-1.5 py-0.5 bg-rose-100 text-rose-700 text-[9px] font-bold rounded uppercase flex items-center gap-1">
-                              Telat Absen Pulang
+                              Terlambat Pulang
                               {item.attendance.check_out_validity === 'TRUE' ? (
                                 <Check size={10} className="text-[#006E62]" />
                               ) : item.attendance.check_out_validity === 'DENY' ? (
@@ -208,7 +208,11 @@ const DailyMonitoring: React.FC = () => {
                           )}
                           {item.attendance?.check_out && (
                             <p className={`text-[9px] font-bold uppercase ${item.attendance?.early_departure_minutes > 0 ? 'text-red-600' : 'text-[#006E62]'}`}>
-                              {item.attendance?.early_departure_minutes > 0 ? `Pulang Awal ${item.attendance.early_departure_minutes} Menit` : 'Tepat Waktu'}
+                              {item.attendance?.early_departure_minutes > 0 
+                                ? (item.attendance?.status_out === 'Terlambat Pulang' 
+                                    ? `Terlambat Pulang ${item.attendance.early_departure_minutes} Menit` 
+                                    : `Pulang Awal ${item.attendance.early_departure_minutes} Menit`) 
+                                : 'Tepat Waktu'}
                             </p>
                           )}
                         </div>

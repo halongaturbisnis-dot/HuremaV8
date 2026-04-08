@@ -409,7 +409,7 @@ const PresenceMain: React.FC = () => {
     : { status: 'Tepat Waktu' };
   
   const isLateOrEarly = scheduleResult.status === 'Terlambat' || scheduleResult.status === 'Pulang Cepat';
-  const isLateCheckout = scheduleResult.status === 'Telat Absen Pulang';
+  const isLateCheckout = scheduleResult.status === 'Terlambat Pulang';
 
   const handleAttendance = async () => {
     if (!capturedPhoto) return;

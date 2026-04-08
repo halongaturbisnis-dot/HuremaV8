@@ -105,14 +105,14 @@ export const presenceService = {
       const earlyTolerance = schedule.tolerance_minutes || 0;
       const lateCheckoutTolerance = schedule.tolerance_checkout_minutes || 0;
 
-      // Jika pulang sebelum waktu seharusnya (diffMins negatif) diluar toleransi
-      if (diffMins < -earlyTolerance) {
-        return { status: 'Pulang Cepat', minutes: Math.abs(diffMins) - earlyTolerance };
+      // Jika pulang sebelum waktu seharusnya (diffMins negatif)
+      if (diffMins < 0) {
+        return { status: 'Pulang Cepat', minutes: Math.abs(diffMins) };
       }
       
       // Jika pulang setelah waktu seharusnya (diffMins positif) diluar toleransi checkout
       if (diffMins > lateCheckoutTolerance) {
-        return { status: 'Telat Absen Pulang', minutes: diffMins - lateCheckoutTolerance };
+        return { status: 'Terlambat Pulang', minutes: diffMins - lateCheckoutTolerance };
       }
     }
 

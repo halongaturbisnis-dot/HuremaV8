@@ -147,9 +147,9 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                     <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[9px] font-black rounded-full uppercase">
                       {submission.submission_data.presence_type === 'IN' ? 'Presensi Masuk' : 'Presensi Keluar'}
                     </span>
-                    {submission.submission_data.full_attendance?.status_out === 'Telat Absen Pulang' && (
+                    {submission.submission_data.full_attendance?.status_out === 'Terlambat Pulang' && (
                       <span className="px-2 py-0.5 bg-rose-100 text-rose-700 text-[9px] font-black rounded-full uppercase">
-                        Telat Absen Pulang
+                        Terlambat Pulang
                       </span>
                     )}
                   </div>
@@ -243,11 +243,11 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                       <div className="grid grid-cols-2 gap-2 pt-1">
                         <div>
                           <p className="text-[8px] font-bold text-gray-400 uppercase">Jam Masuk</p>
-                          <p className="text-[11px] font-bold text-emerald-600">{checkInTarget}</p>
+                          <p className="text-[11px] font-bold text-emerald-600">{formatTimeOnly(checkInTarget)}</p>
                         </div>
                         <div>
                           <p className="text-[8px] font-bold text-gray-400 uppercase">Jam Pulang</p>
-                          <p className="text-[11px] font-bold text-red-600">{checkOutTarget}</p>
+                          <p className="text-[11px] font-bold text-red-600">{formatTimeOnly(checkOutTarget)}</p>
                         </div>
                         <div>
                           <p className="text-[8px] font-bold text-gray-400 uppercase">Toleransi Masuk</p>
@@ -285,15 +285,15 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                           <p className="text-xs font-bold text-[#006E62]">{time ? formatTimeOnly(time) : '-'}</p>
                         </div>
                         <div>
-                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{isIN ? 'Keterlambatan' : 'Pulang Awal / Telat Absen'}</p>
-                          <p className={`text-xs font-bold ${lateEarly > 0 || att?.status_out === 'Telat Absen Pulang' ? 'text-red-600' : 'text-emerald-600'}`}>
-                            {att?.status_out === 'Telat Absen Pulang' ? 'Telat Absen Pulang' : `${lateEarly || 0} Menit`}
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{isIN ? 'Keterlambatan' : (att?.status_out === 'Terlambat Pulang' ? 'Terlambat Pulang' : 'Pulang Awal')}</p>
+                          <p className={`text-xs font-bold ${lateEarly > 0 || att?.status_out === 'Terlambat Pulang' ? 'text-red-600' : 'text-emerald-600'}`}>
+                            {att?.status_out === 'Terlambat Pulang' ? `${lateEarly || 0} Menit` : `${lateEarly || 0} Menit`}
                           </p>
                         </div>
-                        {(lateEarly > 0 || att?.status_out === 'Telat Absen Pulang') && (
+                        {(lateEarly > 0 || att?.status_out === 'Terlambat Pulang') && (
                           <div className="pt-1">
-                            <p className="text-[8px] font-bold text-gray-400 uppercase">Alasan {isIN ? 'Terlambat' : (att?.status_out === 'Telat Absen Pulang' ? 'Telat Absen' : 'Pulang Awal')}</p>
-                            <p className="text-[10px] text-gray-500 italic leading-tight">"{reason || (att?.status_out === 'Telat Absen Pulang' ? att?.late_checkout_reason : '-')}"</p>
+                            <p className="text-[8px] font-bold text-gray-400 uppercase">Alasan {isIN ? 'Terlambat' : (att?.status_out === 'Terlambat Pulang' ? 'Terlambat' : 'Pulang Awal')}</p>
+                            <p className="text-[10px] text-gray-500 italic leading-tight">"{reason || (att?.status_out === 'Terlambat Pulang' ? att?.late_checkout_reason : '-')}"</p>
                           </div>
                         )}
                       </>
@@ -360,10 +360,10 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                 </div>
                 <div className="space-y-2">
                   <p className="text-xs font-bold text-gray-800">
-                    {submission.submission_data.full_attendance?.status_out === 'Telat Absen Pulang' ? 'Telat Absen Pulang' : (submission.submission_data.location_type === 'Tugas Luar' || submission.submission_data.location_type === 'WFH' || submission.submission_data.location_type === 'Ketemu Client' ? 'Luar Lokasi' : submission.submission_data.location_type)}
+                    {submission.submission_data.full_attendance?.status_out === 'Terlambat Pulang' ? 'Terlambat Pulang' : (submission.submission_data.location_type === 'Tugas Luar' || submission.submission_data.location_type === 'WFH' || submission.submission_data.location_type === 'Ketemu Client' ? 'Luar Lokasi' : submission.submission_data.location_type)}
                   </p>
                   <p className="text-xs text-gray-600 italic leading-relaxed bg-amber-50/30 p-3 rounded-lg border border-amber-50/50">
-                    "{submission.submission_data.reason || (submission.submission_data.full_attendance?.status_out === 'Telat Absen Pulang' ? submission.submission_data.full_attendance?.late_checkout_reason : 'Tidak ada alasan yang diberikan')}"
+                    "{submission.submission_data.reason || (submission.submission_data.full_attendance?.status_out === 'Terlambat Pulang' ? submission.submission_data.full_attendance?.late_checkout_reason : 'Tidak ada alasan yang diberikan')}"
                   </p>
                 </div>
               </div>
