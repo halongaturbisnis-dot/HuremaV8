@@ -275,19 +275,16 @@ const PresenceMain: React.FC = () => {
   const isCheckOut = !!activeAttendance;
   const todayDay = timeUtils.getDayIndexInTimeZone(serverTime, detectedTz);
   
-  // Resolve Effective Schedule for Status Calculation
+  // Resolve Effective Schedule for Status Calculation & UI
   // HIERARCHY: 
   // 1. Penugasan Khusus (SPECIAL)
   // 2. Hari Kerja Khusus (TYPE 4)
-  // 3. Libur Kerja Khusus (TYPE 3) -> handled via activeHoliday UI
-  // 4. Libur Mandiri (LEAVE) -> handled via activeLeave UI
-  // 5. Jadwal Reguler (Fixed/Shift/Fleksibel)
+  // 3. Shift Dinamis (Jika dipilih)
+  // 4. Jadwal Reguler (Fixed/Shift/Fleksibel)
   
-  let effectiveSchedule = account?.schedule;
-  
-  if (activeSpecialAssignment) {
-    if (activeSpecialAssignment.custom_check_in || activeSpecialAssignment.custom_check_out) {
-      effectiveSchedule = {
+  const getEffectiveSchedule = () => {
+    if (activeSpecialAssignment && (activeSpecialAssignment.custom_check_in || activeSpecialAssignment.custom_check_out)) {
+      return {
         id: 'SPECIAL',
         name: activeSpecialAssignment.title,
         type: 1,
@@ -303,11 +300,17 @@ const PresenceMain: React.FC = () => {
         }]
       } as any;
     }
-  } else if (activeSpecialSchedule) {
-    effectiveSchedule = activeSpecialSchedule;
-  } else if (account?.schedule_type === 'Shift Dinamis' && selectedShift) {
-    effectiveSchedule = selectedShift;
-  }
+    if (activeSpecialSchedule) {
+      return activeSpecialSchedule;
+    }
+    if (account?.schedule_type === 'Shift Dinamis') {
+      return selectedShift || null;
+    }
+    return account?.schedule || null;
+  };
+
+  const effectiveSchedule = getEffectiveSchedule();
+  const scheduleRule = effectiveSchedule?.rules?.find(r => r.day_of_week === todayDay);
 
   const scheduleResult = effectiveSchedule 
     ? presenceService.calculateStatus(serverTime, effectiveSchedule, isCheckOut ? 'OUT' : 'IN', detectedTz)
@@ -432,36 +435,21 @@ const PresenceMain: React.FC = () => {
   const isWithinRadius = distance !== null && distance <= effectiveRadius;
   const isBlockedByLocation = isLimited && !isWithinRadius;
   
-  // Resolve Rule untuk UI Tampilan Jadwal
-  let displaySchedule = account.schedule;
-  if (activeSpecialAssignment && (activeSpecialAssignment.custom_check_in || activeSpecialAssignment.custom_check_out)) {
-    displaySchedule = {
-      name: activeSpecialAssignment.title,
-      tolerance_minutes: activeSpecialAssignment.custom_early_tolerance || 0,
-      tolerance_checkin_minutes: activeSpecialAssignment.custom_late_tolerance || 0,
-      rules: [{
-        day_of_week: todayDay,
-        check_in_time: activeSpecialAssignment.custom_check_in,
-        check_out_time: activeSpecialAssignment.custom_check_out,
-        is_holiday: false
-      }]
-    } as any;
-  } else if (activeSpecialSchedule) {
-    displaySchedule = activeSpecialSchedule;
-  } else if (account.schedule_type === 'Shift Dinamis') {
-    displaySchedule = selectedShift || undefined;
-  }
-  
-  const scheduleRule = displaySchedule?.rules?.find(r => r.day_of_week === todayDay);
-  
   // HIERARCHY:
   // 1. Penugasan Khusus (Work)
   // 2. Hari Kerja Khusus (Work)
   // 3. Libur Kerja Khusus (Holiday)
   // 4. Libur Mandiri (Leave)
   
-  const isHolidayToday = !activeSpecialAssignment && !activeSpecialSchedule && (!!activeHoliday || (account.schedule_type !== 'Fleksibel' && !!scheduleRule?.is_holiday));
+  const isHolidayToday = !activeSpecialAssignment && !activeSpecialSchedule && (!!activeHoliday || (account?.schedule_type !== 'Fleksibel' && !!scheduleRule?.is_holiday));
   const isLeaveToday = !activeSpecialAssignment && !activeSpecialSchedule && !isHolidayToday && !!activeLeave;
+
+  const showScheduleInfo = !isHolidayToday && !isLeaveToday && (
+    !!activeSpecialAssignment || 
+    !!activeSpecialSchedule || 
+    (account?.schedule_type === 'Shift Dinamis' && !!selectedShift) ||
+    (account?.schedule_type !== 'Fleksibel' && !!scheduleRule && !scheduleRule.is_holiday)
+  );
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -475,7 +463,7 @@ const PresenceMain: React.FC = () => {
             <p className="text-[10px] text-amber-600 font-medium">{activeSpecialAssignment.title} • {activeSpecialAssignment.location_name}</p>
           </div>
           <div className="px-3 py-1 bg-amber-200/50 rounded-full text-[9px] font-black text-amber-800 uppercase tracking-widest">
-            Prioritas Utama
+            Penugasan
           </div>
         </div>
       )}
@@ -505,7 +493,7 @@ const PresenceMain: React.FC = () => {
             <p className="text-[10px] text-rose-600 font-medium">{activeHoliday.name}</p>
           </div>
           <div className="px-3 py-1 bg-rose-200/50 rounded-full text-[9px] font-black text-rose-800 uppercase tracking-widest">
-            Libur Nasional
+            Libur Khusus
           </div>
         </div>
       )}
@@ -833,10 +821,10 @@ const PresenceMain: React.FC = () => {
                  </div>
                )}
 
-               {account.schedule_type !== 'Fleksibel' && (account.schedule_type !== 'Shift Dinamis' || !!selectedShift) && (
+               {showScheduleInfo && (
                  <div className="mt-4 lg:mt-8 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100/50 space-y-3">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-[#006E62] uppercase tracking-wider mb-2">
-                      <CalendarClock size={14} /> {account.schedule_type === 'Shift Dinamis' ? 'Shift Terpilih' : 'Jadwal Hari Ini'}
+                      <CalendarClock size={14} /> {activeSpecialAssignment ? 'Jadwal Penugasan' : activeSpecialSchedule ? 'Jadwal Khusus' : account.schedule_type === 'Shift Dinamis' ? 'Shift Terpilih' : 'Jadwal Hari Ini'}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                        <div>
@@ -851,17 +839,17 @@ const PresenceMain: React.FC = () => {
                     <div className="pt-2 border-t border-emerald-100/50">
                       <p className="text-[9px] text-gray-400 font-bold uppercase">Toleransi</p>
                       <p className="text-[10px] font-medium text-[#006E62]">
-                        Masuk: {displaySchedule?.tolerance_checkin_minutes || 0}m • Pulang: {displaySchedule?.tolerance_minutes || 0}m
+                        Masuk: {effectiveSchedule?.tolerance_checkin_minutes || 0}m • Pulang: {effectiveSchedule?.tolerance_minutes || 0}m
                       </p>
                     </div>
                  </div>
                )}
 
                <div className="mt-4 pt-4 lg:mt-6 lg:pt-6 border-t border-gray-50">
-                  {(account.schedule_type !== 'Shift Dinamis' || !!selectedShift) && (
+                  {showScheduleInfo && (
                     <div className="flex justify-center mb-4">
                       <span className="text-[10px] font-bold text-[#006E62] bg-[#006E62]/5 px-2 py-0.5 rounded uppercase tracking-tighter">
-                        {displaySchedule?.name || (account.schedule_type === 'Fleksibel' ? 'Fleksibel' : 'Reguler')}
+                        {effectiveSchedule?.name || (account.schedule_type === 'Fleksibel' ? 'Fleksibel' : 'Reguler')}
                       </span>
                     </div>
                   )}
