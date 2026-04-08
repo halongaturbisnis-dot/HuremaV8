@@ -102,10 +102,17 @@ export const presenceService = {
         return { status: 'Terlambat', minutes: diffMins - tolerance };
       }
     } else {
-      const tolerance = schedule.tolerance_minutes || 0;
+      const earlyTolerance = schedule.tolerance_minutes || 0;
+      const lateCheckoutTolerance = schedule.tolerance_checkout_minutes || 0;
+
       // Jika pulang sebelum waktu seharusnya (diffMins negatif) diluar toleransi
-      if (diffMins < -tolerance) {
-        return { status: 'Pulang Cepat', minutes: Math.abs(diffMins) - tolerance };
+      if (diffMins < -earlyTolerance) {
+        return { status: 'Pulang Cepat', minutes: Math.abs(diffMins) - earlyTolerance };
+      }
+      
+      // Jika pulang setelah waktu seharusnya (diffMins positif) diluar toleransi checkout
+      if (diffMins > lateCheckoutTolerance) {
+        return { status: 'Telat Absen Pulang', minutes: diffMins - lateCheckoutTolerance };
       }
     }
 
@@ -348,5 +355,22 @@ export const presenceService = {
     
     if (error) throw error;
     return data as Attendance[];
+  },
+
+  /**
+   * Menghitung durasi kerja dalam format HH:MM:SS
+   */
+  calculateWorkDuration(checkIn: string | Date, checkOut: string | Date): string {
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+    const diffMs = end.getTime() - start.getTime();
+    
+    if (diffMs < 0) return "00:00:00";
+    
+    const hours = Math.floor(diffMs / 3600000);
+    const minutes = Math.floor((diffMs % 3600000) / 60000);
+    const seconds = Math.floor((diffMs % 60000) / 1000);
+    
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }
 };

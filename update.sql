@@ -9,7 +9,13 @@ ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_radius integer;
 
 -- Add snapshot columns for schedule rules
 ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS schedule_name_snapshot text;
-ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_check_in time;
-ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_check_out time;
+ALTER TABLE public.attendances DROP COLUMN IF EXISTS target_check_in;
+ALTER TABLE public.attendances DROP COLUMN IF EXISTS target_check_out;
+ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_check_in timestamptz;
+ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_check_out timestamptz;
 ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_late_tolerance integer;
 ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_early_tolerance integer;
+ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS late_checkout_reason text;
+
+-- Tambahkan kolom toleransi checkout ke tabel schedules
+ALTER TABLE public.schedules ADD COLUMN IF NOT EXISTS tolerance_checkout_minutes integer DEFAULT 0;

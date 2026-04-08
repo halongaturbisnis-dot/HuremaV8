@@ -162,7 +162,7 @@ const DailyMonitoring: React.FC = () => {
                           </p>
                           {(item.attendance?.check_in_type && item.attendance.check_in_type !== 'Reguler') && (
                             <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded uppercase flex items-center gap-1">
-                              {item.attendance.check_in_type}
+                              {item.attendance.check_in_type === 'Tugas Luar' || item.attendance.check_in_type === 'WFH' || item.attendance.check_in_type === 'Ketemu Client' ? 'Luar Lokasi' : item.attendance.check_in_type}
                               {item.attendance.check_in_validity === 'TRUE' ? (
                                 <Check size={10} className="text-[#006E62]" />
                               ) : item.attendance.check_in_validity === 'DENY' ? (
@@ -184,7 +184,19 @@ const DailyMonitoring: React.FC = () => {
                           </p>
                           {(item.attendance?.check_out_type && item.attendance.check_out_type !== 'Reguler') && (
                             <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded uppercase flex items-center gap-1">
-                              {item.attendance.check_out_type}
+                              {item.attendance.check_out_type === 'Tugas Luar' || item.attendance.check_out_type === 'WFH' || item.attendance.check_out_type === 'Ketemu Client' ? 'Luar Lokasi' : item.attendance.check_out_type}
+                              {item.attendance.check_out_validity === 'TRUE' ? (
+                                <Check size={10} className="text-[#006E62]" />
+                              ) : item.attendance.check_out_validity === 'DENY' ? (
+                                <X size={10} className="text-red-600" />
+                              ) : (
+                                <TriangleAlert size={10} className="text-amber-600" />
+                              )}
+                            </span>
+                          )}
+                          {item.attendance?.status_out === 'Telat Absen Pulang' && (
+                            <span className="px-1.5 py-0.5 bg-rose-100 text-rose-700 text-[9px] font-bold rounded uppercase flex items-center gap-1">
+                              Telat Absen Pulang
                               {item.attendance.check_out_validity === 'TRUE' ? (
                                 <Check size={10} className="text-[#006E62]" />
                               ) : item.attendance.check_out_validity === 'DENY' ? (

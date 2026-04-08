@@ -143,9 +143,16 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                     <MapPin size={14} className="text-emerald-600" />
                     <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Titik Presensi vs Lokasi Kantor</span>
                   </div>
-                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[9px] font-black rounded-full uppercase">
-                    {submission.submission_data.presence_type === 'IN' ? 'Presensi Masuk' : 'Presensi Keluar'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[9px] font-black rounded-full uppercase">
+                      {submission.submission_data.presence_type === 'IN' ? 'Presensi Masuk' : 'Presensi Keluar'}
+                    </span>
+                    {submission.submission_data.full_attendance?.status_out === 'Telat Absen Pulang' && (
+                      <span className="px-2 py-0.5 bg-rose-100 text-rose-700 text-[9px] font-black rounded-full uppercase">
+                        Telat Absen Pulang
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="p-4 space-y-4">
                   {(() => {
@@ -278,15 +285,15 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                           <p className="text-xs font-bold text-[#006E62]">{time ? formatTimeOnly(time) : '-'}</p>
                         </div>
                         <div>
-                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{isIN ? 'Keterlambatan' : 'Pulang Awal'}</p>
-                          <p className={`text-xs font-bold ${lateEarly > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                            {lateEarly || 0} Menit
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{isIN ? 'Keterlambatan' : 'Pulang Awal / Telat Absen'}</p>
+                          <p className={`text-xs font-bold ${lateEarly > 0 || att?.status_out === 'Telat Absen Pulang' ? 'text-red-600' : 'text-emerald-600'}`}>
+                            {att?.status_out === 'Telat Absen Pulang' ? 'Telat Absen Pulang' : `${lateEarly || 0} Menit`}
                           </p>
                         </div>
-                        {lateEarly > 0 && (
+                        {(lateEarly > 0 || att?.status_out === 'Telat Absen Pulang') && (
                           <div className="pt-1">
-                            <p className="text-[8px] font-bold text-gray-400 uppercase">Alasan {isIN ? 'Terlambat' : 'Pulang Awal'}</p>
-                            <p className="text-[10px] text-gray-500 italic leading-tight">"{reason || '-'}"</p>
+                            <p className="text-[8px] font-bold text-gray-400 uppercase">Alasan {isIN ? 'Terlambat' : (att?.status_out === 'Telat Absen Pulang' ? 'Telat Absen' : 'Pulang Awal')}</p>
+                            <p className="text-[10px] text-gray-500 italic leading-tight">"{reason || (att?.status_out === 'Telat Absen Pulang' ? att?.late_checkout_reason : '-')}"</p>
                           </div>
                         )}
                       </>
@@ -349,12 +356,14 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
               <div className="bg-white p-4 rounded-2xl border border-amber-100 shadow-sm space-y-3">
                 <div className="flex items-center gap-2 pb-2 border-b border-amber-50">
                   <AlertCircle size={14} className="text-amber-600" />
-                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Tipe & Alasan Presensi Luar</span>
+                  <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Tipe & Alasan Khusus</span>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-xs font-bold text-gray-800">{submission.submission_data.location_type}</p>
+                  <p className="text-xs font-bold text-gray-800">
+                    {submission.submission_data.full_attendance?.status_out === 'Telat Absen Pulang' ? 'Telat Absen Pulang' : (submission.submission_data.location_type === 'Tugas Luar' || submission.submission_data.location_type === 'WFH' || submission.submission_data.location_type === 'Ketemu Client' ? 'Luar Lokasi' : submission.submission_data.location_type)}
+                  </p>
                   <p className="text-xs text-gray-600 italic leading-relaxed bg-amber-50/30 p-3 rounded-lg border border-amber-50/50">
-                    "{submission.submission_data.reason || 'Tidak ada alasan yang diberikan'}"
+                    "{submission.submission_data.reason || (submission.submission_data.full_attendance?.status_out === 'Telat Absen Pulang' ? submission.submission_data.full_attendance?.late_checkout_reason : 'Tidak ada alasan yang diberikan')}"
                   </p>
                 </div>
               </div>

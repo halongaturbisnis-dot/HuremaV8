@@ -51,6 +51,7 @@ const PresenceMain: React.FC = () => {
   const [checkInReason, setCheckInReason] = useState('');
   const [checkOutReason, setCheckOutReason] = useState('');
   const [lateEarlyReason, setLateEarlyReason] = useState('');
+  const [lateCheckoutReason, setLateCheckoutReason] = useState('');
   const [lockedCoords, setLockedCoords] = useState<{lat: number, lng: number} | null>(null);
   
   // State khusus Shift Dinamis
@@ -408,6 +409,7 @@ const PresenceMain: React.FC = () => {
     : { status: 'Tepat Waktu' };
   
   const isLateOrEarly = scheduleResult.status === 'Terlambat' || scheduleResult.status === 'Pulang Cepat';
+  const isLateCheckout = scheduleResult.status === 'Telat Absen Pulang';
 
   const handleAttendance = async () => {
     if (!capturedPhoto) return;
@@ -415,6 +417,11 @@ const PresenceMain: React.FC = () => {
     // Validasi alasan keterlambatan / pulang awal
     if (isLateOrEarly && !lateEarlyReason.trim()) {
       return Swal.fire('Peringatan', 'Alasan keterlambatan/pulang awal wajib diisi.', 'warning');
+    }
+
+    // Validasi alasan telat absen pulang
+    if (isLateCheckout && !lateCheckoutReason.trim()) {
+      return Swal.fire('Peringatan', 'Alasan telat absen pulang wajib diisi.', 'warning');
     }
 
     // Validasi alasan presensi luar
@@ -440,6 +447,28 @@ const PresenceMain: React.FC = () => {
         const targetLng = isSpecial ? activeSpecialAssignment.longitude : account?.location?.longitude;
         const targetRad = isSpecial ? activeSpecialAssignment.radius : account?.location?.radius;
 
+        // Hitung target_check_in dan target_check_out sebagai TIMESTAMPTZ
+        let targetCheckIn: string | null = null;
+        let targetCheckOut: string | null = null;
+
+        if (scheduleRule?.check_in_time && scheduleRule?.check_out_time) {
+          const [inH, inM] = scheduleRule.check_in_time.split(':').map(Number);
+          const [outH, outM] = scheduleRule.check_out_time.split(':').map(Number);
+
+          const tIn = new Date(serverTime);
+          tIn.setHours(inH, inM, 0, 0);
+          targetCheckIn = tIn.toISOString();
+
+          const tOut = new Date(serverTime);
+          tOut.setHours(outH, outM, 0, 0);
+          
+          // Jika jam pulang < jam masuk, berarti shift malam (lintas hari)
+          if (outH < inH || (outH === inH && outM < inM)) {
+            tOut.setDate(tOut.getDate() + 1);
+          }
+          targetCheckOut = tOut.toISOString();
+        }
+
         const payload: any = {
           account_id: account.id,
           check_in: currentTimeStr,
@@ -459,8 +488,8 @@ const PresenceMain: React.FC = () => {
           target_longitude: targetLng,
           target_radius: targetRad,
           schedule_name_snapshot: effectiveSchedule?.name,
-          target_check_in: scheduleRule?.check_in_time,
-          target_check_out: scheduleRule?.check_out_time,
+          target_check_in: targetCheckIn,
+          target_check_out: targetCheckOut,
           target_late_tolerance: effectiveSchedule?.tolerance_checkin_minutes || 0,
           target_early_tolerance: effectiveSchedule?.tolerance_minutes || 0
         };
@@ -471,12 +500,7 @@ const PresenceMain: React.FC = () => {
         }
 
         // Hitung durasi kerja (work_duration)
-        const start = new Date(activeAttendance.check_in!);
-        const diffMs = serverTime.getTime() - start.getTime();
-        const h = Math.floor(diffMs / 3600000);
-        const m = Math.floor((diffMs % 3600000) / 60000);
-        const s = Math.floor((diffMs % 60000) / 1000);
-        const durationFormatted = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        const durationFormatted = presenceService.calculateWorkDuration(activeAttendance.check_in!, serverTime);
 
         const payload: any = {
           check_out: currentTimeStr,
@@ -487,9 +511,10 @@ const PresenceMain: React.FC = () => {
           status_out: scheduleResult.status,
           early_departure_minutes: (scheduleResult as any).minutes || 0,
           early_departure_reason: reason,
+          late_checkout_reason: isLateCheckout ? lateCheckoutReason : null,
           check_out_type: isOutOfRangeRequested ? checkOutType : 'Reguler',
           check_out_reason: isOutOfRangeRequested ? checkOutReason : null,
-          check_out_validity: isOutOfRangeRequested ? 'FALSE' : 'TRUE',
+          check_out_validity: (isOutOfRangeRequested || isLateCheckout) ? 'FALSE' : 'TRUE',
           work_duration: durationFormatted
         };
         await presenceService.checkOut(activeAttendance.id, payload);
@@ -928,6 +953,18 @@ const PresenceMain: React.FC = () => {
                      value={lateEarlyReason}
                      onChange={(e) => setLateEarlyReason(e.target.value)}
                      placeholder="Masukkan alasan..."
+                     className="w-full p-3 text-xs border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                   />
+                 </div>
+               )}
+
+               {isLateCheckout && (
+                 <div className="mt-4 p-4 bg-rose-50 rounded-xl border border-rose-100">
+                   <p className="text-[10px] font-bold text-rose-600 uppercase mb-2">Alasan Telat Absen Pulang</p>
+                   <textarea
+                     value={lateCheckoutReason}
+                     onChange={(e) => setLateCheckoutReason(e.target.value)}
+                     placeholder="Masukkan alasan telat absen pulang..."
                      className="w-full p-3 text-xs border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                    />
                  </div>
