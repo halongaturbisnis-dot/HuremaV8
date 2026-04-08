@@ -182,6 +182,7 @@ export interface Attendance {
   check_out_type: string | null;
   check_in_validity: 'TRUE' | 'FALSE' | 'DENY' | null;
   check_out_validity: 'TRUE' | 'FALSE' | 'DENY' | null;
+  schedule_id?: string | null;
   created_at?: string;
 }
 

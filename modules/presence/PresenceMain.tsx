@@ -57,22 +57,14 @@ const PresenceMain: React.FC = () => {
   const [dynamicShifts, setDynamicShifts] = useState<Schedule[]>([]);
   const [selectedShift, setSelectedShift] = useState<Schedule | null>(null);
   
-  // Persist selected shift for dynamic shift users
+  // Lock selected shift based on active attendance (database-based locking)
   useEffect(() => {
-    if (account?.schedule_type === 'Shift Dinamis') {
-      const savedShiftId = localStorage.getItem(`selected_shift_${account.id}`);
-      if (savedShiftId && !selectedShift && dynamicShifts.length > 0) {
-        const found = dynamicShifts.find(s => s.id === savedShiftId);
-        if (found) setSelectedShift(found);
-      }
+    if (activeAttendance?.schedule_id && dynamicShifts.length > 0) {
+      const found = dynamicShifts.find(s => s.id === activeAttendance.schedule_id);
+      if (found) setSelectedShift(found);
     }
-  }, [account?.id, dynamicShifts, account?.schedule_type]);
+  }, [activeAttendance?.schedule_id, dynamicShifts]);
 
-  useEffect(() => {
-    if (selectedShift && account?.id) {
-      localStorage.setItem(`selected_shift_${account.id}`, selectedShift.id);
-    }
-  }, [selectedShift, account?.id]);
   const [isFetchingShifts, setIsFetchingShifts] = useState(false);
   const [landmarker, setLandmarker] = useState<any>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -399,7 +391,8 @@ const PresenceMain: React.FC = () => {
           late_reason: reason,
           check_in_type: isOutOfRangeRequested ? checkInType : 'Reguler',
           check_in_reason: isOutOfRangeRequested ? checkInReason : null,
-          check_in_validity: isOutOfRangeRequested ? 'FALSE' : 'TRUE'
+          check_in_validity: isOutOfRangeRequested ? 'FALSE' : 'TRUE',
+          schedule_id: effectiveSchedule?.id
         };
         await presenceService.checkIn(payload);
       } else {
@@ -430,7 +423,6 @@ const PresenceMain: React.FC = () => {
           work_duration: durationFormatted
         };
         await presenceService.checkOut(activeAttendance.id, payload);
-        localStorage.removeItem(`selected_shift_${account.id}`);
       }
 
       // Tahap 3: Finalisasi UI (hanya setelah simpan DB sukses)

@@ -77,7 +77,12 @@ export const presenceService = {
     const daysMap: { [key: string]: number } = { 'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6 };
     const dayOfWeek = daysMap[dayStr];
     
-    const rule = schedule.rules?.find(r => r.day_of_week === dayOfWeek);
+    // If schedule has exactly 1 rule, use it directly (fallback for special/dynamic)
+    // Otherwise, find the rule for today
+    const rule = (schedule.rules?.length === 1) 
+      ? schedule.rules[0] 
+      : schedule.rules?.find(r => r.day_of_week === dayOfWeek);
+
     if (!rule || rule.is_holiday) return { status: 'Tepat Waktu', minutes: 0 };
 
     const [h, m] = timePart.split(':').map(Number);
