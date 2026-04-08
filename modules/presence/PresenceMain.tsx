@@ -310,9 +310,34 @@ const PresenceMain: React.FC = () => {
   };
 
   const effectiveSchedule = getEffectiveSchedule();
-  // Fallback to first rule if day match fails, especially for special/dynamic schedules
-  const scheduleRule = effectiveSchedule?.rules?.find(r => r.day_of_week === todayDay) || 
-                       ((activeSpecialAssignment || activeSpecialSchedule || (account?.schedule_type === 'Shift Dinamis' && selectedShift)) ? effectiveSchedule?.rules?.[0] : undefined);
+  
+  // Robust schedule rule resolution with fallbacks for special/dynamic cases
+  const resolveScheduleRule = () => {
+    if (!effectiveSchedule) return undefined;
+    
+    // 1. Try to find rule for today
+    const ruleForToday = effectiveSchedule.rules?.find(r => r.day_of_week === todayDay);
+    if (ruleForToday) return ruleForToday;
+
+    // 2. If special/dynamic, try first rule as fallback
+    const isSpecialOrDynamic = !!(activeSpecialAssignment || activeSpecialSchedule || (account?.schedule_type === 'Shift Dinamis' && selectedShift));
+    if (isSpecialOrDynamic && effectiveSchedule.rules?.[0]) {
+      return effectiveSchedule.rules[0];
+    }
+
+    // 3. Last resort: check if times are directly on the object (some special schedules are flattened)
+    if (isSpecialOrDynamic && (effectiveSchedule.check_in_time || effectiveSchedule.check_out_time)) {
+      return {
+        check_in_time: effectiveSchedule.check_in_time,
+        check_out_time: effectiveSchedule.check_out_time,
+        is_holiday: false
+      } as any;
+    }
+
+    return undefined;
+  };
+
+  const scheduleRule = resolveScheduleRule();
 
   const scheduleResult = effectiveSchedule 
     ? presenceService.calculateStatus(serverTime, effectiveSchedule, isCheckOut ? 'OUT' : 'IN', detectedTz)
