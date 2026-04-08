@@ -193,7 +193,12 @@ export const presenceService = {
     
     // Filter out if user is excluded
     const activeSpecial = data?.find(s => !s.excluded_account_ids?.includes(accountId));
-    return activeSpecial || null;
+    if (!activeSpecial) return null;
+
+    return {
+      ...activeSpecial,
+      rules: activeSpecial.schedule_rules
+    } as Schedule;
   },
 
   /**

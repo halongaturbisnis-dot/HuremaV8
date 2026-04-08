@@ -39,11 +39,14 @@ export const scheduleService = {
     if (!locationId) return [];
     const { data, error } = await supabase
       .from('schedule_locations')
-      .select('schedule_id, schedules(*)')
+      .select('schedule_id, schedules(*, schedule_rules(*))')
       .eq('location_id', locationId);
     
     if (error) throw error;
-    return (data as any[]).map(item => item.schedules) as unknown as Schedule[];
+    return (data as any[]).map(item => ({
+      ...item.schedules,
+      rules: item.schedules.schedule_rules
+    })) as unknown as Schedule[];
   },
 
   async getById(id: string) {
