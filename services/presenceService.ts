@@ -63,19 +63,22 @@ export const presenceService = {
 
     const tz = timeZone || timeUtils.getLocalTimeZone();
     
-    // Get current time components in the target timezone
-    const localTimeStr = currentTime.toLocaleString('en-US', { 
-      timeZone: tz, 
+    // Use Intl.DateTimeFormat for robust component extraction
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
       hour12: false,
       weekday: 'short',
       hour: '2-digit',
       minute: '2-digit'
     });
     
-    // localTimeStr format: "Mon, 08:30"
-    const [dayStr, timePart] = localTimeStr.split(', ');
+    const parts = formatter.formatToParts(currentTime);
+    const dayStr = parts.find(p => p.type === 'weekday')?.value;
+    const hourStr = parts.find(p => p.type === 'hour')?.value;
+    const minuteStr = parts.find(p => p.type === 'minute')?.value;
+
     const daysMap: { [key: string]: number } = { 'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6 };
-    const dayOfWeek = daysMap[dayStr];
+    const dayOfWeek = dayStr ? daysMap[dayStr] : currentTime.getDay();
     
     // If schedule has exactly 1 rule, use it directly (fallback for special/dynamic)
     // Otherwise, find the rule for today
@@ -85,8 +88,7 @@ export const presenceService = {
 
     if (!rule || rule.is_holiday) return { status: 'Tepat Waktu', minutes: 0 };
 
-    const [h, m] = timePart.split(':').map(Number);
-    const currentTotalMins = h * 60 + m;
+    const currentTotalMins = parseInt(hourStr || '0') * 60 + parseInt(minuteStr || '0');
     
     const targetTime = (type === 'IN' ? rule.check_in_time : rule.check_out_time) || '00:00:00';
     const [targetH, targetM] = targetTime.split(':').map(Number);
