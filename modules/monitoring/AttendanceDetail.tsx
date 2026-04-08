@@ -133,27 +133,40 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
               <div className="space-y-3">
                 <div>
                   <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Nama Jadwal</p>
-                  <p className="text-xs font-bold text-gray-700">{account.schedule?.name || '-'}</p>
+                  <p className="text-xs font-bold text-gray-700">{attendance.schedule_name_snapshot || account.schedule?.name || '-'}</p>
                 </div>
                 {(() => {
                   const date = new Date(attendance.created_at || new Date());
                   const dayOfWeek = date.getDay();
                   const rule = account.schedule?.rules?.find((r: any) => r.day_of_week === dayOfWeek);
-                  const tolerance = account.schedule?.tolerance_minutes || 0;
+                  
+                  // Gunakan snapshot jika tersedia, jika tidak fallback ke data master
+                  const checkInTarget = attendance.target_check_in || rule?.check_in_time || '-';
+                  const checkOutTarget = attendance.target_check_out || rule?.check_out_time || '-';
+                  const lateTolerance = attendance.target_late_tolerance !== undefined && attendance.target_late_tolerance !== null 
+                    ? attendance.target_late_tolerance 
+                    : (account.schedule?.tolerance_checkin_minutes || 0);
+                  const earlyTolerance = attendance.target_early_tolerance !== undefined && attendance.target_early_tolerance !== null
+                    ? attendance.target_early_tolerance
+                    : (account.schedule?.tolerance_minutes || 0);
                   
                   return (
                     <div className="grid grid-cols-2 gap-4 pt-1">
                       <div>
                         <p className="text-[8px] font-bold text-gray-400 uppercase">Jam Masuk</p>
-                        <p className="text-[11px] font-bold text-emerald-600">{rule?.check_in_time || '-'}</p>
+                        <p className="text-[11px] font-bold text-emerald-600">{checkInTarget}</p>
                       </div>
                       <div>
                         <p className="text-[8px] font-bold text-gray-400 uppercase">Jam Pulang</p>
-                        <p className="text-[11px] font-bold text-red-600">{rule?.check_out_time || '-'}</p>
+                        <p className="text-[11px] font-bold text-red-600">{checkOutTarget}</p>
                       </div>
-                      <div className="col-span-2">
-                        <p className="text-[8px] font-bold text-gray-400 uppercase">Toleransi</p>
-                        <p className="text-[11px] font-bold text-gray-600">{tolerance} Menit</p>
+                      <div>
+                        <p className="text-[8px] font-bold text-gray-400 uppercase">Toleransi Masuk</p>
+                        <p className="text-[11px] font-bold text-gray-600">{lateTolerance} Menit</p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] font-bold text-gray-400 uppercase">Toleransi Pulang</p>
+                        <p className="text-[11px] font-bold text-gray-600">{earlyTolerance} Menit</p>
                       </div>
                     </div>
                   );
@@ -175,17 +188,24 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                 <div className="p-4 space-y-4">
                   {/* 1. Maps */}
                   <div className="h-48 rounded-xl overflow-hidden border border-gray-100 shadow-inner relative">
-                    {attendance.in_latitude && attendance.in_longitude && account.location?.latitude ? (
-                      <PresenceMap 
-                        userLat={attendance.in_latitude}
-                        userLng={attendance.in_longitude}
-                        officeLat={account.location.latitude}
-                        officeLng={account.location.longitude}
-                        radius={account.location.radius || 100}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-50 flex items-center justify-center text-gray-400 text-xs italic">Data lokasi tidak tersedia</div>
-                    )}
+                    {(() => {
+                      const targetLat = attendance.target_latitude || account.location?.latitude;
+                      const targetLng = attendance.target_longitude || account.location?.longitude;
+                      const targetRad = attendance.target_radius || account.location?.radius || 100;
+
+                      if (attendance.in_latitude && attendance.in_longitude && targetLat) {
+                        return (
+                          <PresenceMap 
+                            userLat={attendance.in_latitude}
+                            userLng={attendance.in_longitude}
+                            officeLat={targetLat}
+                            officeLng={targetLng!}
+                            radius={targetRad}
+                          />
+                        );
+                      }
+                      return <div className="w-full h-full bg-gray-50 flex items-center justify-center text-gray-400 text-xs italic">Data lokasi tidak tersedia</div>;
+                    })()}
                   </div>
 
                   {/* 2. Alamat Presensi */}
@@ -206,9 +226,13 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jarak</p>
                         <p className="text-sm font-bold text-gray-700">
-                          {attendance.in_latitude && account.location?.latitude 
-                            ? `${Math.round(calculateDistance(attendance.in_latitude, attendance.in_longitude!, account.location.latitude, account.location.longitude))} Meter`
-                            : '-'}
+                          {(() => {
+                            const targetLat = attendance.target_latitude || account.location?.latitude;
+                            const targetLng = attendance.target_longitude || account.location?.longitude;
+                            return attendance.in_latitude && targetLat 
+                              ? `${Math.round(calculateDistance(attendance.in_latitude, attendance.in_longitude!, targetLat, targetLng!))} Meter`
+                              : '-';
+                          })()}
                         </p>
                       </div>
                     </div>
@@ -270,19 +294,28 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                 <div className="p-4 space-y-4">
                   {/* 1. Maps */}
                   <div className="h-48 rounded-xl overflow-hidden border border-gray-100 shadow-inner relative">
-                    {attendance.out_latitude && attendance.out_longitude && account.location?.latitude ? (
-                      <PresenceMap 
-                        userLat={attendance.out_latitude}
-                        userLng={attendance.out_longitude}
-                        officeLat={account.location.latitude}
-                        officeLng={account.location.longitude}
-                        radius={account.location.radius || 100}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-50 flex items-center justify-center text-gray-400 text-xs italic">
-                        {attendance.check_out ? 'Data lokasi tidak tersedia' : 'Belum melakukan check-out'}
-                      </div>
-                    )}
+                    {(() => {
+                      const targetLat = attendance.target_latitude || account.location?.latitude;
+                      const targetLng = attendance.target_longitude || account.location?.longitude;
+                      const targetRad = attendance.target_radius || account.location?.radius || 100;
+
+                      if (attendance.out_latitude && attendance.out_longitude && targetLat) {
+                        return (
+                          <PresenceMap 
+                            userLat={attendance.out_latitude}
+                            userLng={attendance.out_longitude}
+                            officeLat={targetLat}
+                            officeLng={targetLng!}
+                            radius={targetRad}
+                          />
+                        );
+                      }
+                      return (
+                        <div className="w-full h-full bg-gray-50 flex items-center justify-center text-gray-400 text-xs italic">
+                          {attendance.check_out ? 'Data lokasi tidak tersedia' : 'Belum melakukan check-out'}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* 2. Alamat Presensi */}
@@ -303,9 +336,13 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jarak</p>
                         <p className="text-sm font-bold text-gray-700">
-                          {attendance.out_latitude && account.location?.latitude 
-                            ? `${Math.round(calculateDistance(attendance.out_latitude, attendance.out_longitude!, account.location.latitude, account.location.longitude))} Meter`
-                            : '-'}
+                          {(() => {
+                            const targetLat = attendance.target_latitude || account.location?.latitude;
+                            const targetLng = attendance.target_longitude || account.location?.longitude;
+                            return attendance.out_latitude && targetLat 
+                              ? `${Math.round(calculateDistance(attendance.out_latitude, attendance.out_longitude!, targetLat, targetLng!))} Meter`
+                              : '-';
+                          })()}
                         </p>
                       </div>
                     </div>

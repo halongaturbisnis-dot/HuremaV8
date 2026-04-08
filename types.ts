@@ -187,6 +187,11 @@ export interface Attendance {
   target_latitude?: number | null;
   target_longitude?: number | null;
   target_radius?: number | null;
+  schedule_name_snapshot?: string | null;
+  target_check_in?: string | null;
+  target_check_out?: string | null;
+  target_late_tolerance?: number | null;
+  target_early_tolerance?: number | null;
   created_at?: string;
 }
 

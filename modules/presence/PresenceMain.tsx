@@ -457,7 +457,12 @@ const PresenceMain: React.FC = () => {
           special_assignment_id: isSpecial ? activeSpecialAssignment.id : null,
           target_latitude: targetLat,
           target_longitude: targetLng,
-          target_radius: targetRad
+          target_radius: targetRad,
+          schedule_name_snapshot: effectiveSchedule?.name,
+          target_check_in: scheduleRule?.check_in_time,
+          target_check_out: scheduleRule?.check_out_time,
+          target_late_tolerance: effectiveSchedule?.tolerance_checkin_minutes || 0,
+          target_early_tolerance: effectiveSchedule?.tolerance_minutes || 0
         };
         await presenceService.checkIn(payload);
       } else {

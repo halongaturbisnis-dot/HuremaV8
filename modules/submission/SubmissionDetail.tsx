@@ -156,7 +156,12 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                     const userLng = isIN ? att?.in_longitude : att?.out_longitude;
                     const address = isIN ? att?.in_address : att?.out_address;
 
-                    if (!userLat || !userLng || !office?.latitude) return (
+                    // Snapshot target location
+                    const targetLat = att?.target_latitude || office?.latitude;
+                    const targetLng = att?.target_longitude || office?.longitude;
+                    const targetRad = att?.target_radius || office?.radius || 100;
+
+                    if (!userLat || !userLng || !targetLat) return (
                       <div className="py-8 text-center text-gray-400 text-xs italic">Data lokasi tidak tersedia</div>
                     );
 
@@ -166,9 +171,9 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                           <PresenceMap 
                             userLat={userLat}
                             userLng={userLng}
-                            officeLat={office.latitude}
-                            officeLng={office.longitude}
-                            radius={office.radius || 100}
+                            officeLat={targetLat}
+                            officeLng={targetLng!}
+                            radius={targetRad}
                           />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -188,9 +193,9 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                             <div>
                               <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jarak Titik Presensi</p>
                               <p className="text-[11px] font-bold text-gray-700">
-                                {Math.round(calculateDistance(userLat, userLng, office.latitude, office.longitude))} Meter
+                                {Math.round(calculateDistance(userLat, userLng, targetLat, targetLng!))} Meter
                               </p>
-                              <p className="text-[9px] text-gray-400 font-medium italic">Radius: {office.radius || 100}m</p>
+                              <p className="text-[9px] text-gray-400 font-medium italic">Radius: {targetRad}m</p>
                             </div>
                           </div>
                         </div>
@@ -209,28 +214,41 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                   </div>
                   <div>
                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Nama Jadwal</p>
-                    <p className="text-xs font-bold text-gray-700">{(submission.account as any)?.schedule?.name || '-'}</p>
+                    <p className="text-xs font-bold text-gray-700">{submission.submission_data.full_attendance?.schedule_name_snapshot || (submission.account as any)?.schedule?.name || '-'}</p>
                   </div>
                   {(() => {
                     const att = submission.submission_data.full_attendance;
                     const date = new Date(att?.created_at || new Date());
                     const dayOfWeek = date.getDay();
                     const rule = (submission.account as any)?.schedule?.rules?.find((r: any) => r.day_of_week === dayOfWeek);
-                    const tolerance = (submission.account as any)?.schedule?.tolerance_minutes || 0;
+                    
+                    // Snapshot target rules
+                    const checkInTarget = att?.target_check_in || rule?.check_in_time || '-';
+                    const checkOutTarget = att?.target_check_out || rule?.check_out_time || '-';
+                    const lateTolerance = att?.target_late_tolerance !== undefined && att?.target_late_tolerance !== null
+                      ? att.target_late_tolerance
+                      : ((submission.account as any)?.schedule?.tolerance_checkin_minutes || 0);
+                    const earlyTolerance = att?.target_early_tolerance !== undefined && att?.target_early_tolerance !== null
+                      ? att.target_early_tolerance
+                      : ((submission.account as any)?.schedule?.tolerance_minutes || 0);
                     
                     return (
                       <div className="grid grid-cols-2 gap-2 pt-1">
                         <div>
                           <p className="text-[8px] font-bold text-gray-400 uppercase">Jam Masuk</p>
-                          <p className="text-[11px] font-bold text-emerald-600">{rule?.check_in_time || '-'}</p>
+                          <p className="text-[11px] font-bold text-emerald-600">{checkInTarget}</p>
                         </div>
                         <div>
                           <p className="text-[8px] font-bold text-gray-400 uppercase">Jam Pulang</p>
-                          <p className="text-[11px] font-bold text-red-600">{rule?.check_out_time || '-'}</p>
+                          <p className="text-[11px] font-bold text-red-600">{checkOutTarget}</p>
                         </div>
-                        <div className="col-span-2">
-                          <p className="text-[8px] font-bold text-gray-400 uppercase">Toleransi</p>
-                          <p className="text-[11px] font-bold text-gray-600">{tolerance} Menit</p>
+                        <div>
+                          <p className="text-[8px] font-bold text-gray-400 uppercase">Toleransi Masuk</p>
+                          <p className="text-[11px] font-bold text-gray-600">{lateTolerance} Menit</p>
+                        </div>
+                        <div>
+                          <p className="text-[8px] font-bold text-gray-400 uppercase">Toleransi Pulang</p>
+                          <p className="text-[11px] font-bold text-gray-600">{earlyTolerance} Menit</p>
                         </div>
                       </div>
                     );

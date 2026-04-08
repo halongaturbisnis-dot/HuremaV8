@@ -6,3 +6,10 @@ ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS special_assignment_id uu
 ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_latitude numeric;
 ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_longitude numeric;
 ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_radius integer;
+
+-- Add snapshot columns for schedule rules
+ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS schedule_name_snapshot text;
+ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_check_in time;
+ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_check_out time;
+ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_late_tolerance integer;
+ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_early_tolerance integer;
