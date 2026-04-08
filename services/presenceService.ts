@@ -99,13 +99,13 @@ export const presenceService = {
     if (type === 'IN') {
       const tolerance = schedule.tolerance_checkin_minutes || 0;
       if (diffMins > tolerance) {
-        return { status: 'Terlambat', minutes: diffMins };
+        return { status: 'Terlambat', minutes: diffMins - tolerance };
       }
     } else {
       const tolerance = schedule.tolerance_minutes || 0;
       // Jika pulang sebelum waktu seharusnya (diffMins negatif) diluar toleransi
       if (diffMins < -tolerance) {
-        return { status: 'Pulang Cepat', minutes: Math.abs(diffMins) };
+        return { status: 'Pulang Cepat', minutes: Math.abs(diffMins) - tolerance };
       }
     }
 

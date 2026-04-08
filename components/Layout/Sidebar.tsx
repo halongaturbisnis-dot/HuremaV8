@@ -223,7 +223,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
                 <NavItem 
                   id="schedule" 
                   icon={CalendarClock} 
-                  label="Manajemen Jadwal" 
+                  label="Jadwal" 
                   indent 
                   activeTab={activeTab}
                   setActiveTab={setActiveTab}
@@ -232,7 +232,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
                 <NavItem 
                   id="special_assignment" 
                   icon={ShieldCheck} 
-                  label="Penugasan Khusus" 
+                  label="Penugasan" 
                   indent 
                   activeTab={activeTab}
                   setActiveTab={setActiveTab}
@@ -320,7 +320,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed,
               <NavItem 
                 id="overtime" 
                 icon={Timer} 
-                label="Presensi Lembur" 
+                label="Lembur" 
                 indent 
                 showNew={isAdmin && pendingSubmissions['Lembur'] > 0} 
                 activeTab={activeTab}
