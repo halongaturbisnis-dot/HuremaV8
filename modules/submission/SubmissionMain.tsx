@@ -57,6 +57,7 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
                 name,
                 tolerance_minutes,
                 tolerance_checkin_minutes,
+                tolerance_checkout_minutes,
                 rules:schedule_rules(
                   id,
                   day_of_week,

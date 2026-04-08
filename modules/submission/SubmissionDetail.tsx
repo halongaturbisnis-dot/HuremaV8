@@ -237,7 +237,7 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                       : ((submission.account as any)?.schedule?.tolerance_checkin_minutes || 0);
                     const earlyTolerance = att?.target_early_tolerance !== undefined && att?.target_early_tolerance !== null
                       ? att.target_early_tolerance
-                      : ((submission.account as any)?.schedule?.tolerance_minutes || 0);
+                      : ((submission.account as any)?.schedule?.tolerance_checkout_minutes || 0);
                     
                     return (
                       <div className="grid grid-cols-2 gap-2 pt-1">

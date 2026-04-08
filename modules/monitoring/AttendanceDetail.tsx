@@ -148,7 +148,7 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                     : (account.schedule?.tolerance_checkin_minutes || 0);
                   const earlyTolerance = attendance.target_early_tolerance !== undefined && attendance.target_early_tolerance !== null
                     ? attendance.target_early_tolerance
-                    : (account.schedule?.tolerance_minutes || 0);
+                    : (account.schedule?.tolerance_checkout_minutes || 0);
                   
                   return (
                     <div className="grid grid-cols-2 gap-4 pt-1">

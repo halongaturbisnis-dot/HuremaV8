@@ -102,7 +102,7 @@ export const presenceService = {
         return { status: 'Terlambat', minutes: diffMins - tolerance };
       }
     } else {
-      const lateCheckoutTolerance = schedule.tolerance_minutes || 0;
+      const lateCheckoutTolerance = schedule.tolerance_checkout_minutes || 0;
 
       // Jika pulang sebelum waktu seharusnya (diffMins negatif)
       if (diffMins < 0) {

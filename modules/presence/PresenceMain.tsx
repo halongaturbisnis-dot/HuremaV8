@@ -328,6 +328,7 @@ const PresenceMain: React.FC = () => {
           type: 1,
           tolerance_minutes: activeSpecialAssignment.custom_early_tolerance || 0,
           tolerance_checkin_minutes: activeSpecialAssignment.custom_late_tolerance || 0,
+          tolerance_checkout_minutes: activeSpecialAssignment.custom_early_tolerance || 0,
           rules: [{
             id: 'SPECIAL_RULE',
             schedule_id: activeSpecialAssignment.id,
@@ -354,6 +355,7 @@ const PresenceMain: React.FC = () => {
         type: 1,
         tolerance_minutes: activeSpecialAssignment.custom_early_tolerance || 0,
         tolerance_checkin_minutes: activeSpecialAssignment.custom_late_tolerance || 0,
+        tolerance_checkout_minutes: activeSpecialAssignment.custom_early_tolerance || 0,
         rules: [{
           id: 'SPECIAL_RULE',
           schedule_id: activeSpecialAssignment.id,
@@ -491,7 +493,7 @@ const PresenceMain: React.FC = () => {
           target_check_in: targetCheckIn,
           target_check_out: targetCheckOut,
           target_late_tolerance: effectiveSchedule?.tolerance_checkin_minutes || 0,
-          target_early_tolerance: effectiveSchedule?.tolerance_minutes || 0
+          target_early_tolerance: effectiveSchedule?.tolerance_checkout_minutes || 0
         };
         await presenceService.checkIn(payload);
       } else {
@@ -989,7 +991,7 @@ const PresenceMain: React.FC = () => {
                     <div className="pt-2 border-t border-emerald-100/50">
                       <p className="text-[9px] text-gray-400 font-bold uppercase">Toleransi</p>
                       <p className="text-[10px] font-medium text-[#006E62]">
-                        Masuk: {effectiveSchedule?.tolerance_checkin_minutes || 0}m • Pulang: {effectiveSchedule?.tolerance_minutes || 0}m
+                        Masuk: {effectiveSchedule?.tolerance_checkin_minutes || 0}m • Pulang: {effectiveSchedule?.tolerance_checkout_minutes || 0}m
                       </p>
                     </div>
                  </div>
