@@ -310,7 +310,9 @@ const PresenceMain: React.FC = () => {
   };
 
   const effectiveSchedule = getEffectiveSchedule();
-  const scheduleRule = effectiveSchedule?.rules?.find(r => r.day_of_week === todayDay);
+  // Fallback to first rule if day match fails, especially for special/dynamic schedules
+  const scheduleRule = effectiveSchedule?.rules?.find(r => r.day_of_week === todayDay) || 
+                       ((activeSpecialAssignment || activeSpecialSchedule || (account?.schedule_type === 'Shift Dinamis' && selectedShift)) ? effectiveSchedule?.rules?.[0] : undefined);
 
   const scheduleResult = effectiveSchedule 
     ? presenceService.calculateStatus(serverTime, effectiveSchedule, isCheckOut ? 'OUT' : 'IN', detectedTz)
