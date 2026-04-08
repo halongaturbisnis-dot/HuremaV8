@@ -88,7 +88,8 @@ export const presenceService = {
     const [h, m] = timePart.split(':').map(Number);
     const currentTotalMins = h * 60 + m;
     
-    const [targetH, targetM] = (type === 'IN' ? rule.check_in_time : rule.check_out_time || '00:00:00').split(':').map(Number);
+    const targetTime = (type === 'IN' ? rule.check_in_time : rule.check_out_time) || '00:00:00';
+    const [targetH, targetM] = targetTime.split(':').map(Number);
     const targetTotalMins = targetH * 60 + targetM;
 
     const diffMins = currentTotalMins - targetTotalMins;
