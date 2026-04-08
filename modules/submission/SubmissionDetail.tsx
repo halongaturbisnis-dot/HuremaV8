@@ -271,7 +271,9 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                     const att = submission.submission_data.full_attendance;
                     const isIN = submission.submission_data.presence_type === 'IN';
                     const time = isIN ? att?.check_in : att?.check_out;
-                    const lateEarly = isIN ? att?.late_minutes : att?.early_departure_minutes;
+                    const lateEarly = isIN 
+                      ? att?.late_minutes 
+                      : (att?.status_out === 'Terlambat Pulang' ? att?.late_checkout_minutes : att?.early_departure_minutes);
                     const reason = isIN 
                       ? att?.late_reason 
                       : (att?.status_out === 'Terlambat Pulang' ? att?.late_checkout_reason : att?.early_departure_reason);
@@ -289,13 +291,13 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                         <div>
                           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{isIN ? 'Keterlambatan' : (att?.status_out === 'Terlambat Pulang' ? 'Terlambat Pulang' : 'Pulang Awal')}</p>
                           <p className={`text-xs font-bold ${lateEarly > 0 || att?.status_out === 'Terlambat Pulang' ? 'text-red-600' : 'text-emerald-600'}`}>
-                            {att?.status_out === 'Terlambat Pulang' ? `${lateEarly || 0} Menit` : `${lateEarly || 0} Menit`}
+                            {lateEarly || 0} Menit
                           </p>
                         </div>
                         {(lateEarly > 0 || att?.status_out === 'Terlambat Pulang') && (
                           <div className="pt-1">
                             <p className="text-[8px] font-bold text-gray-400 uppercase">Alasan {isIN ? 'Terlambat' : (att?.status_out === 'Terlambat Pulang' ? 'Terlambat' : 'Pulang Awal')}</p>
-                            <p className="text-[10px] text-gray-500 italic leading-tight">"{reason || (att?.status_out === 'Terlambat Pulang' ? att?.late_checkout_reason : '-')}"</p>
+                            <p className="text-[10px] text-gray-500 italic leading-tight">"{reason || '-'}"</p>
                           </div>
                         )}
                       </>

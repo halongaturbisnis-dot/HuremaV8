@@ -55,7 +55,7 @@ export const presenceService = {
   /**
    * Menghitung keterlambatan atau pulang cepat berdasarkan jadwal (Timezone Aware)
    */
-  calculateStatus(currentTime: Date, schedule: Schedule, type: 'IN' | 'OUT', timeZone?: string): { status: string, minutes: number } {
+  calculateStatus(currentTime: Date, schedule: Schedule, type: 'IN' | 'OUT', timeZone?: string): { status: string, minutes: number, lateCheckoutMinutes?: number } {
     // Mode Fleksibel Bypass
     if (schedule.id === 'FLEKSIBEL') {
       return { status: 'Tepat Waktu', minutes: 0 };
@@ -102,7 +102,6 @@ export const presenceService = {
         return { status: 'Terlambat', minutes: diffMins - tolerance };
       }
     } else {
-      const earlyTolerance = schedule.tolerance_minutes || 0;
       const lateCheckoutTolerance = schedule.tolerance_checkout_minutes || 0;
 
       // Jika pulang sebelum waktu seharusnya (diffMins negatif)
@@ -112,7 +111,7 @@ export const presenceService = {
       
       // Jika pulang setelah waktu seharusnya (diffMins positif) diluar toleransi checkout
       if (diffMins > lateCheckoutTolerance) {
-        return { status: 'Terlambat Pulang', minutes: diffMins - lateCheckoutTolerance };
+        return { status: 'Terlambat Pulang', minutes: 0, lateCheckoutMinutes: diffMins - lateCheckoutTolerance };
       }
     }
 

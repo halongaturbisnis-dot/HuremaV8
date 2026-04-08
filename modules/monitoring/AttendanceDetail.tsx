@@ -354,7 +354,7 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Status Pulang</p>
                         <p className={`text-xs font-bold ${attendance.early_departure_minutes > 0 || attendance.status_out === 'Terlambat Pulang' ? 'text-red-600' : 'text-emerald-600'}`}>
-                          {attendance.status_out || '-'} {attendance.early_departure_minutes > 0 ? `(${attendance.early_departure_minutes} Menit)` : ''}
+                          {attendance.status_out || '-'} {attendance.early_departure_minutes > 0 ? `(${attendance.early_departure_minutes} Menit)` : (attendance.status_out === 'Terlambat Pulang' ? `(${attendance.late_checkout_minutes || 0} Menit)` : '')}
                         </p>
                       </div>
                       <div>

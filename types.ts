@@ -172,6 +172,7 @@ export interface Attendance {
   out_address: string | null;
   late_minutes: number;
   early_departure_minutes: number;
+  late_checkout_minutes: number;
   late_reason: string | null;
   early_departure_reason: string | null;
   status_in: string;

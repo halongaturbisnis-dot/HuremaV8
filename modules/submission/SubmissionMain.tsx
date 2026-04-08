@@ -67,52 +67,58 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
               )
             )
           `)
-          .or('check_in_type.neq.Reguler,check_out_type.neq.Reguler')
+          .or('check_in_type.neq.Reguler,check_out_type.neq.Reguler,check_in_validity.eq.FALSE,check_out_validity.eq.FALSE')
           .order('created_at', { ascending: false });
         if (error) throw error;
         
         // Map attendances to Submission-like structure
         const mapped: any[] = [];
         (data as any[]).forEach(a => {
-          // Check In Out of Range
-          if (a.check_in_type && a.check_in_type !== 'Reguler') {
-            mapped.push({
-              id: `${a.id}_IN`,
-              type: 'Presensi Luar',
-              account_id: a.account_id,
-              account: a.account,
-              status: a.check_in_validity === 'FALSE' ? 'Pending' : (a.check_in_validity === 'TRUE' ? 'Disetujui' : 'Ditolak'),
-              description: `[MASUK] ${a.check_in_type}: ${a.check_in_reason || 'Tanpa alasan'}`,
-              created_at: a.check_in || a.created_at,
-              submission_data: { 
-                attendance_id: a.id, 
-                presence_type: 'IN',
-                reason: a.check_in_reason,
-                location_type: a.check_in_type,
-                // Pass full attendance data for detailed view
-                full_attendance: a
-              }
-            });
+          // Check In Verification Needed (Out of Range OR Late OR Explicitly FALSE)
+          if (a.check_in_type !== 'Reguler' || a.check_in_validity === 'FALSE' || a.status_in === 'Terlambat') {
+            // Only show if it's actually needing verification or was a special type
+            if (a.check_in_type !== 'Reguler' || a.check_in_validity !== 'TRUE') {
+              mapped.push({
+                id: `${a.id}_IN`,
+                type: 'Presensi Luar',
+                account_id: a.account_id,
+                account: a.account,
+                status: a.check_in_validity === 'FALSE' ? 'Pending' : (a.check_in_validity === 'TRUE' ? 'Disetujui' : 'Ditolak'),
+                description: `[MASUK] ${a.check_in_type || 'Reguler'}: ${a.check_in_reason || a.late_reason || 'Tanpa alasan'}`,
+                created_at: a.check_in || a.created_at,
+                submission_data: { 
+                  attendance_id: a.id, 
+                  presence_type: 'IN',
+                  reason: a.check_in_reason || a.late_reason,
+                  location_type: a.check_in_type,
+                  // Pass full attendance data for detailed view
+                  full_attendance: a
+                }
+              });
+            }
           }
-          // Check Out Out of Range
-          if (a.check_out_type && a.check_out_type !== 'Reguler') {
-            mapped.push({
-              id: `${a.id}_OUT`,
-              type: 'Presensi Luar',
-              account_id: a.account_id,
-              account: a.account,
-              status: a.check_out_validity === 'FALSE' ? 'Pending' : (a.check_out_validity === 'TRUE' ? 'Disetujui' : 'Ditolak'),
-              description: `[PULANG] ${a.check_out_type}: ${a.check_out_reason || 'Tanpa alasan'}`,
-              created_at: a.check_out || a.created_at,
-              submission_data: { 
-                attendance_id: a.id, 
-                presence_type: 'OUT',
-                reason: a.check_out_reason,
-                location_type: a.check_out_type,
-                // Pass full attendance data for detailed view
-                full_attendance: a
-              }
-            });
+          // Check Out Verification Needed (Out of Range OR Late Checkout OR Explicitly FALSE)
+          if (a.check_out_type !== 'Reguler' || a.check_out_validity === 'FALSE' || a.status_out === 'Terlambat Pulang') {
+             // Only show if it's actually needing verification or was a special type
+             if (a.check_out_type !== 'Reguler' || a.check_out_validity !== 'TRUE') {
+              mapped.push({
+                id: `${a.id}_OUT`,
+                type: 'Presensi Luar',
+                account_id: a.account_id,
+                account: a.account,
+                status: a.check_out_validity === 'FALSE' ? 'Pending' : (a.check_out_validity === 'TRUE' ? 'Disetujui' : 'Ditolak'),
+                description: `[PULANG] ${a.check_out_type || 'Reguler'}: ${a.check_out_reason || a.late_checkout_reason || 'Tanpa alasan'}`,
+                created_at: a.check_out || a.created_at,
+                submission_data: { 
+                  attendance_id: a.id, 
+                  presence_type: 'OUT',
+                  reason: a.check_out_reason || a.late_checkout_reason,
+                  location_type: a.check_out_type,
+                  // Pass full attendance data for detailed view
+                  full_attendance: a
+                }
+              });
+            }
           }
         });
         setSubmissions(mapped as any);
