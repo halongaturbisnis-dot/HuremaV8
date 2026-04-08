@@ -184,6 +184,9 @@ export interface Attendance {
   check_out_validity: 'TRUE' | 'FALSE' | 'DENY' | null;
   schedule_id?: string | null;
   special_assignment_id?: string | null;
+  target_latitude?: number | null;
+  target_longitude?: number | null;
+  target_radius?: number | null;
   created_at?: string;
 }
 

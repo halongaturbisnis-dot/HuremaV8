@@ -434,6 +434,12 @@ const PresenceMain: React.FC = () => {
 
       if (!isCurrentlyCheckingOut) {
         const isSpecial = !!activeSpecialAssignment;
+        
+        // Snapshot target location
+        const targetLat = isSpecial ? activeSpecialAssignment.latitude : account?.location?.latitude;
+        const targetLng = isSpecial ? activeSpecialAssignment.longitude : account?.location?.longitude;
+        const targetRad = isSpecial ? activeSpecialAssignment.radius : account?.location?.radius;
+
         const payload: any = {
           account_id: account.id,
           check_in: currentTimeStr,
@@ -448,7 +454,10 @@ const PresenceMain: React.FC = () => {
           check_in_reason: isOutOfRangeRequested ? checkInReason : null,
           check_in_validity: isOutOfRangeRequested ? 'FALSE' : 'TRUE',
           schedule_id: isSpecial ? null : effectiveSchedule?.id,
-          special_assignment_id: isSpecial ? activeSpecialAssignment.id : null
+          special_assignment_id: isSpecial ? activeSpecialAssignment.id : null,
+          target_latitude: targetLat,
+          target_longitude: targetLng,
+          target_radius: targetRad
         };
         await presenceService.checkIn(payload);
       } else {
