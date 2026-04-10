@@ -554,70 +554,64 @@ const PresenceVerification: React.FC<PresenceVerificationProps> = ({ onBack }) =
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {activeSpecialAssignment && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-top duration-500">
-          <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 shrink-0">
-            <ShieldCheck size={24} />
-          </div>
-          <div className="flex-1">
-            <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider">Penugasan Khusus Aktif</h4>
-            <p className="text-[10px] text-amber-600 font-medium">{activeSpecialAssignment.title} • {activeSpecialAssignment.location_name}</p>
-          </div>
-          <div className="px-3 py-1 bg-amber-200/50 rounded-full text-[9px] font-black text-amber-800 uppercase tracking-widest">
-            Penugasan
-          </div>
-        </div>
-      )}
-
-      {activeSpecialSchedule && !activeSpecialAssignment && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-top duration-500">
-          <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 shrink-0">
-            <CalendarClock size={24} />
-          </div>
-          <div className="flex-1">
-            <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Hari Kerja Khusus</h4>
-            <p className="text-[10px] text-emerald-600 font-medium">{activeSpecialSchedule.name}</p>
-          </div>
-          <div className="px-3 py-1 bg-emerald-200/50 rounded-full text-[9px] font-black text-emerald-800 uppercase tracking-widest">
-            Jadwal Khusus
-          </div>
-        </div>
-      )}
-
-      {activeHoliday && !activeSpecialAssignment && !activeSpecialSchedule && (
-        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-top duration-500">
-          <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center text-rose-500 shrink-0">
-            <Umbrella size={24} />
-          </div>
-          <div className="flex-1">
-            <h4 className="text-xs font-bold text-rose-800 uppercase tracking-wider">Hari Libur Khusus</h4>
-            <p className="text-[10px] text-rose-600 font-medium">{activeHoliday.name}</p>
-          </div>
-          <div className="px-3 py-1 bg-rose-200/50 rounded-full text-[9px] font-black text-rose-800 uppercase tracking-widest">
-            Libur Khusus
-          </div>
-        </div>
-      )}
-
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
-        <div className="flex items-center gap-4 w-full">
-          <button 
-            onClick={onBack}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 mr-2"
-          >
-            <ChevronLeft size={24} />
-          </button>
-          <div className="w-12 h-12 bg-[#006E62]/10 rounded-xl flex items-center justify-center text-[#006E62]">
-            <Fingerprint size={28} />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-gray-800 tracking-tight">Presensi {isCheckOut ? 'Keluar' : 'Masuk'}</h2>
-          </div>
-        </div>
-      </div>
-
       <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 lg:gap-8 items-start animate-in fade-in duration-500">
         <div className="lg:col-span-7 order-3 lg:order-1 w-full">
+          <div className="flex flex-col gap-4 mb-6">
+            <div className="flex items-center gap-4 w-full justify-center relative py-2">
+              <button 
+                onClick={onBack}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 absolute left-0"
+              >
+                <ChevronLeft size={24} />
+              </button>
+              <h2 className="text-xl font-bold text-gray-800 tracking-tight text-center">Presensi {isCheckOut ? 'Keluar' : 'Masuk'}</h2>
+            </div>
+
+            {activeSpecialAssignment && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-top duration-500">
+                <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 shrink-0">
+                  <ShieldCheck size={24} />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider">Penugasan Khusus Aktif</h4>
+                  <p className="text-[10px] text-amber-600 font-medium">{activeSpecialAssignment.title} • {activeSpecialAssignment.location_name}</p>
+                </div>
+                <div className="px-3 py-1 bg-amber-200/50 rounded-full text-[9px] font-black text-amber-800 uppercase tracking-widest">
+                  Penugasan
+                </div>
+              </div>
+            )}
+
+            {activeSpecialSchedule && !activeSpecialAssignment && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-top duration-500">
+                <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 shrink-0">
+                  <CalendarClock size={24} />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Hari Kerja Khusus</h4>
+                  <p className="text-[10px] text-emerald-600 font-medium">{activeSpecialSchedule.name}</p>
+                </div>
+                <div className="px-3 py-1 bg-emerald-200/50 rounded-full text-[9px] font-black text-emerald-800 uppercase tracking-widest">
+                  Jadwal Khusus
+                </div>
+              </div>
+            )}
+
+            {activeHoliday && !activeSpecialAssignment && !activeSpecialSchedule && (
+              <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-top duration-500">
+                <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center text-rose-500 shrink-0">
+                  <Umbrella size={24} />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-xs font-bold text-rose-800 uppercase tracking-wider">Hari Libur Khusus</h4>
+                  <p className="text-[10px] text-rose-600 font-medium">{activeHoliday.name}</p>
+                </div>
+                <div className="px-3 py-1 bg-rose-200/50 rounded-full text-[9px] font-black text-rose-800 uppercase tracking-widest">
+                  Libur Khusus
+                </div>
+              </div>
+            )}
+          </div>
           {isCameraActive ? (
             <PresenceCamera 
               onCapture={handleCaptureComplete}

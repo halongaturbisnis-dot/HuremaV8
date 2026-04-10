@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PresenceDashboard from './PresenceDashboard';
 import PresenceVerification from './PresenceVerification';
 
@@ -13,6 +13,10 @@ const PresenceMain: React.FC<PresenceMainProps> = ({ setActiveTab }) => {
     localStorage.removeItem('presence_nav_source');
     return source === 'bottom_nav' ? 'verify' : 'dashboard';
   });
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('presence_view_change', { detail: view }));
+  }, [view]);
 
   if (view === 'verify') {
     return <PresenceVerification onBack={() => setView('dashboard')} />;

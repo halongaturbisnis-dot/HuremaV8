@@ -486,9 +486,10 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
   return (
     <div className="min-h-screen bg-white pb-20">
       {/* Top Banner */}
-      <div className="bg-[#006E62] text-white px-6 py-8 rounded-b-[40px] shadow-xl relative overflow-hidden">
+      <div className="mx-4 mt-4 bg-gradient-to-br from-[#006E62] to-[#005a50] backdrop-blur-xl text-white px-6 py-8 rounded-[40px] shadow-2xl relative overflow-hidden border border-white/20">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12 blur-xl"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
         
         <div className="relative z-10 flex flex-col gap-6">
           <div className="text-center">

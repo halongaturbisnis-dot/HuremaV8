@@ -15,6 +15,15 @@ interface MobileLayoutProps {
 
 const MobileLayout: React.FC<MobileLayoutProps> = ({ children, activeTab, setActiveTab, user }) => {
   const [todayAttendance, setTodayAttendance] = useState<Attendance | null>(null);
+  const [presenceView, setPresenceView] = useState<'dashboard' | 'verify'>('dashboard');
+
+  useEffect(() => {
+    const handleViewChange = (e: any) => {
+      setPresenceView(e.detail);
+    };
+    window.addEventListener('presence_view_change', handleViewChange);
+    return () => window.removeEventListener('presence_view_change', handleViewChange);
+  }, []);
 
   useEffect(() => {
     const fetchAttendance = async () => {
@@ -79,7 +88,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children, activeTab, setAct
             localStorage.setItem('presence_nav_source', 'bottom_nav');
             setActiveTab('presence');
           }}
-          className={`p-4 rounded-full transition-all duration-300 -mt-10 border-4 border-white ${activeTab === 'presence' ? 'bg-[#006E62] text-white shadow-xl scale-110' : 'bg-white text-[#006E62] shadow-lg'}`}
+          className={`p-4 rounded-full transition-all duration-300 -mt-10 border-4 border-white ${activeTab === 'presence' && presenceView !== 'verify' ? 'bg-[#006E62] text-white shadow-xl scale-110' : 'bg-white text-[#006E62] shadow-lg'}`}
         >
           <div className="relative">
             <Fingerprint size={28} />
