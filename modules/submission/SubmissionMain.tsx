@@ -83,7 +83,7 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
                 type: 'Presensi Luar',
                 account_id: a.account_id,
                 account: a.account,
-                status: a.check_in_validity === 'FALSE' ? 'Pending' : (a.check_in_validity === 'TRUE' ? 'Disetujui' : 'Ditolak'),
+                status: !a.check_in_validity || a.check_in_validity === 'FALSE' ? 'Pending' : (a.check_in_validity === 'TRUE' ? 'Disetujui' : 'Ditolak'),
                 description: `[MASUK] ${a.check_in_type || 'Reguler'}: ${a.check_in_reason || a.late_reason || 'Tanpa alasan'}`,
                 created_at: a.check_in || a.created_at,
                 submission_data: { 
@@ -106,7 +106,7 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
                 type: 'Presensi Luar',
                 account_id: a.account_id,
                 account: a.account,
-                status: a.check_out_validity === 'FALSE' ? 'Pending' : (a.check_out_validity === 'TRUE' ? 'Disetujui' : 'Ditolak'),
+                status: !a.check_out_validity || a.check_out_validity === 'FALSE' ? 'Pending' : (a.check_out_validity === 'TRUE' ? 'Disetujui' : 'Ditolak'),
                 description: `[PULANG] ${a.check_out_type || 'Reguler'}: ${a.check_out_reason || a.late_checkout_reason || 'Tanpa alasan'}`,
                 created_at: a.check_out || a.created_at,
                 submission_data: { 
@@ -309,7 +309,7 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
           submission={selectedSubmission} 
           onClose={() => setSelectedSubmission(null)} 
           onVerify={handleVerify}
-          canVerify={(currentUser?.role === 'admin' || currentUser?.is_hr_admin) && currentUser?.id !== selectedSubmission.account_id && selectedSubmission.status === 'Pending'}
+          canVerify={(currentUser?.role === 'admin' || currentUser?.is_hr_admin) && selectedSubmission.status === 'Pending'}
         />
       )}
     </div>

@@ -163,7 +163,7 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                     <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[9px] font-black rounded-full uppercase">
                       {submission.submission_data.presence_type === 'IN' ? 'Presensi Masuk' : 'Presensi Keluar'}
                     </span>
-                    {submission.submission_data.full_attendance?.status_out === 'Terlambat Pulang' && (
+                    {submission.submission_data.presence_type === 'OUT' && submission.submission_data.full_attendance?.status_out === 'Terlambat Pulang' && (
                       <span className="px-2 py-0.5 bg-rose-100 text-rose-700 text-[9px] font-black rounded-full uppercase">
                         Terlambat Pulang
                       </span>
@@ -305,8 +305,8 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                           <p className="text-xs font-bold text-[#006E62]">{time ? formatTimeOnly(time, isIN ? att?.in_timezone : att?.out_timezone) : '-'}</p>
                         </div>
                         <div>
-                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{isIN ? 'Keterlambatan' : (att?.status_out === 'Terlambat Pulang' ? 'Terlambat Pulang' : 'Pulang Awal')}</p>
-                          <p className={`text-xs font-bold ${lateEarly > 0 || att?.status_out === 'Terlambat Pulang' ? 'text-red-600' : 'text-emerald-600'}`}>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{isIN ? 'Terlambat' : (att?.status_out === 'Terlambat Pulang' ? 'Terlambat Pulang' : 'Pulang Awal')}</p>
+                          <p className={`text-xs font-bold ${(isIN ? att?.late_minutes > 0 : (att?.status_out === 'Terlambat Pulang' || att?.early_departure_minutes > 0)) ? 'text-red-600' : 'text-emerald-600'}`}>
                             {lateEarly || 0} Menit
                           </p>
                         </div>
