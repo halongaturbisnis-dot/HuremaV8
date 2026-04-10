@@ -492,8 +492,8 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
         
         {/* Shimmer Effect */}
-        <div className="absolute inset-0 z-0 opacity-40">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent -translate-x-full animate-shimmer"></div>
+        <div className="absolute inset-0 z-0 opacity-30">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-shimmer"></div>
         </div>
         
         <div className="relative z-10 flex flex-col gap-6">
