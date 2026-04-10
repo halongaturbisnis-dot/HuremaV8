@@ -15,6 +15,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { authService } from '../../services/authService';
 import { accountService } from '../../services/accountService';
 import { presenceService } from '../../services/presenceService';
+import { googleDriveService } from '../../services/googleDriveService';
 import { Attendance, Account } from '../../types';
 import PresenceDetailMobile from './PresenceDetailMobile';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
@@ -136,33 +137,48 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       {/* Header Section */}
-      <div className="bg-[#006E62] text-white px-6 pt-8 pb-12 rounded-b-[40px] shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
-        <div className="relative z-10">
-          <p className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-70 mb-2">PT Manfaat Inspirasi Digital Indonesia Magelang</p>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-black tracking-tight">Selamat Datang,</h1>
-              <h2 className="text-3xl font-black text-emerald-300">{account?.full_name?.split(' ')[0]}</h2>
-              <p className="text-xs font-bold opacity-80 mt-1">{account?.position} • {account?.grade}</p>
-            </div>
-            <div className="relative">
-              <div className="w-20 h-20 rounded-2xl border-4 border-white/20 overflow-hidden shadow-2xl">
-                <img 
-                  src={account?.photo_google_id ? `https://lh3.googleusercontent.com/d/${account.photo_google_id}=s400` : 'https://picsum.photos/seed/user/200'} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-              <div className="absolute -bottom-2 -right-2 bg-emerald-400 text-[#006E62] px-2 py-1 rounded-lg text-[10px] font-black shadow-lg">
-                {account?.internal_nik}
-              </div>
-            </div>
+      <div className="bg-[#006E62] text-white px-6 py-8 rounded-b-[40px] shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12 blur-xl"></div>
+        
+        <div className="relative z-10 flex flex-col gap-6">
+          <div className="text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70 whitespace-normal">
+              PT MANFAAT INSPIRASI DIGITAL INDONESIA MAGELANG
+            </p>
           </div>
-          <div className="mt-6 inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10">
-            <MapPin size={14} className="text-emerald-300" />
-            <span className="text-[11px] font-bold tracking-wide">{account?.location?.name || 'Lokasi Tidak Terdeteksi'}</span>
+          
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/90">Selamat Datang,</p>
+              <h1 className="text-3xl font-black tracking-tight leading-none">{account?.full_name?.split(' ')[0]}</h1>
+              <p className="text-[11px] font-bold text-white mt-1">
+                {account?.position || 'Staff'} • {account?.grade || account?.department || 'Operasional'}
+              </p>
+              
+              <div className="flex items-center gap-1.5 mt-3 bg-white/10 w-fit px-3 py-1.5 rounded-full backdrop-blur-md">
+                <MapPin size={12} className="text-white" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-white">{account?.location?.name || 'Lokasi Belum Diatur'}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-24 h-24 rounded-3xl border-4 border-white/20 p-1.5 bg-white/10 backdrop-blur-md shadow-2xl">
+                {account?.photo_google_id ? (
+                  <img 
+                    src={googleDriveService.getFileUrl(account.photo_google_id)} 
+                    className="w-full h-full object-cover rounded-2xl" 
+                    alt="Profile" 
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-emerald-700 rounded-2xl flex items-center justify-center font-black text-2xl">
+                    {account?.full_name?.charAt(0)}
+                  </div>
+                )}
+              </div>
+              <span className="text-[10px] font-bold text-white/80 tracking-widest">{account?.internal_nik || '-'}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -282,20 +298,20 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
           {/* Legend */}
           <div className="mt-6 grid grid-cols-2 gap-y-2 gap-x-4">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+              <div className="w-2 h-2 rounded-full bg-[#10b981]"></div>
               <span className="text-[10px] font-bold text-gray-600">Tepat Waktu</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-red-500"></div>
+              <div className="w-2 h-2 rounded-full bg-[#ef4444]"></div>
               <span className="text-[10px] font-bold text-gray-600">Terlambat</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+              <div className="w-2 h-2 rounded-full bg-[#f59e0b]"></div>
               <span className="text-[10px] font-bold text-gray-600">Pulang Awal</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-              <span className="text-[10px] font-bold text-gray-600">Lembur</span>
+              <div className="w-2 h-2 rounded-full bg-[#3b82f6]"></div>
+              <span className="text-[10px] font-bold text-gray-600">Terlambat Pulang</span>
             </div>
           </div>
         </div>

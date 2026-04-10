@@ -136,7 +136,7 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
   const canRequestLeave = account?.schedule_type === 'Fleksibel' || account?.schedule_type === 'Shift Dinamis' || account?.schedule_type === 'Shift' || isAdmin;
 
   const menuItems = [
-    { id: 'presence', label: 'Presensi Reguler', icon: Fingerprint, color: 'bg-emerald-500', onClick: () => setViewMode('presence_sub') },
+    { id: 'presence', label: 'Presensi Reguler', icon: Fingerprint, color: 'bg-emerald-500', onClick: () => setActiveTab('presence') },
     { id: 'overtime', label: 'Presensi Lembur', icon: Clock, color: 'bg-orange-500', onClick: () => setViewMode('overtime_sub') },
     { id: 'off', label: 'OFF KERJA', icon: Calendar, color: 'bg-blue-500', onClick: () => setViewMode('off_sub') },
     { id: 'kpi', label: 'KPI', icon: Target, color: 'bg-indigo-500', onClick: () => setActiveTab('kpi') },
