@@ -838,13 +838,17 @@ const PresenceMain: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 text-[10px] pt-2">
-                       <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                       <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-center">
                           <span className="text-gray-400 font-bold uppercase block mb-1">Jarak</span>
-                          <span className={`text-sm font-bold ${isWithinRadius ? 'text-[#006E62]' : 'text-rose-500'}`}>{distance !== null ? `${Math.round(distance)}m` : 'Calculating...'}</span>
+                          <span className={`text-sm font-bold ${isWithinRadius ? 'text-[#006E62]' : 'text-rose-500'}`}>
+                            {distance !== null ? `${new Intl.NumberFormat('id-ID').format(Math.round(distance))} meter` : 'Calculating...'}
+                          </span>
                        </div>
-                       <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                       <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-center">
                           <span className="text-gray-400 font-bold uppercase block mb-1">Maks Radius</span>
-                          <span className="text-sm font-bold text-gray-700">{effectiveRadius}m</span>
+                          <span className="text-sm font-bold text-gray-700">
+                            {new Intl.NumberFormat('id-ID').format(effectiveRadius)} meter
+                          </span>
                        </div>
                     </div>
                     {isBlockedByLocation && (
@@ -992,24 +996,29 @@ const PresenceMain: React.FC = () => {
 
                {showScheduleInfo && (
                  <div className="mt-4 lg:mt-8 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100/50 space-y-3">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-[#006E62] uppercase tracking-wider mb-2">
-                      <CalendarClock size={14} /> {activeSpecialAssignment ? 'Jadwal Penugasan' : activeSpecialSchedule ? 'Jadwal Khusus' : account.schedule_type === 'Shift Dinamis' ? 'Shift Terpilih' : 'Jadwal Hari Ini'}
+                    <div className="relative flex justify-center items-center text-[10px] font-bold text-[#006E62] uppercase tracking-wider mb-2">
+                      <div className="absolute left-0 top-0">
+                        <CalendarClock size={14} />
+                      </div>
+                      <span className="text-center">
+                        {activeSpecialAssignment ? 'Jadwal Penugasan' : activeSpecialSchedule ? 'Jadwal Khusus' : account.schedule_type === 'Shift Dinamis' ? 'Shift Terpilih' : 'Jadwal Hari Ini'}
+                      </span>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                       <div>
+                       <div className="text-center">
                           <p className="text-[9px] text-gray-400 font-bold uppercase">Jam Masuk</p>
                           <p className="text-xs font-bold text-gray-700">{formatDisplayTime(scheduleRule?.check_in_time, activeAttendance?.in_timezone)}</p>
+                          <p className="text-[9px] text-[#006E62] font-medium mt-1">
+                            Toleransi: {effectiveSchedule?.tolerance_checkin_minutes || 0} menit
+                          </p>
                        </div>
-                       <div>
+                       <div className="text-center">
                           <p className="text-[9px] text-gray-400 font-bold uppercase">Jam Pulang</p>
                           <p className="text-xs font-bold text-gray-700">{formatDisplayTime(scheduleRule?.check_out_time, activeAttendance?.in_timezone)}</p>
+                          <p className="text-[9px] text-[#006E62] font-medium mt-1">
+                            Toleransi: {effectiveSchedule?.tolerance_checkout_minutes || 0} menit
+                          </p>
                        </div>
-                    </div>
-                    <div className="pt-2 border-t border-emerald-100/50">
-                      <p className="text-[9px] text-gray-400 font-bold uppercase">Toleransi</p>
-                      <p className="text-[10px] font-medium text-[#006E62]">
-                        Masuk: {effectiveSchedule?.tolerance_checkin_minutes || 0}m • Pulang: {effectiveSchedule?.tolerance_checkout_minutes || 0}m
-                      </p>
                     </div>
                  </div>
                )}
