@@ -90,36 +90,12 @@ export const presenceService = {
 
     const targetTime = (type === 'IN' ? rule.check_in_time : rule.check_out_time) || '00:00:00';
     
-    let targetTotalMins: number;
-
-    // Check if targetTime is a full ISO timestamp (contains 'T' and '-')
-    if (targetTime.includes('T') && targetTime.includes('-')) {
-      const targetDate = new Date(targetTime);
-      // Calculate absolute difference in minutes between currentTime and targetDate
-      const diffMs = currentTime.getTime() - targetDate.getTime();
-      const diffMins = Math.floor(diffMs / 60000);
-
-      if (type === 'IN') {
-        const tolerance = schedule.tolerance_checkin_minutes || 0;
-        if (diffMins > tolerance) {
-          return { status: 'Terlambat', minutes: diffMins - tolerance };
-        }
-      } else {
-        const lateCheckoutTolerance = schedule.tolerance_checkout_minutes || 0;
-        if (diffMins < 0) {
-          return { status: 'Pulang Cepat', minutes: Math.abs(diffMins) };
-        }
-        if (diffMins > lateCheckoutTolerance) {
-          return { status: 'Terlambat Pulang', minutes: 0, lateCheckoutMinutes: diffMins - lateCheckoutTolerance };
-        }
-      }
-      return { status: 'Tepat Waktu', minutes: 0 };
-    } else {
-      // Fallback to legacy HH:mm:ss logic
+    // NEW LOGIC: Always use Wall Clock comparison if it's HH:mm:ss
+    if (!targetTime.includes('T')) {
       const [targetH, targetM] = targetTime.split(':').map(Number);
-      targetTotalMins = targetH * 60 + targetM;
-
+      const targetTotalMins = targetH * 60 + targetM;
       const currentTotalMins = parseInt(hourStr || '0') * 60 + parseInt(minuteStr || '0');
+      
       const diffMins = currentTotalMins - targetTotalMins;
 
       if (type === 'IN') {
@@ -136,8 +112,28 @@ export const presenceService = {
           return { status: 'Terlambat Pulang', minutes: 0, lateCheckoutMinutes: diffMins - lateCheckoutTolerance };
         }
       }
+      return { status: 'Tepat Waktu', minutes: 0 };
     }
 
+    // Fallback for ISO timestamps (if any still exist in old data)
+    const targetDate = new Date(targetTime);
+    const diffMs = currentTime.getTime() - targetDate.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (type === 'IN') {
+      const tolerance = schedule.tolerance_checkin_minutes || 0;
+      if (diffMins > tolerance) {
+        return { status: 'Terlambat', minutes: diffMins - tolerance };
+      }
+    } else {
+      const lateCheckoutTolerance = schedule.tolerance_checkout_minutes || 0;
+      if (diffMins < 0) {
+        return { status: 'Pulang Cepat', minutes: Math.abs(diffMins) };
+      }
+      if (diffMins > lateCheckoutTolerance) {
+        return { status: 'Terlambat Pulang', minutes: 0, lateCheckoutMinutes: diffMins - lateCheckoutTolerance };
+      }
+    }
     return { status: 'Tepat Waktu', minutes: 0 };
   },
 

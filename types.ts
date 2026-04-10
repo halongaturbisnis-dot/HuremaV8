@@ -194,6 +194,8 @@ export interface Attendance {
   target_late_tolerance?: number | null;
   target_early_tolerance?: number | null;
   late_checkout_reason?: string | null;
+  in_timezone?: string | null;
+  out_timezone?: string | null;
   created_at?: string;
 }
 

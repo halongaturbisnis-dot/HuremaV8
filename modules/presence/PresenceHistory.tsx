@@ -20,9 +20,19 @@ const PresenceHistory: React.FC<PresenceHistoryProps> = ({ logs, isLoading }) =>
     });
   };
 
-  const formatTime = (dateStr: string | null) => {
+  const formatTime = (dateStr: string | null, forceTimeZone?: string | null) => {
     if (!dateStr) return '--:--';
-    return new Date(dateStr).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const tz = forceTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+    try {
+      return new Intl.DateTimeFormat('id-ID', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        hour12: false,
+        timeZone: tz 
+      }).format(new Date(dateStr)).replace(/\./g, ':');
+    } catch (e) {
+      return new Date(dateStr).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+    }
   };
 
   if (isLoading) return (
@@ -55,7 +65,7 @@ const PresenceHistory: React.FC<PresenceHistoryProps> = ({ logs, isLoading }) =>
                 <div className="p-3 bg-emerald-50/50 rounded-lg border border-emerald-100 space-y-2">
                   <p className="text-[8px] font-bold text-emerald-600 uppercase tracking-tighter">Check In</p>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-lg font-sans font-bold text-gray-800">{formatTime(log.check_in)}</span>
+                    <span className="text-lg font-sans font-bold text-gray-800">{formatTime(log.check_in, log.in_timezone)}</span>
                     <span className="text-[9px] font-bold text-[#006E62] uppercase">{log.status_in}</span>
                   </div>
                   {log.in_address && (
@@ -75,7 +85,7 @@ const PresenceHistory: React.FC<PresenceHistoryProps> = ({ logs, isLoading }) =>
                 <div className="p-3 bg-blue-50/50 rounded-lg border border-blue-100 space-y-2">
                   <p className="text-[8px] font-bold text-blue-600 uppercase tracking-tighter">Check Out</p>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-lg font-sans font-bold text-gray-800">{formatTime(log.check_out)}</span>
+                    <span className="text-lg font-sans font-bold text-gray-800">{formatTime(log.check_out, log.out_timezone)}</span>
                     <span className={`text-[9px] font-bold uppercase ${log.status_out === 'Pulang Cepat' ? 'text-rose-500' : 'text-blue-500'}`}>{log.status_out}</span>
                   </div>
                   {log.out_address && (

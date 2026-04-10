@@ -318,13 +318,20 @@ const PresenceMain: React.FC = () => {
   // 3. Shift Dinamis (Jika dipilih)
   // 4. Jadwal Reguler (Fixed/Shift/Fleksibel)
   
-  const formatDisplayTime = (timeStr: string | null | undefined) => {
+  const formatDisplayTime = (timeStr: string | null | undefined, forceTimeZone?: string | null) => {
     if (!timeStr) return '--:--';
     if (timeStr.includes('-') || timeStr.includes('T')) {
       try {
         const date = new Date(timeStr);
         if (isNaN(date.getTime())) return '--:--';
-        return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(/\./g, ':');
+        
+        const tz = forceTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+        return new Intl.DateTimeFormat('id-ID', { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          hour12: false,
+          timeZone: tz 
+        }).format(date).replace(/\./g, ':');
       } catch (e) {
         return '--:--';
       }
@@ -468,26 +475,13 @@ const PresenceMain: React.FC = () => {
         const targetLng = isSpecial ? activeSpecialAssignment.longitude : account?.location?.longitude;
         const targetRad = isSpecial ? activeSpecialAssignment.radius : account?.location?.radius;
 
-        // Hitung target_check_in dan target_check_out sebagai TIMESTAMPTZ
+        // Hitung target_check_in dan target_check_out sebagai HH:mm:ss
         let targetCheckIn: string | null = null;
         let targetCheckOut: string | null = null;
 
         if (scheduleRule?.check_in_time && scheduleRule?.check_out_time) {
-          const [inH, inM] = scheduleRule.check_in_time.split(':').map(Number);
-          const [outH, outM] = scheduleRule.check_out_time.split(':').map(Number);
-
-          const tIn = new Date(serverTime);
-          tIn.setHours(inH, inM, 0, 0);
-          targetCheckIn = tIn.toISOString();
-
-          const tOut = new Date(serverTime);
-          tOut.setHours(outH, outM, 0, 0);
-          
-          // Jika jam pulang < jam masuk, berarti shift malam (lintas hari)
-          if (outH < inH || (outH === inH && outM < inM)) {
-            tOut.setDate(tOut.getDate() + 1);
-          }
-          targetCheckOut = tOut.toISOString();
+          targetCheckIn = scheduleRule.check_in_time;
+          targetCheckOut = scheduleRule.check_out_time;
         }
 
         const payload: any = {
@@ -497,6 +491,7 @@ const PresenceMain: React.FC = () => {
           in_longitude: submissionCoords?.lng,
           in_photo_id: photoId,
           in_address: address,
+          in_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           status_in: scheduleResult.status,
           late_minutes: (scheduleResult as any).minutes || 0,
           late_reason: reason,
@@ -529,6 +524,7 @@ const PresenceMain: React.FC = () => {
           out_longitude: submissionCoords?.lng,
           out_photo_id: photoId,
           out_address: address,
+          out_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           status_out: scheduleResult.status,
           early_departure_minutes: scheduleResult.status === 'Pulang Cepat' ? ((scheduleResult as any).minutes || 0) : 0,
           late_checkout_minutes: scheduleResult.status === 'Terlambat Pulang' ? ((scheduleResult as any).lateCheckoutMinutes || 0) : 0,
@@ -1002,11 +998,11 @@ const PresenceMain: React.FC = () => {
                     <div className="grid grid-cols-2 gap-4">
                        <div>
                           <p className="text-[9px] text-gray-400 font-bold uppercase">Jam Masuk</p>
-                          <p className="text-xs font-bold text-gray-700">{formatDisplayTime(scheduleRule?.check_in_time)}</p>
+                          <p className="text-xs font-bold text-gray-700">{formatDisplayTime(scheduleRule?.check_in_time, activeAttendance?.in_timezone)}</p>
                        </div>
                        <div>
                           <p className="text-[9px] text-gray-400 font-bold uppercase">Jam Pulang</p>
-                          <p className="text-xs font-bold text-gray-700">{formatDisplayTime(scheduleRule?.check_out_time)}</p>
+                          <p className="text-xs font-bold text-gray-700">{formatDisplayTime(scheduleRule?.check_out_time, activeAttendance?.in_timezone)}</p>
                        </div>
                     </div>
                     <div className="pt-2 border-t border-emerald-100/50">
