@@ -169,7 +169,7 @@ const App: React.FC = () => {
           ) : activeTab === 'document' ? (
             <div className="p-4"><DocumentMain user={user} /></div>
           ) : activeTab === 'presence' ? (
-            <div className="p-4"><PresenceMain /></div>
+            <div className="p-4"><PresenceMain setActiveTab={setActiveTab} /></div>
           ) : activeTab === 'overtime' ? (
             <div className="p-4"><OvertimeMain /></div>
           ) : activeTab === 'submission' ? (

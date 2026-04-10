@@ -1,0 +1,399 @@
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  Fingerprint, 
+  ClipboardList, 
+  Calendar, 
+  ChevronRight, 
+  Clock, 
+  CheckCircle2, 
+  AlertCircle,
+  TrendingUp,
+  Filter
+} from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { authService } from '../../services/authService';
+import { accountService } from '../../services/accountService';
+import { presenceService } from '../../services/presenceService';
+import { Attendance, Account } from '../../types';
+import PresenceDetailMobile from './PresenceDetailMobile';
+import LoadingSpinner from '../../components/Common/LoadingSpinner';
+
+interface PresenceDashboardProps {
+  onVerify: () => void;
+  setActiveTab?: (tab: string) => void;
+}
+
+const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActiveTab }) => {
+  const [account, setAccount] = useState<Account | null>(null);
+  const [attendances, setAttendances] = useState<Attendance[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFetchingData, setIsFetchingData] = useState(false);
+  const [selectedAttendance, setSelectedAttendance] = useState<Attendance | null>(null);
+  
+  // Date Filter State
+  const [dateRange, setDateRange] = useState({
+    start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    end: new Date().toISOString().split('T')[0]
+  });
+
+  const currentUser = authService.getCurrentUser();
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchInitialData();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (account) {
+      fetchHistory();
+    }
+  }, [dateRange, account]);
+
+  const fetchInitialData = async () => {
+    try {
+      setIsLoading(true);
+      const acc = await accountService.getById(currentUser!.id);
+      setAccount(acc as any);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchHistory = async () => {
+    try {
+      setIsFetchingData(true);
+      const data = await presenceService.getAttendanceByRange(dateRange.start, dateRange.end, account!.id);
+      setAttendances(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsFetchingData(false);
+    }
+  };
+
+  const handleDateChange = (type: 'start' | 'end', value: string) => {
+    const newRange = { ...dateRange, [type]: value };
+    
+    // Protection: Max 31 days
+    const start = new Date(newRange.start);
+    const end = new Date(newRange.end);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays > 31) {
+      alert("Rentang waktu maksimal adalah 31 hari.");
+      return;
+    }
+
+    if (start > end) {
+      alert("Tanggal mulai tidak boleh lebih besar dari tanggal selesai.");
+      return;
+    }
+
+    setDateRange(newRange);
+  };
+
+  // Chart Data Aggregation
+  const chartData = useMemo(() => {
+    const inData = [
+      { name: 'Tepat Waktu', value: 0, color: '#10b981' },
+      { name: 'Terlambat', value: 0, color: '#ef4444' }
+    ];
+
+    const outData = [
+      { name: 'Tepat Waktu', value: 0, color: '#10b981' },
+      { name: 'Pulang Awal', value: 0, color: '#f59e0b' },
+      { name: 'Terlambat Pulang', value: 0, color: '#3b82f6' }
+    ];
+
+    attendances.forEach(a => {
+      // In Stats
+      if (a.status_in === 'Terlambat') inData[1].value++;
+      else if (a.check_in) inData[0].value++;
+
+      // Out Stats
+      if (a.status_out === 'Pulang Cepat') outData[1].value++;
+      else if (a.status_out === 'Terlambat Pulang') outData[2].value++;
+      else if (a.check_out) outData[0].value++;
+    });
+
+    return { inData, outData };
+  }, [attendances]);
+
+  const todayAttendance = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return attendances.find(a => a.created_at?.startsWith(today));
+  }, [attendances]);
+
+  const isCheckOut = !!(todayAttendance?.check_in && !todayAttendance?.check_out);
+
+  if (isLoading) return <LoadingSpinner message="Menyiapkan Dashboard..." />;
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-24">
+      {/* Header Section */}
+      <div className="bg-[#006E62] text-white px-6 pt-8 pb-12 rounded-b-[40px] shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+        <div className="relative z-10">
+          <p className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-70 mb-2">PT Manfaat Inspirasi Digital Indonesia Magelang</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-black tracking-tight">Selamat Datang,</h1>
+              <h2 className="text-3xl font-black text-emerald-300">{account?.full_name?.split(' ')[0]}</h2>
+              <p className="text-xs font-bold opacity-80 mt-1">{account?.position} • {account?.grade}</p>
+            </div>
+            <div className="relative">
+              <div className="w-20 h-20 rounded-2xl border-4 border-white/20 overflow-hidden shadow-2xl">
+                <img 
+                  src={account?.photo_google_id ? `https://lh3.googleusercontent.com/d/${account.photo_google_id}=s400` : 'https://picsum.photos/seed/user/200'} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <div className="absolute -bottom-2 -right-2 bg-emerald-400 text-[#006E62] px-2 py-1 rounded-lg text-[10px] font-black shadow-lg">
+                {account?.internal_nik}
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10">
+            <MapPin size={14} className="text-emerald-300" />
+            <span className="text-[11px] font-bold tracking-wide">{account?.location?.name || 'Lokasi Tidak Terdeteksi'}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="px-6 -mt-8 grid grid-cols-2 gap-4 relative z-20">
+        <button 
+          onClick={onVerify}
+          className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100 flex flex-col items-center gap-3 group active:scale-95 transition-all"
+        >
+          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-colors ${isCheckOut ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}>
+            <Fingerprint size={32} />
+          </div>
+          <span className="text-xs font-bold text-gray-700">Presensi {isCheckOut ? 'Keluar' : 'Masuk'}</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveTab ? setActiveTab('submission') : null}
+          className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100 flex flex-col items-center gap-3 group active:scale-95 transition-all"
+        >
+          <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-lg">
+            <ClipboardList size={32} />
+          </div>
+          <span className="text-xs font-bold text-gray-700">Dispensasi Presensi</span>
+        </button>
+      </div>
+
+      {/* Filter Section */}
+      <div className="px-6 mt-8">
+        <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Filter size={16} className="text-[#006E62]" />
+              <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Filter Riwayat</h3>
+            </div>
+            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Maks 31 Hari</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+              <input 
+                type="date" 
+                value={dateRange.start}
+                onChange={(e) => handleDateChange('start', e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006E62]"
+              />
+            </div>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+              <input 
+                type="date" 
+                value={dateRange.end}
+                onChange={(e) => handleDateChange('end', e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006E62]"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Statistics Section */}
+      <div className="px-6 mt-6">
+        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+          <div className="flex items-center gap-2 mb-6">
+            <TrendingUp size={16} className="text-[#006E62]" />
+            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Statistik Kehadiran</h3>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            {/* In Chart */}
+            <div className="flex flex-col items-center">
+              <div className="h-32 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartData.inData}
+                      innerRadius={35}
+                      outerRadius={50}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {chartData.inData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="text-[10px] font-bold text-gray-500 uppercase mt-2">Presensi Masuk</p>
+            </div>
+
+            {/* Out Chart */}
+            <div className="flex flex-col items-center">
+              <div className="h-32 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartData.outData}
+                      innerRadius={35}
+                      outerRadius={50}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {chartData.outData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="text-[10px] font-bold text-gray-500 uppercase mt-2">Presensi Keluar</p>
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div className="mt-6 grid grid-cols-2 gap-y-2 gap-x-4">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+              <span className="text-[10px] font-bold text-gray-600">Tepat Waktu</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-red-500"></div>
+              <span className="text-[10px] font-bold text-gray-600">Terlambat</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+              <span className="text-[10px] font-bold text-gray-600">Pulang Awal</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+              <span className="text-[10px] font-bold text-gray-600">Lembur</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* History List */}
+      <div className="px-6 mt-6 space-y-4">
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-2">
+            <Clock size={16} className="text-[#006E62]" />
+            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Riwayat Aktivitas</h3>
+          </div>
+          <span className="text-[10px] font-bold text-gray-400">{attendances.length} Data</span>
+        </div>
+
+        {isFetchingData ? (
+          <div className="py-10 flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Memperbarui Data...</p>
+          </div>
+        ) : attendances.length === 0 ? (
+          <div className="bg-white p-10 rounded-3xl border border-gray-100 shadow-sm flex flex-col items-center text-center">
+            <Calendar size={48} className="text-gray-100 mb-4" />
+            <p className="text-sm font-bold text-gray-400">Tidak ada riwayat pada periode ini.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {attendances.slice().reverse().map((log) => (
+              <button 
+                key={log.id}
+                onClick={() => setSelectedAttendance(log)}
+                className="w-full bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all"
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${log.status_in === 'Terlambat' ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-600'}`}>
+                    {log.status_in === 'Terlambat' ? <AlertCircle size={24} /> : <CheckCircle2 size={24} />}
+                  </div>
+                  <div className="text-left">
+                    <p className="text-xs font-bold text-gray-800">
+                      {new Date(log.created_at!).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                        {log.check_in ? log.check_in.slice(11, 16) : '--:--'}
+                      </span>
+                      <span className="text-gray-300">•</span>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                        {log.check_out ? log.check_out.slice(11, 16) : '--:--'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-right mr-2">
+                    <p className={`text-[10px] font-black uppercase tracking-tighter ${log.status_in === 'Terlambat' ? 'text-rose-500' : 'text-emerald-600'}`}>
+                      {log.status_in}
+                    </p>
+                    {log.status_out && (
+                      <p className={`text-[9px] font-bold uppercase tracking-tighter ${log.status_out === 'Pulang Cepat' ? 'text-amber-500' : 'text-blue-500'}`}>
+                        {log.status_out}
+                      </p>
+                    )}
+                  </div>
+                  <ChevronRight size={18} className="text-gray-300 group-hover:text-[#006E62] transition-colors" />
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Detail Modal */}
+      {selectedAttendance && account && (
+        <PresenceDetailMobile 
+          attendance={selectedAttendance}
+          account={account}
+          onClose={() => setSelectedAttendance(null)}
+        />
+      )}
+    </div>
+  );
+};
+
+export default PresenceDashboard;
+
+const MapPin = ({ size, className }: { size: number, className?: string }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+);
