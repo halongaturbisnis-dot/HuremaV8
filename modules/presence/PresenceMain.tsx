@@ -319,32 +319,22 @@ const PresenceMain: React.FC = () => {
   // 4. Jadwal Reguler (Fixed/Shift/Fleksibel)
   
   const getEffectiveSchedule = () => {
-    // HIERARCHY LOCKING: Jika sedang check-in, gunakan mode yang tersimpan di DB
+    // HIERARCHY LOCKING: Jika sedang check-in, gunakan mode yang tersimpan di DB (Snapshot)
     if (activeAttendance) {
-      if (activeAttendance.special_assignment_id && activeSpecialAssignment) {
-        return {
-          id: activeSpecialAssignment.id,
-          name: activeSpecialAssignment.title,
-          type: 1,
-          tolerance_minutes: activeSpecialAssignment.custom_early_tolerance || 0,
-          tolerance_checkin_minutes: activeSpecialAssignment.custom_late_tolerance || 0,
-          tolerance_checkout_minutes: activeSpecialAssignment.custom_early_tolerance || 0,
-          rules: [{
-            id: 'SPECIAL_RULE',
-            schedule_id: activeSpecialAssignment.id,
-            day_of_week: todayDay,
-            check_in_time: activeSpecialAssignment.custom_check_in,
-            check_out_time: activeSpecialAssignment.custom_check_out,
-            is_holiday: false
-          }]
-        } as any;
-      }
-      if (activeAttendance.schedule_id) {
-        if (account?.schedule_type === 'Shift Dinamis') return selectedShift;
-        if (activeSpecialSchedule && activeSpecialSchedule.id === activeAttendance.schedule_id) return activeSpecialSchedule;
-        return account?.schedule || null;
-      }
-      return account?.schedule || null; // Fleksibel
+      return {
+        id: activeAttendance.schedule_id || 'SNAPSHOT',
+        name: activeAttendance.schedule_name_snapshot || 'Jadwal Terkunci',
+        type: activeAttendance.special_assignment_id ? 1 : (account?.schedule_type === 'Shift Dinamis' ? 2 : 1),
+        tolerance_checkin_minutes: activeAttendance.target_late_tolerance || 0,
+        tolerance_checkout_minutes: activeAttendance.target_early_tolerance || 0,
+        rules: [{
+          id: 'SNAPSHOT_RULE',
+          day_of_week: todayDay,
+          check_in_time: activeAttendance.target_check_in,
+          check_out_time: activeAttendance.target_check_out,
+          is_holiday: false
+        }]
+      } as any;
     }
 
     // NORMAL FLOW: Penentuan jadwal saat belum check-in

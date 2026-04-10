@@ -199,7 +199,19 @@ export const monitoringService = {
       // PRIORITY HIERARCHY: One user = One primary category
       // 1. Present (Check-in) - Always highest priority for monitoring
       if (attendance) {
-        results.present.push({ ...accWithInfo, attendance });
+        // Use snapshot data if available to ensure consistency
+        const snapshotRule = attendance.target_check_in ? {
+          check_in_time: attendance.target_check_in,
+          check_out_time: attendance.target_check_out,
+          is_holiday: false
+        } : rule;
+
+        results.present.push({ 
+          ...accWithInfo, 
+          today_rule: snapshotRule,
+          schedule_name: attendance.schedule_name_snapshot || accWithInfo.schedule_name,
+          attendance 
+        });
       } 
       // 2. Mandatory Work (Penugasan / Hari Kerja Khusus)
       else if (specialAssignment || specialWorkSchedule) {

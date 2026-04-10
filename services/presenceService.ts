@@ -88,30 +88,53 @@ export const presenceService = {
 
     if (!rule || rule.is_holiday) return { status: 'Tepat Waktu', minutes: 0 };
 
-    const currentTotalMins = parseInt(hourStr || '0') * 60 + parseInt(minuteStr || '0');
-    
     const targetTime = (type === 'IN' ? rule.check_in_time : rule.check_out_time) || '00:00:00';
-    const [targetH, targetM] = targetTime.split(':').map(Number);
-    const targetTotalMins = targetH * 60 + targetM;
+    
+    let targetTotalMins: number;
 
-    const diffMins = currentTotalMins - targetTotalMins;
+    // Check if targetTime is a full ISO timestamp (contains 'T' and '-')
+    if (targetTime.includes('T') && targetTime.includes('-')) {
+      const targetDate = new Date(targetTime);
+      // Calculate absolute difference in minutes between currentTime and targetDate
+      const diffMs = currentTime.getTime() - targetDate.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
 
-    if (type === 'IN') {
-      const tolerance = schedule.tolerance_checkin_minutes || 0;
-      if (diffMins > tolerance) {
-        return { status: 'Terlambat', minutes: diffMins - tolerance };
+      if (type === 'IN') {
+        const tolerance = schedule.tolerance_checkin_minutes || 0;
+        if (diffMins > tolerance) {
+          return { status: 'Terlambat', minutes: diffMins - tolerance };
+        }
+      } else {
+        const lateCheckoutTolerance = schedule.tolerance_checkout_minutes || 0;
+        if (diffMins < 0) {
+          return { status: 'Pulang Cepat', minutes: Math.abs(diffMins) };
+        }
+        if (diffMins > lateCheckoutTolerance) {
+          return { status: 'Terlambat Pulang', minutes: 0, lateCheckoutMinutes: diffMins - lateCheckoutTolerance };
+        }
       }
+      return { status: 'Tepat Waktu', minutes: 0 };
     } else {
-      const lateCheckoutTolerance = schedule.tolerance_checkout_minutes || 0;
+      // Fallback to legacy HH:mm:ss logic
+      const [targetH, targetM] = targetTime.split(':').map(Number);
+      targetTotalMins = targetH * 60 + targetM;
 
-      // Jika pulang sebelum waktu seharusnya (diffMins negatif)
-      if (diffMins < 0) {
-        return { status: 'Pulang Cepat', minutes: Math.abs(diffMins) };
-      }
-      
-      // Jika pulang setelah waktu seharusnya (diffMins positif) diluar toleransi checkout
-      if (diffMins > lateCheckoutTolerance) {
-        return { status: 'Terlambat Pulang', minutes: 0, lateCheckoutMinutes: diffMins - lateCheckoutTolerance };
+      const currentTotalMins = parseInt(hourStr || '0') * 60 + parseInt(minuteStr || '0');
+      const diffMins = currentTotalMins - targetTotalMins;
+
+      if (type === 'IN') {
+        const tolerance = schedule.tolerance_checkin_minutes || 0;
+        if (diffMins > tolerance) {
+          return { status: 'Terlambat', minutes: diffMins - tolerance };
+        }
+      } else {
+        const lateCheckoutTolerance = schedule.tolerance_checkout_minutes || 0;
+        if (diffMins < 0) {
+          return { status: 'Pulang Cepat', minutes: Math.abs(diffMins) };
+        }
+        if (diffMins > lateCheckoutTolerance) {
+          return { status: 'Terlambat Pulang', minutes: 0, lateCheckoutMinutes: diffMins - lateCheckoutTolerance };
+        }
       }
     }
 

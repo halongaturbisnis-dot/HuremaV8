@@ -21,14 +21,23 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
     });
   };
 
-  const formatTimeOnly = (isoString: string | null) => {
-    if (!isoString) return '-';
-    try {
-      const date = new Date(isoString);
-      return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
-    } catch (e) {
-      return '-';
+  const formatTimeOnly = (timeStr: string | null) => {
+    if (!timeStr) return '-';
+    if (timeStr === '-') return '-';
+    
+    // Check if it's a full ISO timestamp or just a time string
+    if (timeStr.includes('T') || timeStr.includes('-')) {
+      try {
+        const date = new Date(timeStr);
+        if (isNaN(date.getTime())) return timeStr.slice(0, 5);
+        return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+      } catch (e) {
+        return timeStr.slice(0, 5);
+      }
     }
+    
+    // It's likely a HH:mm:ss string
+    return timeStr.slice(0, 5);
   };
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
