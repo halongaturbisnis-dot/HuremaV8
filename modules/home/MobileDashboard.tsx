@@ -5,7 +5,7 @@ import {
   CheckSquare, FileText, Users, Wallet, CreditCard, 
   MessageSquare, AlertTriangle, ShieldCheck, ChevronRight, 
   ArrowLeft, User, MapPin, ExternalLink, Info, Plus, Building,
-  Plane, Heart, FileCheck, History, LogIn, LogOut, Target, Video, Files, Database, Star, Trophy
+  Plane, Heart, FileCheck, History, LogIn, LogOut, Target, Video, Files, Database, Star, Trophy, Bell
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { authService } from '../../services/authService';
@@ -15,8 +15,9 @@ import { presenceService } from '../../services/presenceService';
 import { overtimeService } from '../../services/overtimeService';
 import { awardService } from '../../services/awardService';
 import { googleDriveService } from '../../services/googleDriveService';
+import { announcementService } from '../../services/announcementService';
 import { Client_Name } from '../../assets';
-import { AuthUser, Account, Schedule, Attendance, Overtime, EmployeeOfThePeriod } from '../../types';
+import { AuthUser, Account, Schedule, Attendance, Overtime, EmployeeOfThePeriod, Announcement } from '../../types';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import Swal from 'sweetalert2';
 
@@ -34,9 +35,13 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
   const [attendanceHistory, setAttendanceHistory] = useState<Attendance[]>([]);
   const [overtimeHistory, setOvertimeHistory] = useState<Overtime[]>([]);
   const [bestEmployee, setBestEmployee] = useState<EmployeeOfThePeriod | null>(null);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('main');
   const [elapsedTime, setElapsedTime] = useState<string>('');
+
+  const unreadCount = announcements.filter(a => !a.is_read).length;
+  const latestAnnouncement = announcements[0];
 
   const getPhotoUrl = (photoId: string | null) => {
     if (!photoId) return null;
@@ -65,6 +70,11 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
           setOvertimeHistory(otHistory);
           if (awards && awards.length > 0) {
             setBestEmployee(awards[0]);
+          }
+
+          if (acc) {
+            const anns = await announcementService.getAnnouncements(acc);
+            setAnnouncements(anns);
           }
 
           if (acc?.schedule_id) {
@@ -485,66 +495,73 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
 
   return (
     <div className="min-h-screen bg-white pb-20">
-      {/* Top Banner */}
-      <div className="mx-4 mt-4 bg-gradient-to-br from-[#006E62] to-[#005a50] backdrop-blur-xl text-white px-6 py-8 rounded-[40px] shadow-2xl relative overflow-hidden border border-white/20">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12 blur-xl"></div>
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
-        
-        {/* Shimmer Effect */}
-        <div className="absolute inset-0 z-0 opacity-30">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-shimmer"></div>
-        </div>
-        
-        <div className="relative z-10 flex flex-col gap-6">
-          <div className="text-center">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-white whitespace-normal">
-              {Client_Name}
-            </p>
+      {/* Top Banner & Duration Capsule Wrapper */}
+      <div className="relative mx-4 mt-4 mb-10">
+        <div className="bg-gradient-to-br from-[#006E62] to-[#005a50] backdrop-blur-xl text-white px-6 py-8 rounded-[40px] shadow-2xl relative overflow-hidden border border-white/20">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12 blur-xl"></div>
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
+          
+          {/* Shimmer Effect */}
+          <div className="absolute inset-0 z-0 opacity-30">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-shimmer"></div>
           </div>
           
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">{getGreeting().toUpperCase()}!</p>
-              <h1 className="text-2xl font-black tracking-tight leading-tight text-[#F5C31D] max-w-[65%] whitespace-normal">{account?.full_name}</h1>
-              <p className="text-[11px] font-bold text-white mt-1">
-                {account?.position || 'Staff'} • {account?.grade || account?.department || 'Operasional'}
+          <div className="relative z-10 flex flex-col gap-6">
+            <div className="text-center">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-white whitespace-normal">
+                {Client_Name}
               </p>
-              
-              <div className="flex items-center gap-1.5 mt-3 bg-white/10 w-fit px-3 py-1.5 rounded-full backdrop-blur-md">
-                <Building size={12} className="text-white" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-white">{account?.location?.name || 'Lokasi Belum Diatur'}</span>
-              </div>
             </div>
-
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-24 h-24 rounded-full p-0.5 bg-white/10 backdrop-blur-md shadow-2xl overflow-hidden">
-                {account?.photo_google_id ? (
-                  <img 
-                    src={getPhotoUrl(account.photo_google_id) || ''} 
-                    className="w-full h-full object-cover rounded-full" 
-                    alt="Profile" 
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-emerald-700 rounded-full flex items-center justify-center font-black text-2xl">
-                    {account?.full_name?.charAt(0)}
-                  </div>
-                )}
+            
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 space-y-1">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">{getGreeting().toUpperCase()}!</p>
+                <h1 className="text-2xl font-black tracking-tight leading-tight text-[#F5C31D] whitespace-normal">{account?.full_name}</h1>
+                <p className="text-[11px] font-bold text-white mt-1">
+                  {account?.position || 'Staff'} • {account?.grade || account?.department || 'Operasional'}
+                </p>
+                
+                <div className="flex items-center gap-1.5 mt-3 bg-white/10 w-fit px-3 py-1.5 rounded-full backdrop-blur-md">
+                  <Building size={12} className="text-white" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-white">{account?.location?.name || 'Lokasi Belum Diatur'}</span>
+                </div>
               </div>
-              <span className="text-[10px] font-bold text-white/80 tracking-widest">{account?.internal_nik || '-'}</span>
+
+              <div className="flex-shrink-0 flex flex-col items-center gap-2">
+                <div className="w-24 h-24 rounded-full p-0.5 bg-white/10 backdrop-blur-md shadow-2xl overflow-hidden">
+                  {account?.photo_google_id ? (
+                    <img 
+                      src={getPhotoUrl(account.photo_google_id) || ''} 
+                      className="w-full h-full object-cover rounded-full" 
+                      alt="Profile" 
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-emerald-700 rounded-full flex items-center justify-center font-black text-2xl">
+                      {account?.full_name?.charAt(0)}
+                    </div>
+                  )}
+                </div>
+                <span className="text-[10px] font-bold text-white/80 tracking-widest">{account?.internal_nik || '-'}</span>
+              </div>
             </div>
           </div>
-
-          {elapsedTime && activeSessionType && (
-            <div className="flex flex-col items-center animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <div className="bg-red-600 px-6 py-2 rounded-full shadow-xl shadow-red-900/40 border border-red-400/30">
-                <span className="text-lg font-black font-sans text-white tracking-widest leading-none">{elapsedTime}</span>
-              </div>
-              <span className="text-[10px] font-black text-white mt-2 tracking-[0.4em] uppercase opacity-90">{activeSessionType}</span>
-            </div>
-          )}
         </div>
+
+        {/* Intersection Duration Capsule */}
+        {elapsedTime && activeSessionType && (
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-20 w-full max-w-[200px]">
+            <div className={`flex flex-col items-center px-6 py-2 rounded-full shadow-xl border border-white/20 animate-in fade-in zoom-in duration-500 ${
+              activeSessionType === 'LEMBUR' ? 'bg-amber-500 shadow-amber-900/40' : 'bg-rose-600 shadow-red-900/40'
+            }`}>
+              <span className="text-lg font-black font-sans text-white tracking-widest leading-none">{elapsedTime}</span>
+              <span className="text-[8px] font-black text-white mt-1 tracking-[0.2em] uppercase opacity-90">
+                {activeSessionType === 'LEMBUR' ? 'DURASI LEMBUR' : 'DURASI KERJA'}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       <AnimatePresence mode="wait">
@@ -557,6 +574,42 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
         >
           {viewMode === 'main' && (
             <>
+              {/* Announcement Card */}
+              {announcements.length > 0 && (
+                <div className="mx-4 mt-8 mb-6 relative">
+                  <div className="bg-white rounded-[32px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
+                          <Bell size={16} className="text-emerald-600" />
+                        </div>
+                        <span className="text-xs font-bold text-gray-800 uppercase tracking-wider">Pengumuman</span>
+                      </div>
+                      <button 
+                        className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-1"
+                      >
+                        View All <ChevronRight size={12} />
+                      </button>
+                    </div>
+                    
+                    {latestAnnouncement && (
+                      <div className="space-y-1">
+                        <h3 className="text-sm font-bold text-gray-900 line-clamp-1">{latestAnnouncement.title}</h3>
+                        <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed">
+                          {latestAnnouncement.content.replace(/<[^>]*>/g, '')}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {unreadCount > 0 && (
+                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-rose-500 rounded-full flex items-center justify-center border-2 border-white shadow-lg z-10">
+                      <span className="text-[10px] font-bold text-white">{unreadCount}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {renderMainGrid()}
               
               {/* Best Employee Section */}
