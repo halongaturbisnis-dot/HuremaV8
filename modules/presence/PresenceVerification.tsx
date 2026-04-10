@@ -281,8 +281,9 @@ const PresenceVerification: React.FC<PresenceVerificationProps> = ({ onBack }) =
   }, [coords, currentAddress, isFetchingAddress]);
 
   const handleCaptureComplete = (photoBlob: Blob) => {
-    setCapturedPhoto(photoBlob);
-    setPhotoPreviewUrl(URL.createObjectURL(photoBlob));
+    const photoFile = new File([photoBlob], `presence_${Date.now()}.jpg`, { type: 'image/jpeg' });
+    setCapturedPhoto(photoFile);
+    setPhotoPreviewUrl(URL.createObjectURL(photoFile));
     setIsCameraActive(false);
     setLockedCoords(coords);
   };

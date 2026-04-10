@@ -12,6 +12,12 @@ interface PresenceDetailMobileProps {
 }
 
 const PresenceDetailMobile: React.FC<PresenceDetailMobileProps> = ({ attendance, account, onClose }) => {
+  const getPhotoUrl = (photoId: string | null) => {
+    if (!photoId) return null;
+    if (photoId.startsWith('http')) return photoId;
+    return googleDriveService.getFileUrl(photoId);
+  };
+
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
     return new Date(dateStr).toLocaleDateString('id-ID', {
@@ -87,7 +93,7 @@ const PresenceDetailMobile: React.FC<PresenceDetailMobileProps> = ({ attendance,
                 <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
                   {account.photo_google_id ? (
                     <img 
-                      src={googleDriveService.getFileUrl(account.photo_google_id)} 
+                      src={getPhotoUrl(account.photo_google_id) || ''} 
                       alt="" 
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
@@ -294,7 +300,7 @@ const PresenceDetailMobile: React.FC<PresenceDetailMobileProps> = ({ attendance,
               <div className="aspect-video rounded-xl overflow-hidden bg-gray-50 border border-gray-100 relative">
                 {attendance.in_photo_id ? (
                   <img 
-                    src={googleDriveService.getFileUrl(attendance.in_photo_id)} 
+                    src={getPhotoUrl(attendance.in_photo_id) || ''} 
                     alt="Foto Masuk" 
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
@@ -312,7 +318,7 @@ const PresenceDetailMobile: React.FC<PresenceDetailMobileProps> = ({ attendance,
               <div className="aspect-video rounded-xl overflow-hidden bg-gray-50 border border-gray-100 relative">
                 {attendance.out_photo_id ? (
                   <img 
-                    src={googleDriveService.getFileUrl(attendance.out_photo_id)} 
+                    src={getPhotoUrl(attendance.out_photo_id) || ''} 
                     alt="Foto Pulang" 
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"

@@ -26,6 +26,12 @@ interface PresenceDashboardProps {
 }
 
 const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActiveTab }) => {
+  const getPhotoUrl = (photoId: string | null) => {
+    if (!photoId) return null;
+    if (photoId.startsWith('http')) return photoId;
+    return googleDriveService.getFileUrl(photoId);
+  };
+
   const [account, setAccount] = useState<Account | null>(null);
   const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -166,7 +172,7 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
               <div className="w-24 h-24 rounded-3xl border-4 border-white/20 p-1.5 bg-white/10 backdrop-blur-md shadow-2xl">
                 {account?.photo_google_id ? (
                   <img 
-                    src={googleDriveService.getFileUrl(account.photo_google_id)} 
+                    src={getPhotoUrl(account.photo_google_id) || ''} 
                     className="w-full h-full object-cover rounded-2xl" 
                     alt="Profile" 
                     referrerPolicy="no-referrer"

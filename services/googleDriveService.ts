@@ -64,7 +64,7 @@ class GoogleDriveService {
 
     // Jika tidak ada nama (data lama), default ke image untuk keamanan tampilan profil/presensi
     // Namun untuk kontrak, kita akan menangani di level UI jika perlu default ke document
-    const isImage = !name || /\.(jpg|jpeg|png|webp|gif|svg|bmp)$/i.test(name);
+    const isImage = !name || name === 'undefined' || name === 'blob' || /\.(jpg|jpeg|png|webp|gif|svg|bmp)$/i.test(name);
     
     if (isImage) {
       return `https://lh3.googleusercontent.com/d/${id}=s${fullSize ? '0' : '1600'}`;

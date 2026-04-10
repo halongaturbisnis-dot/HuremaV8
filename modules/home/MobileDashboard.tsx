@@ -38,6 +38,12 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
   const [viewMode, setViewMode] = useState<ViewMode>('main');
   const [elapsedTime, setElapsedTime] = useState<string>('');
 
+  const getPhotoUrl = (photoId: string | null) => {
+    if (!photoId) return null;
+    if (photoId.startsWith('http')) return photoId;
+    return googleDriveService.getFileUrl(photoId);
+  };
+
   const isAdmin = user?.role === 'admin' || user?.is_hr_admin || user?.is_performance_admin || user?.is_finance_admin;
 
   useEffect(() => {
@@ -509,7 +515,7 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
               <div className="w-24 h-24 rounded-3xl border-4 border-white/20 p-1.5 bg-white/10 backdrop-blur-md shadow-2xl">
                 {account?.photo_google_id ? (
                   <img 
-                    src={googleDriveService.getFileUrl(account.photo_google_id)} 
+                    src={getPhotoUrl(account.photo_google_id) || ''} 
                     className="w-full h-full object-cover rounded-2xl" 
                     alt="Profile" 
                     referrerPolicy="no-referrer"
@@ -564,9 +570,10 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
                         <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-emerald-100 shadow-inner">
                           {acc.photo_google_id ? (
                             <img 
-                              src={googleDriveService.getFileUrl(acc.photo_google_id)} 
+                              src={getPhotoUrl(acc.photo_google_id) || ''} 
                               alt="" 
                               className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
                             />
                           ) : (
                             <div className="w-full h-full bg-gray-50 flex items-center justify-center text-gray-300">
