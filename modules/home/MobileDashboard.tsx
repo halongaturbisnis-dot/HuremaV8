@@ -4,7 +4,7 @@ import {
   Fingerprint, Clock, Calendar, ClipboardList, BarChart3, 
   CheckSquare, FileText, Users, Wallet, CreditCard, 
   MessageSquare, AlertTriangle, ShieldCheck, ChevronRight, 
-  ArrowLeft, User, MapPin, ExternalLink, Info, Plus,
+  ArrowLeft, User, MapPin, ExternalLink, Info, Plus, Building,
   Plane, Heart, FileCheck, History, LogIn, LogOut, Target, Video, Files, Database, Star, Trophy
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -498,21 +498,21 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
         
         <div className="relative z-10 flex flex-col gap-6">
           <div className="text-center">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70 whitespace-normal">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-white whitespace-normal">
               {Client_Name}
             </p>
           </div>
           
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/90">{getGreeting().toUpperCase()}!</p>
-              <h1 className="text-3xl font-black tracking-tight leading-none">{account?.full_name?.split(' ')[0]}</h1>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">{getGreeting().toUpperCase()}!</p>
+              <h1 className="text-2xl font-black tracking-tight leading-tight text-[#F5C31D] max-w-[65%] whitespace-normal">{account?.full_name}</h1>
               <p className="text-[11px] font-bold text-white mt-1">
                 {account?.position || 'Staff'} • {account?.grade || account?.department || 'Operasional'}
               </p>
               
               <div className="flex items-center gap-1.5 mt-3 bg-white/10 w-fit px-3 py-1.5 rounded-full backdrop-blur-md">
-                <MapPin size={12} className="text-white" />
+                <Building size={12} className="text-white" />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-white">{account?.location?.name || 'Lokasi Belum Diatur'}</span>
               </div>
             </div>
