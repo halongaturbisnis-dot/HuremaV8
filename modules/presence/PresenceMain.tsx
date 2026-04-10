@@ -778,8 +778,8 @@ const PresenceMain: React.FC = () => {
                 <p className="text-xs text-gray-400 mt-6 max-w-xs leading-tight">
                   {!isBlockedByLocation 
                     ? (account.schedule_type === 'Shift Dinamis' && !todayAttendance && !selectedShift 
-                        ? 'Silahkan pilih salah satu shift di panel samping untuk mengaktifkan tombol verifikasi.'
-                        : 'Klik tombol di bawah untuk verifikasi identitas AI dan mencatat lokasi Anda.')
+                        ? 'Silahkan pilih salah satu shift.'
+                        : 'Verifikasi identitas dan lokasi Anda.')
                     : 'Akses presensi terkunci. Anda harus berada di area lokasi penempatan.'}
                 </p>
                 
@@ -1035,13 +1035,13 @@ const PresenceMain: React.FC = () => {
                     <div className="text-center">
                       <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Status Masuk</p>
                       <p className={`text-xs font-bold ${todayAttendance?.status_in === 'Terlambat' ? 'text-rose-500' : 'text-[#006E62]'}`}>
-                        {todayAttendance?.check_in ? `${new Date(todayAttendance.check_in).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(/\./g, ':')} • ${todayAttendance.status_in}` : '--:--'}
+                        {todayAttendance?.check_in ? `${formatDisplayTime(todayAttendance.check_in, todayAttendance.in_timezone)} • ${todayAttendance.status_in}` : '--:--'}
                       </p>
                     </div>
                     <div className="text-center border-l border-gray-50">
                       <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Status Pulang</p>
                       <p className={`text-xs font-bold ${todayAttendance?.status_out === 'Pulang Cepat' ? 'text-rose-500' : 'text-blue-500'}`}>
-                        {todayAttendance?.check_out ? todayAttendance.status_out : '--:--'}
+                        {todayAttendance?.check_out ? `${formatDisplayTime(todayAttendance.check_out, todayAttendance.out_timezone)} • ${todayAttendance.status_out}` : '--:--'}
                       </p>
                     </div>
                   </div>

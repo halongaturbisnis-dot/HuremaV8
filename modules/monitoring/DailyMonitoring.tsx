@@ -47,12 +47,18 @@ const DailyMonitoring: React.FC = () => {
     );
   };
 
-  const formatTime = (isoString: string | null) => {
+  const formatTime = (isoString: string | null, forceTimeZone?: string | null) => {
     if (!isoString) return '-';
     if (isoString.includes(':') && isoString.length <= 8) return isoString.substring(0, 5);
     try {
       const date = new Date(isoString);
-      return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const tz = forceTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+      return new Intl.DateTimeFormat('id-ID', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        hour12: false,
+        timeZone: tz 
+      }).format(date).replace(/\./g, ':');
     } catch (e) {
       return '-';
     }
@@ -158,7 +164,7 @@ const DailyMonitoring: React.FC = () => {
                       <td className="px-4 py-3 text-center">
                         <div className="flex flex-col items-center gap-1">
                           <p className="text-sm font-black font-mono text-gray-900">
-                            {formatTime(item.attendance?.check_in)}
+                            {formatTime(item.attendance?.check_in, item.attendance?.in_timezone)}
                           </p>
                           {(item.attendance?.check_in_type && item.attendance.check_in_type !== 'Reguler') && (
                             <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded uppercase flex items-center gap-1">
@@ -180,7 +186,7 @@ const DailyMonitoring: React.FC = () => {
                       <td className="px-4 py-3 text-center">
                         <div className="flex flex-col items-center gap-1">
                           <p className="text-sm font-black font-mono text-gray-900">
-                            {formatTime(item.attendance?.check_out)}
+                            {formatTime(item.attendance?.check_out, item.attendance?.out_timezone)}
                           </p>
                           {(item.attendance?.check_out_type && item.attendance.check_out_type !== 'Reguler') && (
                             <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold rounded uppercase flex items-center gap-1">

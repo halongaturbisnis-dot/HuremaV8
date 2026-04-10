@@ -25,7 +25,7 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
     });
   };
 
-  const formatTimeOnly = (timeStr: string | null) => {
+  const formatTimeOnly = (timeStr: string | null, forceTimeZone?: string | null) => {
     if (!timeStr) return '-';
     if (timeStr === '-') return '-';
     
@@ -34,7 +34,14 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
       try {
         const date = new Date(timeStr);
         if (isNaN(date.getTime())) return timeStr.slice(0, 5);
-        return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+        
+        const tz = forceTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+        return new Intl.DateTimeFormat('id-ID', { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          hour12: false,
+          timeZone: tz 
+        }).format(date).replace(/\./g, ':');
       } catch (e) {
         return timeStr.slice(0, 5);
       }
@@ -295,7 +302,7 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                         </div>
                         <div>
                           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Waktu Presensi</p>
-                          <p className="text-xs font-bold text-[#006E62]">{time ? formatTimeOnly(time) : '-'}</p>
+                          <p className="text-xs font-bold text-[#006E62]">{time ? formatTimeOnly(time, isIN ? att?.in_timezone : att?.out_timezone) : '-'}</p>
                         </div>
                         <div>
                           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{isIN ? 'Keterlambatan' : (att?.status_out === 'Terlambat Pulang' ? 'Terlambat Pulang' : 'Pulang Awal')}</p>

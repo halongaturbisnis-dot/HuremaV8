@@ -21,7 +21,7 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
     });
   };
 
-  const formatTimeOnly = (timeStr: string | null) => {
+  const formatTimeOnly = (timeStr: string | null, forceTimeZone?: string | null) => {
     if (!timeStr) return '-';
     if (timeStr === '-') return '-';
     
@@ -30,7 +30,14 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
       try {
         const date = new Date(timeStr);
         if (isNaN(date.getTime())) return timeStr.slice(0, 5);
-        return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+        
+        const tz = forceTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+        return new Intl.DateTimeFormat('id-ID', { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          hour12: false,
+          timeZone: tz 
+        }).format(date).replace(/\./g, ':');
       } catch (e) {
         return timeStr.slice(0, 5);
       }
@@ -230,7 +237,7 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Waktu Masuk</p>
-                        <p className="text-sm font-bold text-[#006E62]">{formatTimeOnly(attendance.check_in)}</p>
+                        <p className="text-sm font-bold text-[#006E62]">{formatTimeOnly(attendance.check_in, attendance.in_timezone)}</p>
                       </div>
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jarak</p>
@@ -342,7 +349,7 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Waktu Pulang</p>
-                        <p className="text-sm font-bold text-red-600">{formatTimeOnly(attendance.check_out)}</p>
+                        <p className="text-sm font-bold text-red-600">{formatTimeOnly(attendance.check_out, attendance.out_timezone)}</p>
                       </div>
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jarak</p>
