@@ -610,8 +610,7 @@ const PresenceVerification: React.FC<PresenceVerificationProps> = ({ onBack }) =
             <Fingerprint size={28} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-800 tracking-tight">Verifikasi Presensi</h2>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{account?.full_name} • {account?.internal_nik}</p>
+            <h2 className="text-xl font-bold text-gray-800 tracking-tight">Presensi {isCheckOut ? 'Keluar' : 'Masuk'}</h2>
           </div>
         </div>
       </div>
@@ -707,7 +706,7 @@ const PresenceVerification: React.FC<PresenceVerificationProps> = ({ onBack }) =
                   message="Selesaikan sesi lembur Anda terlebih dahulu sebelum memulai presensi reguler."
                 />
               )}
-              <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 shadow-xl transition-all duration-500 ${!isBlockedByLocation ? 'bg-emerald-50 text-[#006E62]' : 'bg-rose-50 text-rose-500'}`}>
+              <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 shadow-xl transition-all duration-500 ${(!isBlockedByLocation || isOutOfRangeRequested) ? 'bg-emerald-50 text-[#006E62]' : 'bg-rose-50 text-rose-500'}`}>
                  <Fingerprint size={40} />
               </div>
               <h3 className="text-xl font-bold text-gray-800">
@@ -715,7 +714,7 @@ const PresenceVerification: React.FC<PresenceVerificationProps> = ({ onBack }) =
               </h3>
               
               <p className="text-xs text-gray-400 mt-6 max-w-xs leading-tight">
-                {!isBlockedByLocation 
+                {(!isBlockedByLocation || isOutOfRangeRequested)
                   ? (account.schedule_type === 'Shift Dinamis' && !todayAttendance && !selectedShift 
                       ? 'Silahkan pilih salah satu shift.'
                       : 'Verifikasi identitas dan lokasi Anda.')
