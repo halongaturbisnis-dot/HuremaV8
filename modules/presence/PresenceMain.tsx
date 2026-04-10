@@ -318,6 +318,20 @@ const PresenceMain: React.FC = () => {
   // 3. Shift Dinamis (Jika dipilih)
   // 4. Jadwal Reguler (Fixed/Shift/Fleksibel)
   
+  const formatDisplayTime = (timeStr: string | null | undefined) => {
+    if (!timeStr) return '--:--';
+    if (timeStr.includes('-') || timeStr.includes('T')) {
+      try {
+        const date = new Date(timeStr);
+        if (isNaN(date.getTime())) return '--:--';
+        return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(/\./g, ':');
+      } catch (e) {
+        return '--:--';
+      }
+    }
+    return timeStr.slice(0, 5);
+  };
+
   const getEffectiveSchedule = () => {
     // HIERARCHY LOCKING: Jika sedang check-in, gunakan mode yang tersimpan di DB (Snapshot)
     if (activeAttendance) {
@@ -413,7 +427,9 @@ const PresenceMain: React.FC = () => {
     ? presenceService.calculateStatus(serverTime, { ...effectiveSchedule, rules: [scheduleRule] }, isCheckOut ? 'OUT' : 'IN', detectedTz)
     : { status: 'Tepat Waktu' };
   
-  const isLateOrEarly = scheduleResult.status === 'Terlambat' || scheduleResult.status === 'Pulang Cepat';
+  const isLate = scheduleResult.status === 'Terlambat';
+  const isEarly = scheduleResult.status === 'Pulang Cepat';
+  const isLateOrEarly = isLate || isEarly;
   const isLateCheckout = scheduleResult.status === 'Terlambat Pulang';
 
   const handleAttendance = async () => {
@@ -954,7 +970,9 @@ const PresenceMain: React.FC = () => {
 
                {isLateOrEarly && (
                  <div className="mt-4 p-4 bg-rose-50 rounded-xl border border-rose-100">
-                   <p className="text-[10px] font-bold text-rose-600 uppercase mb-2">Alasan Keterlambatan/Pulang Awal</p>
+                   <p className="text-[10px] font-bold text-rose-600 uppercase mb-2">
+                     {isLate ? 'Alasan Keterlambatan' : 'Alasan Pulang Awal'}
+                   </p>
                    <textarea
                      value={lateEarlyReason}
                      onChange={(e) => setLateEarlyReason(e.target.value)}
@@ -966,7 +984,7 @@ const PresenceMain: React.FC = () => {
 
                {isLateCheckout && (
                  <div className="mt-4 p-4 bg-rose-50 rounded-xl border border-rose-100">
-                   <p className="text-[10px] font-bold text-rose-600 uppercase mb-2">Alasan Telat Absen Pulang</p>
+                   <p className="text-[10px] font-bold text-rose-600 uppercase mb-2">Alasan Keterlambatan Pulang</p>
                    <textarea
                      value={lateCheckoutReason}
                      onChange={(e) => setLateCheckoutReason(e.target.value)}
@@ -984,11 +1002,11 @@ const PresenceMain: React.FC = () => {
                     <div className="grid grid-cols-2 gap-4">
                        <div>
                           <p className="text-[9px] text-gray-400 font-bold uppercase">Jam Masuk</p>
-                          <p className="text-xs font-bold text-gray-700">{scheduleRule?.check_in_time ? scheduleRule.check_in_time.slice(0, 5) : '--:--'}</p>
+                          <p className="text-xs font-bold text-gray-700">{formatDisplayTime(scheduleRule?.check_in_time)}</p>
                        </div>
                        <div>
                           <p className="text-[9px] text-gray-400 font-bold uppercase">Jam Pulang</p>
-                          <p className="text-xs font-bold text-gray-700">{scheduleRule?.check_out_time ? scheduleRule.check_out_time.slice(0, 5) : '--:--'}</p>
+                          <p className="text-xs font-bold text-gray-700">{formatDisplayTime(scheduleRule?.check_out_time)}</p>
                        </div>
                     </div>
                     <div className="pt-2 border-t border-emerald-100/50">
