@@ -75,9 +75,9 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
         const mapped: any[] = [];
         (data as any[]).forEach(a => {
           // Check In Verification Needed (Out of Range OR Late OR Explicitly FALSE)
-          if (a.check_in_type !== 'Reguler' || a.check_in_validity === 'FALSE' || a.status_in === 'Terlambat') {
+          if (a.check_in && ((a.check_in_type && a.check_in_type !== 'Reguler') || a.check_in_validity === 'FALSE' || a.status_in === 'Terlambat')) {
             // Only show if it's actually needing verification or was a special type
-            if (a.check_in_type !== 'Reguler' || a.check_in_validity !== 'TRUE') {
+            if ((a.check_in_type && a.check_in_type !== 'Reguler') || a.check_in_validity !== 'TRUE') {
               mapped.push({
                 id: `${a.id}_IN`,
                 type: 'Presensi Luar',
@@ -98,9 +98,9 @@ const SubmissionMain: React.FC<SubmissionMainProps> = ({ type }) => {
             }
           }
           // Check Out Verification Needed (Out of Range OR Late Checkout OR Explicitly FALSE)
-          if (a.check_out_type !== 'Reguler' || a.check_out_validity === 'FALSE' || a.status_out === 'Terlambat Pulang') {
+          if (a.check_out && ((a.check_out_type && a.check_out_type !== 'Reguler') || a.check_out_validity === 'FALSE' || a.status_out === 'Terlambat Pulang')) {
              // Only show if it's actually needing verification or was a special type
-             if (a.check_out_type !== 'Reguler' || a.check_out_validity !== 'TRUE') {
+             if ((a.check_out_type && a.check_out_type !== 'Reguler') || a.check_out_validity !== 'TRUE') {
               mapped.push({
                 id: `${a.id}_OUT`,
                 type: 'Presensi Luar',
