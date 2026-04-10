@@ -85,8 +85,12 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children, activeTab, setAct
         
         <button 
           onClick={() => {
-            localStorage.setItem('presence_nav_source', 'bottom_nav');
-            setActiveTab('presence');
+            if (activeTab === 'presence') {
+              window.dispatchEvent(new CustomEvent('presence_force_verify'));
+            } else {
+              localStorage.setItem('presence_nav_source', 'bottom_nav');
+              setActiveTab('presence');
+            }
           }}
           className={`p-4 rounded-full transition-all duration-300 -mt-10 border-4 border-white ${activeTab === 'presence' && presenceView !== 'verify' ? 'bg-[#006E62] text-white shadow-xl scale-110' : 'bg-white text-[#006E62] shadow-lg'}`}
         >

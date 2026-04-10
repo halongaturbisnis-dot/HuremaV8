@@ -18,6 +18,12 @@ const PresenceMain: React.FC<PresenceMainProps> = ({ setActiveTab }) => {
     window.dispatchEvent(new CustomEvent('presence_view_change', { detail: view }));
   }, [view]);
 
+  useEffect(() => {
+    const handleForceVerify = () => setView('verify');
+    window.addEventListener('presence_force_verify', handleForceVerify);
+    return () => window.removeEventListener('presence_force_verify', handleForceVerify);
+  }, []);
+
   if (view === 'verify') {
     return <PresenceVerification onBack={() => setView('dashboard')} />;
   }

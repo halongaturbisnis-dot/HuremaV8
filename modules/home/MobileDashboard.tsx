@@ -491,6 +491,11 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12 blur-xl"></div>
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
         
+        {/* Shimmer Effect */}
+        <div className="absolute inset-0 z-0 opacity-30">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-shimmer"></div>
+        </div>
+        
         <div className="relative z-10 flex flex-col gap-6">
           <div className="text-center">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70 whitespace-normal">
@@ -500,7 +505,7 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
           
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/90">Selamat Datang</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/90">Selamat Datang,</p>
               <h1 className="text-3xl font-black tracking-tight leading-none">{account?.full_name?.split(' ')[0]}</h1>
               <p className="text-[11px] font-bold text-white mt-1">
                 {account?.position || 'Staff'} • {account?.grade || account?.department || 'Operasional'}
@@ -513,16 +518,16 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
             </div>
 
             <div className="flex flex-col items-center gap-2">
-              <div className="w-24 h-24 rounded-3xl border-4 border-white/20 p-1.5 bg-white/10 backdrop-blur-md shadow-2xl">
+              <div className="w-24 h-24 rounded-full p-0.5 bg-white/10 backdrop-blur-md shadow-2xl overflow-hidden">
                 {account?.photo_google_id ? (
                   <img 
                     src={getPhotoUrl(account.photo_google_id) || ''} 
-                    className="w-full h-full object-cover rounded-2xl" 
+                    className="w-full h-full object-cover rounded-full" 
                     alt="Profile" 
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="w-full h-full bg-emerald-700 rounded-2xl flex items-center justify-center font-black text-2xl">
+                  <div className="w-full h-full bg-emerald-700 rounded-full flex items-center justify-center font-black text-2xl">
                     {account?.full_name?.charAt(0)}
                   </div>
                 )}
