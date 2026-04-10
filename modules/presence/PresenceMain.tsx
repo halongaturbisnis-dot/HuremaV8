@@ -343,7 +343,6 @@ const PresenceMain: React.FC = () => {
         id: activeSpecialAssignment.id,
         name: activeSpecialAssignment.title,
         type: 1,
-        tolerance_minutes: activeSpecialAssignment.custom_early_tolerance || 0,
         tolerance_checkin_minutes: activeSpecialAssignment.custom_late_tolerance || 0,
         tolerance_checkout_minutes: activeSpecialAssignment.custom_early_tolerance || 0,
         rules: [{
@@ -359,7 +358,7 @@ const PresenceMain: React.FC = () => {
     if (activeSpecialSchedule) {
       return {
         ...activeSpecialSchedule,
-        tolerance_checkin_minutes: activeSpecialSchedule.tolerance_checkin_minutes ?? activeSpecialSchedule.tolerance_minutes ?? 0,
+        tolerance_checkin_minutes: activeSpecialSchedule.tolerance_checkin_minutes ?? 0,
         tolerance_checkout_minutes: activeSpecialSchedule.tolerance_checkout_minutes ?? 0
       };
     }
@@ -367,14 +366,14 @@ const PresenceMain: React.FC = () => {
       if (!selectedShift) return null;
       return {
         ...selectedShift,
-        tolerance_checkin_minutes: selectedShift.tolerance_checkin_minutes ?? selectedShift.tolerance_minutes ?? 0,
+        tolerance_checkin_minutes: selectedShift.tolerance_checkin_minutes ?? 0,
         tolerance_checkout_minutes: selectedShift.tolerance_checkout_minutes ?? 0
       };
     }
     if (!account?.schedule) return null;
     return {
       ...account.schedule,
-      tolerance_checkin_minutes: account.schedule.tolerance_checkin_minutes ?? account.schedule.tolerance_minutes ?? 0,
+      tolerance_checkin_minutes: account.schedule.tolerance_checkin_minutes ?? 0,
       tolerance_checkout_minutes: account.schedule.tolerance_checkout_minutes ?? 0
     };
   };

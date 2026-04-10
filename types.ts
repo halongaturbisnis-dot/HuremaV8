@@ -48,7 +48,6 @@ export interface Schedule {
   id: string;
   name: string;
   type: 1 | 2 | 3 | 4;
-  tolerance_minutes: number;
   tolerance_checkin_minutes: number;
   tolerance_checkout_minutes: number;
   start_date?: string | null;

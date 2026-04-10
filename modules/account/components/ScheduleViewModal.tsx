@@ -53,7 +53,7 @@ const ScheduleViewModal: React.FC<ScheduleViewModalProps> = ({ schedule, onClose
               <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Toleransi</p>
               <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 justify-end">
                 <AlertCircle size={12} className="text-[#006E62]" /> 
-                {schedule.tolerance_checkin_minutes || 0} In / {schedule.tolerance_minutes || 0} Out
+                {schedule.tolerance_checkin_minutes || 0} In / {schedule.tolerance_checkout_minutes || 0} Out
               </div>
             </div>
           </div>

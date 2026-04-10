@@ -15,8 +15,8 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ onClose, onSubmit, initialD
   const [formData, setFormData] = useState<any>({
     name: initialData?.name || '',
     type: initialData?.type || 1,
-    tolerance_minutes: initialData?.tolerance_minutes || 0,
     tolerance_checkin_minutes: initialData?.tolerance_checkin_minutes || 0,
+    tolerance_checkout_minutes: initialData?.tolerance_checkout_minutes || 0,
     start_date: initialData?.start_date || '',
     end_date: initialData?.end_date || '',
     excluded_account_ids: initialData?.excluded_account_ids || [],
@@ -50,15 +50,15 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ onClose, onSubmit, initialD
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    const parsedValue = (name === 'type' || name === 'tolerance_minutes' || name === 'tolerance_checkin_minutes') ? parseInt(value) || 0 : value;
+    const parsedValue = (name === 'type' || name === 'tolerance_checkin_minutes' || name === 'tolerance_checkout_minutes') ? parseInt(value) || 0 : value;
     
     setFormData(prev => {
       const newData = { ...prev, [name]: parsedValue };
       
       // LOGIKA AUTO-RESET: Jika ganti ke Tipe 3, nolkan toleransi & rules
       if (name === 'type' && parsedValue === 3) {
-        newData.tolerance_minutes = 0;
         newData.tolerance_checkin_minutes = 0;
+        newData.tolerance_checkout_minutes = 0;
         newData.rules = [];
         // Jika sedang di tab Toleransi atau Rules, pindah ke Info
         if (activeTab === 'toleransi' || activeTab === 'rules') setActiveTab('info');
@@ -228,7 +228,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({ onClose, onSubmit, initialD
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase">Toleransi Pulang (Menit)</label>
-                  <input type="number" name="tolerance_minutes" value={formData.tolerance_minutes} onChange={handleChange} className="w-full px-3 py-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-[#006E62] outline-none" />
+                  <input type="number" name="tolerance_checkout_minutes" value={formData.tolerance_checkout_minutes} onChange={handleChange} className="w-full px-3 py-2 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-[#006E62] outline-none" />
                 </div>
               </div>
               <div className="p-4 bg-blue-50 border border-blue-100 rounded">

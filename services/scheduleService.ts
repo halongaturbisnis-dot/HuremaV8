@@ -73,7 +73,6 @@ export const scheduleService = {
     
     // Sanitasi Tipe 3 (Libur Khusus): Tidak boleh ada aturan jam dan toleransi
     if (scheduleData.type === 3) {
-      scheduleData.tolerance_minutes = 0;
       scheduleData.tolerance_checkin_minutes = 0;
       scheduleData.tolerance_checkout_minutes = 0;
       rules = [];
@@ -117,7 +116,6 @@ export const scheduleService = {
 
     // Sanitasi Tipe 3 (Libur Khusus)
     if (scheduleData.type === 3) {
-      scheduleData.tolerance_minutes = 0;
       scheduleData.tolerance_checkin_minutes = 0;
       scheduleData.tolerance_checkout_minutes = 0;
       rules = [];
