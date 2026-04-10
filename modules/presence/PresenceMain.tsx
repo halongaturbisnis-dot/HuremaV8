@@ -8,7 +8,7 @@ interface PresenceMainProps {
 }
 
 const PresenceMain: React.FC<PresenceMainProps> = ({ setActiveTab }) => {
-  const [view, setView] = useState<'dashboard' | 'verify'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'verify'>('verify');
 
   if (view === 'verify') {
     return <PresenceVerification onBack={() => setView('dashboard')} />;
