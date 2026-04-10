@@ -504,7 +504,7 @@ const PresenceVerification: React.FC<PresenceVerificationProps> = ({ onBack }) =
         timer: 2000,
         showConfirmButton: false
       });
-      onBack();
+      window.location.href = '/';
     } catch (error) {
       console.error(error);
       Swal.fire('Gagal', 'Terjadi kesalahan saat menyimpan presensi.', 'error');
@@ -553,8 +553,53 @@ const PresenceVerification: React.FC<PresenceVerificationProps> = ({ onBack }) =
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <div className="flex bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex-col md:flex-row justify-between items-center gap-6">
-        <div className="flex items-center gap-4">
+      {activeSpecialAssignment && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-top duration-500">
+          <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 shrink-0">
+            <ShieldCheck size={24} />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider">Penugasan Khusus Aktif</h4>
+            <p className="text-[10px] text-amber-600 font-medium">{activeSpecialAssignment.title} • {activeSpecialAssignment.location_name}</p>
+          </div>
+          <div className="px-3 py-1 bg-amber-200/50 rounded-full text-[9px] font-black text-amber-800 uppercase tracking-widest">
+            Penugasan
+          </div>
+        </div>
+      )}
+
+      {activeSpecialSchedule && !activeSpecialAssignment && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-top duration-500">
+          <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 shrink-0">
+            <CalendarClock size={24} />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Hari Kerja Khusus</h4>
+            <p className="text-[10px] text-emerald-600 font-medium">{activeSpecialSchedule.name}</p>
+          </div>
+          <div className="px-3 py-1 bg-emerald-200/50 rounded-full text-[9px] font-black text-emerald-800 uppercase tracking-widest">
+            Jadwal Khusus
+          </div>
+        </div>
+      )}
+
+      {activeHoliday && !activeSpecialAssignment && !activeSpecialSchedule && (
+        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-top duration-500">
+          <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center text-rose-500 shrink-0">
+            <Umbrella size={24} />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-xs font-bold text-rose-800 uppercase tracking-wider">Hari Libur Khusus</h4>
+            <p className="text-[10px] text-rose-600 font-medium">{activeHoliday.name}</p>
+          </div>
+          <div className="px-3 py-1 bg-rose-200/50 rounded-full text-[9px] font-black text-rose-800 uppercase tracking-widest">
+            Libur Khusus
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="flex items-center gap-4 w-full">
           <button 
             onClick={onBack}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 mr-2"
@@ -627,6 +672,9 @@ const PresenceVerification: React.FC<PresenceVerificationProps> = ({ onBack }) =
               <p className="text-sm text-rose-600 font-bold mt-2 max-w-xs uppercase tracking-tight">
                 {activeHoliday ? `"${activeHoliday.name}"` : '"Off Day / Hari Libur"'}
               </p>
+              <div className="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <p className="text-xs text-gray-500 leading-relaxed font-medium">Sesuai kebijakan manajemen, sistem presensi dinonaktifkan selama periode libur ini. Nikmati waktu istirahat Anda.</p>
+              </div>
             </div>
           ) : isLeaveToday ? (
             <div className="bg-white rounded-2xl border border-gray-100 p-20 flex flex-col items-center justify-center shadow-sm text-center">
@@ -636,6 +684,12 @@ const PresenceVerification: React.FC<PresenceVerificationProps> = ({ onBack }) =
               <h3 className="text-2xl font-bold text-gray-800">
                 Sedang {activeLeave?.type}
               </h3>
+              <p className="text-sm text-amber-600 font-bold mt-2 max-w-xs uppercase tracking-tight">
+                "{activeLeave?.data.description || 'Izin Disetujui'}"
+              </p>
+              <div className="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <p className="text-xs text-gray-500 leading-relaxed font-medium">Status Anda saat ini sedang dalam masa {activeLeave?.type.toLowerCase()}. Sistem presensi diistirahatkan untuk Anda.</p>
+              </div>
             </div>
           ) : (!activeAttendance && todayAttendance && todayAttendance.check_out) ? (
             <div className="bg-white rounded-2xl border border-gray-100 p-20 flex flex-col items-center justify-center shadow-sm text-center">
@@ -643,6 +697,7 @@ const PresenceVerification: React.FC<PresenceVerificationProps> = ({ onBack }) =
                 <ShieldCheck size={48} />
               </div>
               <h3 className="text-2xl font-bold text-gray-800">Selesai!</h3>
+              <p className="text-sm text-gray-500 mt-2 max-w-xs">Terima kasih, Anda telah menyelesaikan presensi masuk dan pulang untuk hari ini.</p>
             </div>
           ) : (
             <div className="relative bg-white rounded-2xl border border-gray-100 p-8 flex flex-col items-center justify-center shadow-sm text-center overflow-hidden">
@@ -658,6 +713,14 @@ const PresenceVerification: React.FC<PresenceVerificationProps> = ({ onBack }) =
               <h3 className="text-xl font-bold text-gray-800">
                  {isCheckOut ? 'Waktunya Pulang?' : 'Siap Bekerja Hari Ini?'}
               </h3>
+              
+              <p className="text-xs text-gray-400 mt-6 max-w-xs leading-tight">
+                {!isBlockedByLocation 
+                  ? (account.schedule_type === 'Shift Dinamis' && !todayAttendance && !selectedShift 
+                      ? 'Silahkan pilih salah satu shift.'
+                      : 'Verifikasi identitas dan lokasi Anda.')
+                  : 'Akses presensi terkunci. Anda harus berada di area lokasi penempatan.'}
+              </p>
               
               <button 
                 disabled={(isBlockedByLocation && !isOutOfRangeRequested) || isCapturing || !landmarker || (account.schedule_type === 'Shift Dinamis' && !isCheckOut && !selectedShift) || (isOvertimeActive && !isCheckOut)}
@@ -676,11 +739,16 @@ const PresenceVerification: React.FC<PresenceVerificationProps> = ({ onBack }) =
         </div>
 
         <div className="lg:col-span-5 order-1 lg:order-2 space-y-4 lg:space-y-6 w-full flex flex-col">
+          {/* Status Geotag Card - Order 1 on Mobile */}
           <div className="bg-white rounded-2xl border border-gray-100 p-4 lg:p-6 shadow-sm order-1 lg:order-2 relative z-0">
-             <div className="flex items-center justify-between mb-4">
+             <div className="hidden lg:flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <MapPin size={16} className="text-[#006E62]" />
                   <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-500">Status Geotag</h4>
+                </div>
+                <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-bold uppercase ${!isLimited ? 'bg-blue-50 text-blue-600' : (isWithinRadius ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600')}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${!isLimited ? 'bg-blue-500' : (isWithinRadius ? 'bg-emerald-500' : 'bg-rose-500')}`}></div>
+                  {!isLimited ? 'Bebas Lokasi' : (isWithinRadius ? 'Dalam Radius' : 'Luar Radius')}
                 </div>
              </div>
              
@@ -693,20 +761,42 @@ const PresenceVerification: React.FC<PresenceVerificationProps> = ({ onBack }) =
                     officeLng={activeSpecialAssignment ? activeSpecialAssignment.longitude : account.location.longitude}
                     radius={effectiveRadius}
                   />
+                  
+                  <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <div className="flex items-center gap-2 mb-1">
+                      <MapPin size={12} className="text-[#006E62]" />
+                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Alamat Geotag</span>
+                    </div>
+                    <p className="text-[10px] font-medium text-gray-700 leading-relaxed">
+                      {isFetchingAddress ? (
+                        <span className="flex items-center gap-2 italic text-gray-400">
+                          <Loader2 size={10} className="animate-spin" /> Mencari alamat...
+                        </span>
+                      ) : currentAddress || 'Alamat tidak ditemukan'}
+                    </p>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4 text-[10px] pt-2">
                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-center">
                         <span className="text-gray-400 font-bold uppercase block mb-1">Jarak</span>
                         <span className={`text-sm font-bold ${isWithinRadius ? 'text-[#006E62]' : 'text-rose-500'}`}>
-                          {distance !== null ? `${new Intl.NumberFormat('id-ID').format(Math.round(distance))} m` : '...'}
+                          {distance !== null ? `${new Intl.NumberFormat('id-ID').format(Math.round(distance))} meter` : 'Calculating...'}
                         </span>
                      </div>
                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-center">
-                        <span className="text-gray-400 font-bold uppercase block mb-1">Radius</span>
+                        <span className="text-gray-400 font-bold uppercase block mb-1">Maks Radius</span>
                         <span className="text-sm font-bold text-gray-700">
-                          {new Intl.NumberFormat('id-ID').format(effectiveRadius)} m
+                          {new Intl.NumberFormat('id-ID').format(effectiveRadius)} meter
                         </span>
                      </div>
                   </div>
+                  {isBlockedByLocation && (
+                    <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl flex gap-3 items-start animate-pulse">
+                       <AlertCircle size={16} className="text-rose-500 shrink-0 mt-0.5" />
+                       <p className="text-[10px] text-rose-600 font-bold leading-tight uppercase tracking-tight text-center flex-1">Lokasi anda berada di luar radius jangkauan lokasi {activeSpecialAssignment ? activeSpecialAssignment.location_name : account.location.name}</p>
+                    </div>
+                  )}
+
                   {isBlockedByLocation && (
                     <div className="mt-4 p-4 bg-white rounded-xl border border-gray-100">
                       <div className="flex items-center justify-between mb-4">
@@ -718,29 +808,182 @@ const PresenceVerification: React.FC<PresenceVerificationProps> = ({ onBack }) =
                           <div className={`w-4 h-4 bg-white rounded-full transition-transform ${isOutOfRangeRequested ? 'translate-x-5' : 'translate-x-1'}`} />
                         </button>
                       </div>
+                      {isOutOfRangeRequested && (
+                        <div className="space-y-3">
+                          <select 
+                            value={isCheckOut ? checkOutType : checkInType} 
+                            onChange={(e) => isCheckOut ? setCheckOutType(e.target.value) : setCheckInType(e.target.value)}
+                            className="w-full p-2 text-xs border border-gray-200 rounded-lg"
+                          >
+                            <option value="Tugas Luar">Tugas Luar</option>
+                            <option value="WFH">WFH</option>
+                            <option value="Ketemu Client">Ketemu Client</option>
+                            <option value="Lainnya">Lainnya</option>
+                          </select>
+                          <textarea 
+                            value={isCheckOut ? checkOutReason : checkInReason} 
+                            onChange={(e) => isCheckOut ? setCheckOutReason(e.target.value) : setCheckInReason(e.target.value)}
+                            placeholder="Alasan presensi luar..."
+                            className="w-full p-2 text-xs border border-gray-200 rounded-lg"
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                </div>
              ) : (
                <div className="flex flex-col items-center justify-center py-14 text-gray-300">
                   <MapIcon size={40} strokeWidth={1} className="animate-bounce" />
-                  <p className="text-[10px] font-bold uppercase tracking-widest mt-4">GPS...</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest mt-4">Mengunci Sinyal GPS...</p>
                </div>
              )}
           </div>
 
+          {/* Waktu Terverifikasi Card - Order 2 on Mobile */}
           <div className="bg-white rounded-2xl border border-gray-100 p-4 lg:p-5 shadow-sm overflow-hidden relative order-2 lg:order-1">
+             <div className="hidden lg:flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <Clock size={16} className="text-[#006E62]" />
+                  <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-500">Waktu Terverifikasi</h4>
+                </div>
+             </div>
              <div className="text-center py-4 relative z-10">
                 <div className="text-5xl font-sans font-bold text-gray-800 tracking-tighter">
                   {serverTime.toLocaleTimeString('id-ID', { hour12: false, timeZone: detectedTz }).replace(/\./g, ':')}
                 </div>
+                <div className="text-[11px] font-bold text-[#006E62] uppercase tracking-widest mt-2">
+                  {serverTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+                </div>
+
+                {isOvertimeActive && !isCheckOut && (
+                  <div className="mt-4 p-3 bg-orange-50 border border-orange-100 rounded-xl flex gap-3 items-start animate-pulse">
+                    <AlertCircle size={16} className="text-orange-500 shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-orange-600 font-bold leading-tight uppercase tracking-tight text-center flex-1">Ada sesi lembur yang sedang aktif</p>
+                  </div>
+                )}
+
                 {todayAttendance?.check_in && !todayAttendance.check_out && (
-                  <div className="mt-8 p-3 bg-[#006E62]/5 rounded-2xl border border-emerald-100/50">
+                  <div className="mt-8 p-3 bg-[#006E62]/5 rounded-2xl border border-emerald-100/50 animate-in fade-in zoom-in duration-700">
+                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Durasi Kerja Berjalan</p>
                     <div className="text-2xl font-sans font-black text-[#006E62] tracking-widest">
                       {getLiveWorkDuration()}
                     </div>
                   </div>
                 )}
+             </div>
+
+              {/* LOGIKA KHUSUS SHIFT DINAMIS: PILEH JADWAL (Cek via schedule_type) */}
+              {account.schedule_type === 'Shift Dinamis' && !activeSpecialAssignment && !activeSpecialSchedule && (
+                <div className="mt-6 w-full space-y-3">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-left mb-2">
+                    {todayAttendance ? 'Shift Kerja Terpilih:' : 'Pilih Shift Kerja Hari Ini:'}
+                  </p>
+                  {isFetchingShifts ? (
+                    <div className="py-4 text-xs text-gray-400 italic">Mengambil daftar shift...</div>
+                  ) : dynamicShifts.length === 0 ? (
+                    <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-[10px] text-rose-600 font-bold">Tidak ada jadwal Shift Kerja (Type 2) tersedia di lokasi Anda.</div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-1">
+                      {dynamicShifts.map(s => (
+                        <button 
+                          key={s.id}
+                          onClick={() => !todayAttendance && setSelectedShift(s)}
+                          disabled={!!todayAttendance}
+                          className={`flex items-center justify-between p-3 rounded-xl border transition-all text-left group ${selectedShift?.id === s.id ? 'border-[#006E62] bg-emerald-50' : 'border-gray-100 bg-white hover:border-[#006E62]'} ${todayAttendance ? 'opacity-80 cursor-not-allowed' : ''}`}
+                        >
+                          <div className="flex-1">
+                            <p className={`text-xs font-bold ${selectedShift?.id === s.id ? 'text-[#006E62]' : 'text-gray-700'}`}>{s.name}</p>
+                            <p className="text-[9px] text-gray-400 uppercase font-bold">
+                              {s.rules?.find(r => r.day_of_week === todayDay)?.check_in_time?.slice(0,5)} - {s.rules?.find(r => r.day_of_week === todayDay)?.check_out_time?.slice(0,5)}
+                            </p>
+                          </div>
+                          <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${selectedShift?.id === s.id ? 'bg-[#006E62] border-[#006E62] text-white' : 'border-gray-200 group-hover:border-[#006E62]'}`}>
+                             {selectedShift?.id === s.id && <Check size={12} />}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+             {isLateOrEarly && (
+               <div className="mt-4 p-4 bg-rose-50 rounded-xl border border-rose-100">
+                 <p className="text-[10px] font-bold text-rose-600 uppercase mb-2">
+                   {isLate ? 'Alasan Keterlambatan' : 'Alasan Pulang Awal'}
+                 </p>
+                 <textarea
+                   value={lateEarlyReason}
+                   onChange={(e) => setLateEarlyReason(e.target.value)}
+                   placeholder="Masukkan alasan..."
+                   className="w-full p-3 text-xs border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                 />
+               </div>
+             )}
+
+             {isLateCheckout && (
+               <div className="mt-4 p-4 bg-rose-50 rounded-xl border border-rose-100">
+                 <p className="text-[10px] font-bold text-rose-600 uppercase mb-2">Alasan Keterlambatan Pulang</p>
+                 <textarea
+                   value={lateCheckoutReason}
+                   onChange={(e) => setLateCheckoutReason(e.target.value)}
+                   placeholder="Masukkan alasan telat absen pulang..."
+                   className="w-full p-3 text-xs border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                 />
+               </div>
+             )}
+
+             {showScheduleInfo && (
+               <div className="mt-4 lg:mt-8 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100/50 space-y-3">
+                  <div className="relative flex justify-center items-center text-[10px] font-bold text-[#006E62] uppercase tracking-wider mb-2">
+                    <div className="absolute left-0 top-0">
+                      <CalendarClock size={14} />
+                    </div>
+                    <span className="text-center">
+                      {activeSpecialAssignment ? 'Jadwal Penugasan' : activeSpecialSchedule ? 'Jadwal Khusus' : account.schedule_type === 'Shift Dinamis' ? 'Shift Terpilih' : 'Jadwal Hari Ini'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="text-center">
+                        <p className="text-[9px] text-gray-400 font-bold uppercase">Jam Masuk</p>
+                        <p className="text-xs font-bold text-gray-700">{formatDisplayTime(scheduleRule?.check_in_time, activeAttendance?.in_timezone)}</p>
+                        <p className="text-[9px] text-[#006E62] font-medium mt-1">
+                          Toleransi: {effectiveSchedule?.tolerance_checkin_minutes || 0} menit
+                        </p>
+                     </div>
+                     <div className="text-center">
+                        <p className="text-[9px] text-gray-400 font-bold uppercase">Jam Pulang</p>
+                        <p className="text-xs font-bold text-gray-700">{formatDisplayTime(scheduleRule?.check_out_time, activeAttendance?.in_timezone)}</p>
+                        <p className="text-[9px] text-[#006E62] font-medium mt-1">
+                          Toleransi: {effectiveSchedule?.tolerance_checkout_minutes || 0} menit
+                        </p>
+                     </div>
+                  </div>
+               </div>
+             )}
+
+             <div className="mt-4 pt-4 lg:mt-6 lg:pt-6 border-t border-gray-50">
+                {showScheduleInfo && (
+                  <div className="flex justify-center mb-4">
+                    <span className="text-[10px] font-bold text-[#006E62] bg-[#006E62]/5 px-2 py-0.5 rounded uppercase tracking-tighter">
+                      {effectiveSchedule?.name || (account.schedule_type === 'Fleksibel' ? 'Fleksibel' : 'Reguler')}
+                    </span>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Status Masuk</p>
+                    <p className={`text-xs font-bold ${todayAttendance?.status_in === 'Terlambat' ? 'text-rose-500' : 'text-[#006E62]'}`}>
+                      {todayAttendance?.check_in ? `${formatDisplayTime(todayAttendance.check_in, todayAttendance.in_timezone)} • ${todayAttendance.status_in}` : '--:--'}
+                    </p>
+                  </div>
+                  <div className="text-center border-l border-gray-50">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Status Pulang</p>
+                    <p className={`text-xs font-bold ${todayAttendance?.status_out === 'Pulang Cepat' ? 'text-rose-500' : 'text-blue-500'}`}>
+                      {todayAttendance?.check_out ? `${formatDisplayTime(todayAttendance.check_out, todayAttendance.out_timezone)} • ${todayAttendance.status_out}` : '--:--'}
+                    </p>
+                  </div>
+                </div>
              </div>
           </div>
         </div>
