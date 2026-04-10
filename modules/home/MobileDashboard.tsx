@@ -492,8 +492,8 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
         
         {/* Shimmer Effect */}
-        <div className="absolute inset-0 z-0 opacity-30">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-shimmer"></div>
+        <div className="absolute inset-0 z-0 opacity-40">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent -translate-x-full animate-shimmer"></div>
         </div>
         
         <div className="relative z-10 flex flex-col gap-6">
@@ -505,7 +505,7 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
           
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/90">Selamat Datang,</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/90">{getGreeting().toUpperCase()}!</p>
               <h1 className="text-3xl font-black tracking-tight leading-none">{account?.full_name?.split(' ')[0]}</h1>
               <p className="text-[11px] font-bold text-white mt-1">
                 {account?.position || 'Staff'} • {account?.grade || account?.department || 'Operasional'}

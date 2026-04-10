@@ -2,7 +2,7 @@
 @import "leaflet/dist/leaflet.css";
 
 @theme {
-  --animate-shimmer: shimmer 3s infinite linear;
+  --animate-shimmer: shimmer 4s infinite ease-in-out;
   @keyframes shimmer {
     0% { transform: translateX(-100%); }
     100% { transform: translateX(100%); }
