@@ -357,12 +357,26 @@ const PresenceMain: React.FC = () => {
       } as any;
     }
     if (activeSpecialSchedule) {
-      return activeSpecialSchedule;
+      return {
+        ...activeSpecialSchedule,
+        tolerance_checkin_minutes: activeSpecialSchedule.tolerance_checkin_minutes ?? activeSpecialSchedule.tolerance_minutes ?? 0,
+        tolerance_checkout_minutes: activeSpecialSchedule.tolerance_checkout_minutes ?? 0
+      };
     }
     if (account?.schedule_type === 'Shift Dinamis') {
-      return selectedShift || null;
+      if (!selectedShift) return null;
+      return {
+        ...selectedShift,
+        tolerance_checkin_minutes: selectedShift.tolerance_checkin_minutes ?? selectedShift.tolerance_minutes ?? 0,
+        tolerance_checkout_minutes: selectedShift.tolerance_checkout_minutes ?? 0
+      };
     }
-    return account?.schedule || null;
+    if (!account?.schedule) return null;
+    return {
+      ...account.schedule,
+      tolerance_checkin_minutes: account.schedule.tolerance_checkin_minutes ?? account.schedule.tolerance_minutes ?? 0,
+      tolerance_checkout_minutes: account.schedule.tolerance_checkout_minutes ?? 0
+    };
   };
 
   const effectiveSchedule = getEffectiveSchedule();

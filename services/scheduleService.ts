@@ -75,6 +75,7 @@ export const scheduleService = {
     if (scheduleData.type === 3) {
       scheduleData.tolerance_minutes = 0;
       scheduleData.tolerance_checkin_minutes = 0;
+      scheduleData.tolerance_checkout_minutes = 0;
       rules = [];
     }
 
@@ -118,6 +119,7 @@ export const scheduleService = {
     if (scheduleData.type === 3) {
       scheduleData.tolerance_minutes = 0;
       scheduleData.tolerance_checkin_minutes = 0;
+      scheduleData.tolerance_checkout_minutes = 0;
       rules = [];
     }
 
