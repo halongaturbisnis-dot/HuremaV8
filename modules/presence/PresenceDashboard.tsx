@@ -141,7 +141,7 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
   if (isLoading) return <LoadingSpinner message="Menyiapkan Dashboard..." />;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-white pb-24">
       {/* Action Buttons */}
       <div className="px-6 pt-8 grid grid-cols-2 gap-4 relative z-20">
         <button 
@@ -182,7 +182,7 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
                 type="date" 
                 value={dateRange.start}
                 onChange={(e) => handleDateChange('start', e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006E62]"
+                className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-[10px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006E62]"
               />
             </div>
             <div className="relative">
@@ -191,7 +191,7 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
                 type="date" 
                 value={dateRange.end}
                 onChange={(e) => handleDateChange('end', e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006E62]"
+                className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-[10px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006E62]"
               />
             </div>
           </div>
@@ -281,7 +281,7 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-2">
             <Clock size={16} className="text-[#006E62]" />
-            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Riwayat Aktivitas</h3>
+            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Riwayat Presensi</h3>
           </div>
           <span className="text-[10px] font-bold text-gray-400">{attendances.length} Data</span>
         </div>
@@ -305,9 +305,6 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
                 className="w-full bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all"
               >
                 <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${log.status_in === 'Terlambat' ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-600'}`}>
-                    {log.status_in === 'Terlambat' ? <AlertCircle size={24} /> : <CheckCircle2 size={24} />}
-                  </div>
                   <div className="text-left">
                     <p className="text-xs font-bold text-gray-800">
                       {new Date(log.created_at!).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
