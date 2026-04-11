@@ -155,7 +155,7 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
         </button>
 
         <button 
-          onClick={() => setActiveTab ? setActiveTab('submission') : null}
+          onClick={() => setActiveTab ? setActiveTab('dispensation') : null}
           className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100 flex flex-col items-center gap-3 group active:scale-95 transition-all"
         >
           <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-lg">
@@ -181,7 +181,7 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
                 type="date" 
                 value={dateRange.start}
                 onChange={(e) => handleDateChange('start', e.target.value)}
-                className="w-full px-0 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006E62] text-center appearance-none"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006E62] text-center appearance-none"
               />
             </div>
             <div className="relative">
@@ -189,7 +189,7 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
                 type="date" 
                 value={dateRange.end}
                 onChange={(e) => handleDateChange('end', e.target.value)}
-                className="w-full px-0 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006E62] text-center appearance-none"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006E62] text-center appearance-none"
               />
             </div>
           </div>

@@ -31,7 +31,7 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
   const [account, setAccount] = useState<Account | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   
-  // Manual Input for ABSENT
+  // Manual Input for ABSEN_KERJA
   const [manualCheckIn, setManualCheckIn] = useState('');
   const [manualCheckOut, setManualCheckOut] = useState('');
   const [manualLocationId, setManualLocationId] = useState('');
@@ -50,7 +50,7 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
         issues: editData.issues.map(i => i.type)
       });
       setSelectedIssues(editData.issues.map(i => i.type));
-      const absentIssue = editData.issues.find(i => i.type === 'ABSENT');
+      const absentIssue = editData.issues.find(i => i.type === 'ABSEN_KERJA');
       if (absentIssue) {
         setManualCheckIn(absentIssue.manual_check_in || '');
         setManualCheckOut(absentIssue.manual_check_out || '');
@@ -98,7 +98,7 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
       return;
     }
 
-    const isAbsent = selectedIssues.includes('ABSENT');
+    const isAbsent = selectedIssues.includes('ABSEN_KERJA');
     if (isAbsent) {
       if (!manualCheckIn || !manualCheckOut) {
         Swal.fire('Peringatan', 'Mohon isi jam masuk dan jam pulang.', 'warning');
@@ -122,7 +122,7 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
       let outPhotoId = null;
       const fileIds: string[] = editData?.file_ids || [];
 
-      // Upload photos for ABSENT
+      // Upload photos for ABSEN_KERJA
       if (inPhoto) inPhotoId = await googleDriveService.uploadFile(inPhoto, folderId);
       if (outPhoto) outPhotoId = await googleDriveService.uploadFile(outPhoto, folderId);
 
@@ -134,7 +134,7 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
 
       const issues: DispensationIssue[] = selectedIssues.map(type => {
         const issue: DispensationIssue = { type, status: 'PENDING' };
-        if (type === 'ABSENT') {
+        if (type === 'ABSEN_KERJA') {
           issue.manual_check_in = manualCheckIn;
           issue.manual_check_out = manualCheckOut;
           issue.in_photo_id = inPhotoId;
@@ -262,8 +262,8 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
                 <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">2. Detail Dispensasi</h4>
               </div>
 
-              {/* Manual Input for ABSENT */}
-              {selectedIssues.includes('ABSENT') && (
+              {/* Manual Input for ABSEN_KERJA */}
+              {selectedIssues.includes('ABSEN_KERJA') && (
                 <div className="space-y-4 bg-gray-50 p-6 rounded-[32px] border border-gray-100">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">

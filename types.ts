@@ -904,7 +904,7 @@ export interface PayrollItem {
   };
 }
 
-export type DispensationIssueType = 'LATE' | 'EARLY_LEAVE' | 'NO_CLOCK_OUT' | 'ABSENT';
+export type DispensationIssueType = 'TERLAMBAT' | 'PULANG_AWAL' | 'ABSEN_KERJA';
 export type DispensationIssueStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface DispensationIssue {

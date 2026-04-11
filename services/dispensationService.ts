@@ -106,7 +106,7 @@ export const dispensationService = {
     // Process each issue
     for (const issue of issues) {
       if (issue.status === 'APPROVED') {
-        if (issue.type === 'ABSENT') {
+        if (issue.type === 'ABSEN_KERJA') {
           // INSERT new attendance record
           const { locationService } = await import('./locationService');
           const locationId = issue.manual_location_id || request.account.location_id;
@@ -144,10 +144,10 @@ export const dispensationService = {
         } else if (request.presence_id) {
           // UPDATE existing attendance record
           const updateData: any = {};
-          if (issue.type === 'LATE') {
+          if (issue.type === 'TERLAMBAT') {
             updateData.status_in = 'Tepat Waktu';
             updateData.late_minutes = 0;
-          } else if (issue.type === 'EARLY_LEAVE') {
+          } else if (issue.type === 'PULANG_AWAL') {
             updateData.status_out = 'Tepat Waktu';
             updateData.early_departure_minutes = 0;
           }

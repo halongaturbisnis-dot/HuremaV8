@@ -167,7 +167,7 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
                       </div>
                       <div>
                         <span className="text-xs font-black text-gray-800 uppercase tracking-wider">{issue.type.replace('_', ' ')}</span>
-                        {issue.type === 'ABSENT' && (
+                        {issue.type === 'ABSEN_KERJA' && (
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter flex items-center gap-1">
                               <Clock size={10} /> {issue.manual_check_in} - {issue.manual_check_out}
@@ -209,8 +209,8 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
                     )}
                   </div>
 
-                  {/* Manual Photos for ABSENT */}
-                  {issue.type === 'ABSENT' && (issue.in_photo_id || issue.out_photo_id) && (
+                  {/* Manual Photos for ABSEN_KERJA */}
+                  {issue.type === 'ABSEN_KERJA' && (issue.in_photo_id || issue.out_photo_id) && (
                     <div className="mt-4 grid grid-cols-2 gap-4">
                       {issue.in_photo_id && (
                         <div className="space-y-2">
