@@ -142,16 +142,15 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
       
       let inPhotoId = null;
       let outPhotoId = null;
-      const fileIds: string[] = editData?.file_ids || [];
+      let finalFileId = editData?.file_id || null;
 
       // Upload photos for ABSEN_KERJA
       if (inPhoto) inPhotoId = await googleDriveService.uploadFile(inPhoto, folderId);
       if (outPhoto) outPhotoId = await googleDriveService.uploadFile(outPhoto, folderId);
 
-      // Upload additional files
-      for (const f of additionalFiles) {
-        const fid = await googleDriveService.uploadFile(f, folderId);
-        fileIds.push(fid);
+      // Upload additional files (take the first one for file_id)
+      if (additionalFiles.length > 0) {
+        finalFileId = await googleDriveService.uploadFile(additionalFiles[0], folderId);
       }
 
       const issues: DispensationIssue[] = selectedIssues.map(type => {
@@ -170,7 +169,7 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
         await dispensationService.update(editData.id, {
           issues,
           reason,
-          file_ids: fileIds
+          file_id: finalFileId
         });
       } else {
         await dispensationService.create({
@@ -179,7 +178,7 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
           date: selectedDate.date,
           issues,
           reason,
-          file_ids: fileIds,
+          file_id: finalFileId,
           status: 'PENDING',
           is_read: false
         } as any);

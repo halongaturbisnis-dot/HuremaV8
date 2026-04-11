@@ -124,20 +124,17 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
               "{request.reason}"
             </div>
 
-            {request.file_ids && request.file_ids.length > 0 && (
+            {request.file_id && (
               <div className="flex flex-wrap gap-2">
-                {request.file_ids.map((fid, i) => (
-                  <a 
-                    key={i}
-                    href={googleDriveService.getFileUrl(fid)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-blue-100 transition-all border border-blue-100"
-                  >
-                    <Download size={14} />
-                    Lampiran {i + 1}
-                  </a>
-                ))}
+                <a 
+                  href={googleDriveService.getFileUrl(request.file_id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-blue-100 transition-all border border-blue-100"
+                >
+                  <Download size={14} />
+                  Lampiran
+                </a>
               </div>
             )}
           </div>

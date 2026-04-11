@@ -197,11 +197,11 @@ export const dispensationService = {
    */
   async getEligibleDates(accountId: string) {
     const { settingsService } = await import('./settingsService');
-    const maxDays = await settingsService.getSetting('dispensation_max_days', 31);
+    const maxDays = await settingsService.getSetting('dispensation_window_days', 7);
     
     const today = new Date();
     const startDate = new Date();
-    startDate.setDate(today.getDate() - maxDays);
+    startDate.setDate(today.getDate() - Number(maxDays));
 
     // 1. Get user account info (for location and schedule)
     const { data: account } = await supabase
