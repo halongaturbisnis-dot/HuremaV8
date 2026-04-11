@@ -25,6 +25,7 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
   const [isLoading, setIsLoading] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
   const [eligibleDates, setEligibleDates] = useState<EligibleDate[]>([]);
+  const [windowDays, setWindowDays] = useState<number>(7);
   const [selectedDate, setSelectedDate] = useState<EligibleDate | null>(null);
   const [selectedIssues, setSelectedIssues] = useState<DispensationIssueType[]>([]);
   const [reason, setReason] = useState(editData?.reason || '');
@@ -97,8 +98,9 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
   const loadEligibleDates = async () => {
     try {
       setIsDetecting(true);
-      const dates = await dispensationService.getEligibleDates(user!.id);
-      setEligibleDates(dates);
+      const result = await dispensationService.getEligibleDates(user!.id);
+      setEligibleDates(result.dates);
+      setWindowDays(result.windowDays);
     } catch (error) {
       console.error(error);
     } finally {
@@ -237,7 +239,7 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
               ) : eligibleDates.length === 0 ? (
                 <div className="p-6 bg-emerald-50 rounded-3xl border border-emerald-100 flex items-center gap-4">
                   <CheckCircle2 className="text-emerald-500 shrink-0" size={24} />
-                  <p className="text-xs text-emerald-700 font-bold">Tidak ditemukan masalah presensi dalam 31 hari terakhir.</p>
+                  <p className="text-xs text-emerald-700 font-bold">Tidak ditemukan masalah presensi dalam {windowDays} hari terakhir.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3">

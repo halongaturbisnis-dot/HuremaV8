@@ -203,18 +203,8 @@ export const dispensationService = {
     const startDate = new Date();
     startDate.setDate(today.getDate() - Number(windowDays));
 
-    // 1. Get user account info and location timezone
-    const { data: account } = await supabase
-      .from('accounts')
-      .select('location_id, schedule_id, locations(timezone)')
-      .eq('id', accountId)
-      .single();
-
-    if (!account) return [];
-    const locationTimezone = (account as any).locations?.timezone || 'Asia/Jakarta';
-
     // Helper to convert UTC to Local Date String based on timezone
-    const toLocalDate = (date: Date | string, tz: string = locationTimezone) => {
+    const toLocalDate = (date: Date | string, tz: string = 'Asia/Jakarta') => {
       try {
         return new Intl.DateTimeFormat('en-CA', {
           timeZone: tz,
@@ -223,7 +213,6 @@ export const dispensationService = {
           day: '2-digit'
         }).format(new Date(date));
       } catch (e) {
-        // Fallback if timezone is invalid
         return new Intl.DateTimeFormat('en-CA', {
           timeZone: 'Asia/Jakarta',
           year: 'numeric',
@@ -235,6 +224,15 @@ export const dispensationService = {
 
     const startDateStr = toLocalDate(startDate);
     const todayStr = toLocalDate(today);
+
+    // 1. Get user account info (Removed locations(timezone) as it doesn't exist)
+    const { data: account } = await supabase
+      .from('accounts')
+      .select('location_id, schedule_id, schedule_type')
+      .eq('id', accountId)
+      .single();
+
+    if (!account) return { dates: [], windowDays: Number(windowDays) };
 
     // 2. Get attendances in range
     const { data: attendances } = await supabase
@@ -253,7 +251,7 @@ export const dispensationService = {
     const requestedDates = new Set(existingRequests?.map(r => r.date));
     const requestedPresenceIds = new Set(existingRequests?.filter(r => r.presence_id).map(r => r.presence_id));
 
-    // 4. Get all types of leaves/permissions
+    // 4. Get all types of leaves/permissions (Fix dates, not timezone dependent)
     const [
       { data: annualLeaves },
       { data: leaveRequests },
@@ -294,7 +292,6 @@ export const dispensationService = {
       .gte('end_date', startDateStr)
       .lte('start_date', todayStr);
     
-    // Filter out schedules where user is excluded
     const filteredSpecialSchedules = specialSchedules?.filter(s => 
       !s.excluded_account_ids?.includes(accountId)
     );
@@ -308,7 +305,7 @@ export const dispensationService = {
 
     const eligible: any[] = [];
 
-    // Check existing attendances for late/early
+    // Step 1: Check existing attendances for late/early
     attendances?.forEach(att => {
       if (requestedPresenceIds.has(att.id)) return;
 
@@ -318,29 +315,46 @@ export const dispensationService = {
 
       if (issues.length > 0) {
         eligible.push({
-          date: toLocalDate(att.check_in, att.in_timezone || locationTimezone),
+          date: toLocalDate(att.check_in, att.in_timezone || 'Asia/Jakarta'),
           presence_id: att.id,
           issues
         });
       }
     });
 
-    // Check for "Absen Kerja"
+    // Step 2-5: Check for "Absen Kerja"
     for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
       const dateStr = toLocalDate(d);
       if (requestedDates.has(dateStr)) continue;
       
-      const hasAttendance = attendances?.some(att => toLocalDate(att.check_in, att.in_timezone || locationTimezone) === dateStr);
+      const hasAttendance = attendances?.some(att => toLocalDate(att.check_in, att.in_timezone || 'Asia/Jakarta') === dateStr);
       if (hasAttendance) continue;
 
-      // Syarat 2: Tidak ada cuti/izin/libur mandiri
+      // a. Cek Penugasan Khusus
+      const hasAssignment = assignments?.some(a => dateStr >= a.start_date && dateStr <= a.end_date);
+      if (hasAssignment) {
+        eligible.push({ date: dateStr, presence_id: null, issues: ['ABSEN_KERJA'] });
+        continue;
+      }
+
+      // b. Cek Jadwal Kerja Khusus (Tipe 4)
+      const specialWorkDay = filteredSpecialSchedules?.find(s => s.type === 4 && dateStr >= s.start_date && dateStr <= s.end_date);
+      if (specialWorkDay) {
+        eligible.push({ date: dateStr, presence_id: null, issues: ['ABSEN_KERJA'] });
+        continue;
+      }
+
+      // c. Cek Jadwal Libur Khusus (Tipe 3)
+      const specialHoliday = filteredSpecialSchedules?.find(s => s.type === 3 && dateStr >= s.start_date && dateStr <= s.end_date);
+      if (specialHoliday) continue;
+
+      // d. Cek Izin/Cuti
       const isOffByLeave = [
         ...(annualLeaves || []),
         ...(leaveRequests || []),
         ...(maternityLeaves || []),
         ...(permissionRequests || [])
       ].some(l => dateStr >= l.start_date && dateStr <= l.end_date);
-
       if (isOffByLeave) continue;
 
       const isOffBySubmission = submissions?.some(s => {
@@ -350,30 +364,22 @@ export const dispensationService = {
       });
       if (isOffBySubmission) continue;
 
-      // Syarat 3: Tidak ada penugasan khusus
-      const hasAssignment = assignments?.some(a => dateStr >= a.start_date && dateStr <= a.end_date);
-      if (hasAssignment) continue;
-
-      // Syarat 4 & 5: Jadwal & Libur Khusus
-      const specialHoliday = filteredSpecialSchedules?.find(s => s.type === 3 && dateStr >= s.start_date && dateStr <= s.end_date);
-      if (specialHoliday) continue;
-
-      const specialWorkDay = filteredSpecialSchedules?.find(s => s.type === 4 && dateStr >= s.start_date && dateStr <= s.end_date);
-      
-      // Jika bukan hari kerja khusus, cek jadwal rutin
-      if (!specialWorkDay && schedule && schedule.type === 1) {
+      // e. Cek Jenis Jadwal (Tipe 1)
+      if (account.schedule_type === 'Jadwal Hari Kerja' && schedule && schedule.type === 1) {
         const dayOfWeek = d.getDay();
         const rule = schedule.schedule_rules?.find((r: any) => r.day_of_week === dayOfWeek);
         if (!rule || rule.is_holiday) continue;
+        
+        eligible.push({ date: dateStr, presence_id: null, issues: ['ABSEN_KERJA'] });
+      } else if (account.schedule_type !== 'Jadwal Hari Kerja') {
+        // Shift/Dinamis/Fleksibel -> ABSEN
+        eligible.push({ date: dateStr, presence_id: null, issues: ['ABSEN_KERJA'] });
       }
-
-      eligible.push({
-        date: dateStr,
-        presence_id: null,
-        issues: ['ABSEN_KERJA']
-      });
     }
 
-    return eligible.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return { 
+      dates: eligible.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+      windowDays: Number(windowDays)
+    };
   },
 };
