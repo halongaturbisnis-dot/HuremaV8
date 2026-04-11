@@ -196,19 +196,31 @@ export const dispensationService = {
    * Mendapatkan tanggal yang layak diajukan dispensasi
    */
   async getEligibleDates(accountId: string) {
+    const { settingsService } = await import('./settingsService');
+    const maxDays = await settingsService.getSetting('dispensation_max_days', 31);
+    
     const today = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(today.getDate() - 31);
+    const startDate = new Date();
+    startDate.setDate(today.getDate() - maxDays);
 
-    // 1. Get attendances in range
+    // 1. Get user account info (for location and schedule)
+    const { data: account } = await supabase
+      .from('accounts')
+      .select('location_id, schedule_id')
+      .eq('id', accountId)
+      .single();
+
+    if (!account) return [];
+
+    // 2. Get attendances in range
     const { data: attendances } = await supabase
       .from('attendances')
       .select('*')
       .eq('account_id', accountId)
-      .gte('check_in', thirtyDaysAgo.toISOString())
+      .gte('check_in', startDate.toISOString())
       .lte('check_in', today.toISOString());
 
-    // 2. Get existing requests to avoid duplicates
+    // 3. Get existing requests to avoid duplicates
     const { data: existingRequests } = await supabase
       .from('dispensation_requests')
       .select('date, presence_id')
@@ -216,6 +228,30 @@ export const dispensationService = {
 
     const requestedDates = new Set(existingRequests?.map(r => r.date));
     const requestedPresenceIds = new Set(existingRequests?.filter(r => r.presence_id).map(r => r.presence_id));
+
+    // 4. Get submissions (Leaves, Permissions, etc.)
+    const { data: submissions } = await supabase
+      .from('account_submissions')
+      .select('*')
+      .eq('account_id', accountId)
+      .eq('status', 'Disetujui')
+      .in('type', ['Cuti', 'Izin', 'Libur Mandiri', 'Cuti Tahunan', 'Cuti Melahirkan']);
+
+    // 5. Get Special Holidays (Type 3)
+    const { data: specialHolidays } = await supabase
+      .from('schedules')
+      .select('*, schedule_locations!inner(location_id)')
+      .eq('type', 3)
+      .eq('schedule_locations.location_id', account.location_id)
+      .lte('start_date', today.toISOString().split('T')[0])
+      .gte('end_date', startDate.toISOString().split('T')[0]);
+
+    // 6. Get User's Schedule Rules
+    const { data: schedule } = await supabase
+      .from('schedules')
+      .select('*, schedule_rules(*)')
+      .eq('id', account.schedule_id)
+      .single();
 
     const eligible: any[] = [];
 
@@ -236,21 +272,42 @@ export const dispensationService = {
       }
     });
 
-    // For "Absen Kerja", we would ideally compare with schedule
-    // For now, let's allow manual input for dates without attendance in last 31 days
-    // that are not in requestedDates
-    for (let d = new Date(thirtyDaysAgo); d <= today; d.setDate(d.getDate() + 1)) {
+    // For "Absen Kerja"
+    for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
       const dateStr = d.toISOString().split('T')[0];
       if (requestedDates.has(dateStr)) continue;
       
       const hasAttendance = attendances?.some(att => att.check_in.startsWith(dateStr));
-      if (!hasAttendance) {
-        eligible.push({
-          date: dateStr,
-          presence_id: null,
-          issues: ['ABSEN_KERJA']
-        });
+      if (hasAttendance) continue;
+
+      // Check if user is "libur"
+      
+      // a. Check Submissions (Leaves/Permissions)
+      const isOffBySubmission = submissions?.some(s => {
+        const start = s.submission_data?.start_date;
+        const end = s.submission_data?.end_date;
+        return dateStr >= start && dateStr <= end;
+      });
+      if (isOffBySubmission) continue;
+
+      // b. Check Special Holidays (Type 3)
+      const isOffBySpecialHoliday = specialHolidays?.some(sh => {
+        return dateStr >= sh.start_date && dateStr <= sh.end_date;
+      });
+      if (isOffBySpecialHoliday) continue;
+
+      // c. Check Schedule Rules (Day off)
+      if (schedule) {
+        const dayOfWeek = d.getDay();
+        const rule = schedule.schedule_rules?.find((r: any) => r.day_of_week === dayOfWeek);
+        if (!rule || rule.is_holiday) continue;
       }
+
+      eligible.push({
+        date: dateStr,
+        presence_id: null,
+        issues: ['ABSEN_KERJA']
+      });
     }
 
     return eligible.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

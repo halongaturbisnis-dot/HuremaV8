@@ -37,7 +37,29 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
   const [manualLocationId, setManualLocationId] = useState('');
   const [inPhoto, setInPhoto] = useState<File | null>(null);
   const [outPhoto, setOutPhoto] = useState<File | null>(null);
+  const [inPhotoPreview, setInPhotoPreview] = useState<string | null>(null);
+  const [outPhotoPreview, setOutPhotoPreview] = useState<string | null>(null);
   const [additionalFiles, setAdditionalFiles] = useState<File[]>([]);
+
+  useEffect(() => {
+    if (inPhoto) {
+      const url = URL.createObjectURL(inPhoto);
+      setInPhotoPreview(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setInPhotoPreview(null);
+    }
+  }, [inPhoto]);
+
+  useEffect(() => {
+    if (outPhoto) {
+      const url = URL.createObjectURL(outPhoto);
+      setOutPhotoPreview(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setOutPhotoPreview(null);
+    }
+  }, [outPhoto]);
 
   useEffect(() => {
     fetchInitialData();
@@ -94,7 +116,7 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
     e.preventDefault();
     
     if (!selectedDate || selectedIssues.length === 0 || !reason) {
-      Swal.fire('Peringatan', 'Mohon lengkapi data pengajuan.', 'warning');
+      Swal.fire('Peringatan', 'Mohon lengkapi data pengajuan. Semua kolom wajib diisi.', 'warning');
       return;
     }
 
@@ -180,8 +202,8 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-lg rounded-t-[40px] sm:rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
         <div className="px-8 pt-8 pb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -233,20 +255,35 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
                         : 'bg-gray-50 border-gray-100 text-gray-700 hover:bg-white hover:border-gray-300'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedDate?.date === d.date ? 'bg-white/20' : 'bg-white shadow-sm text-gray-400'}`}>
-                          <Calendar size={18} />
+                      <div className="grid grid-cols-4 gap-3 items-center">
+                        <div className={`flex flex-col items-center justify-center p-2 rounded-2xl border ${selectedDate?.date === d.date ? 'bg-white/20 border-white/30' : 'bg-red-50 border-red-100'}`}>
+                          <span className={`text-[8px] font-black uppercase ${selectedDate?.date === d.date ? 'text-white/70' : 'text-red-400'}`}>
+                            {new Date(d.date).toLocaleDateString('id-ID', { month: 'short' })}
+                          </span>
+                          <span className={`text-lg font-black leading-none ${selectedDate?.date === d.date ? 'text-white' : 'text-red-600'}`}>
+                            {new Date(d.date).getDate()}
+                          </span>
                         </div>
-                        <div>
-                          <p className="text-xs font-black">
-                            {new Date(d.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' })}
+                        <div className="col-span-2">
+                          <p className={`text-[10px] font-black uppercase tracking-tight ${selectedDate?.date === d.date ? 'text-white' : 'text-gray-800'}`}>
+                            {new Date(d.date).toLocaleDateString('id-ID', { weekday: 'long' })}
                           </p>
-                          <p className={`text-[9px] font-bold uppercase tracking-tighter ${selectedDate?.date === d.date ? 'text-white/70' : 'text-gray-400'}`}>
-                            {d.issues.map(i => i.replace('_', ' ')).join(', ')}
-                          </p>
+                          <div className="flex flex-wrap gap-1 mt-0.5">
+                            {d.issues.map((i, idx2) => (
+                              <span key={idx2} className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-md ${
+                                selectedDate?.date === d.date 
+                                ? 'bg-white/20 text-white' 
+                                : 'bg-red-50 text-red-600'
+                              }`}>
+                                {i.replace('_', ' ')}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex justify-end">
+                          {selectedDate?.date === d.date && <CheckCircle2 size={20} />}
                         </div>
                       </div>
-                      {selectedDate?.date === d.date && <CheckCircle2 size={20} />}
                     </button>
                   ))}
                 </div>
@@ -305,18 +342,30 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Foto Masuk</label>
-                      <label className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${inPhoto ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-gray-200'}`}>
+                      <label className={`relative flex flex-col items-center justify-center h-32 rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden ${inPhoto ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-gray-200'}`}>
                         <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => setInPhoto(e.target.files?.[0] || null)} />
-                        {inPhoto ? <CheckCircle2 className="text-emerald-500" size={24} /> : <Camera className="text-gray-300" size={24} />}
-                        <span className="text-[8px] font-bold text-gray-400 uppercase mt-1">{inPhoto ? 'Terpilih' : 'Ambil Foto'}</span>
+                        {inPhotoPreview ? (
+                          <img src={inPhotoPreview} className="w-full h-full object-cover" />
+                        ) : (
+                          <>
+                            <Camera className="text-gray-300" size={24} />
+                            <span className="text-[8px] font-bold text-gray-400 uppercase mt-1">Ambil Foto</span>
+                          </>
+                        )}
                       </label>
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Foto Pulang</label>
-                      <label className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${outPhoto ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-gray-200'}`}>
+                      <label className={`relative flex flex-col items-center justify-center h-32 rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden ${outPhoto ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-gray-200'}`}>
                         <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => setOutPhoto(e.target.files?.[0] || null)} />
-                        {outPhoto ? <CheckCircle2 className="text-emerald-500" size={24} /> : <Camera className="text-gray-300" size={24} />}
-                        <span className="text-[8px] font-bold text-gray-400 uppercase mt-1">{outPhoto ? 'Terpilih' : 'Ambil Foto'}</span>
+                        {outPhotoPreview ? (
+                          <img src={outPhotoPreview} className="w-full h-full object-cover" />
+                        ) : (
+                          <>
+                            <Camera className="text-gray-300" size={24} />
+                            <span className="text-[8px] font-bold text-gray-400 uppercase mt-1">Ambil Foto</span>
+                          </>
+                        )}
                       </label>
                     </div>
                   </div>
