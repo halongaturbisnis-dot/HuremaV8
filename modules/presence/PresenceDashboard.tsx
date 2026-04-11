@@ -177,21 +177,19 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
           </div>
           <div className="flex flex-col gap-3">
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
               <input 
                 type="date" 
                 value={dateRange.start}
                 onChange={(e) => handleDateChange('start', e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006E62]"
+                className="w-full px-0 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006E62] text-center appearance-none"
               />
             </div>
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
               <input 
                 type="date" 
                 value={dateRange.end}
                 onChange={(e) => handleDateChange('end', e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006E62]"
+                className="w-full px-0 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006E62] text-center appearance-none"
               />
             </div>
           </div>

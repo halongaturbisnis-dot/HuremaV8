@@ -52,7 +52,7 @@ const AdminDispensationMain: React.FC<AdminDispensationMainProps> = ({ user }) =
       case 'PARTIAL':
         return <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 w-fit"><AlertCircle size={10} /> Sebagian</span>;
       default:
-        return <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 w-fit"><Clock size={10} /> Pending</span>;
+        return <span className="px-2 py-1 bg-blue-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 w-fit animate-pulse shadow-lg shadow-blue-500/20"><Clock size={10} /> WAITING</span>;
     }
   };
 

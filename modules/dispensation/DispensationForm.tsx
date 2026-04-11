@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, AlertCircle, Calendar, Clock, FileText, Upload, CheckCircle2, Loader2, Info, ClipboardList } from 'lucide-react';
+import { X, Save, AlertCircle, Calendar, Clock, FileText, Upload, CheckCircle2, Loader2, Info, ClipboardList, MapPin, Camera } from 'lucide-react';
 import { dispensationService } from '../../services/dispensationService';
-import { presenceService } from '../../services/presenceService';
-import { settingsService } from '../../services/settingsService';
-import { scheduleService } from '../../services/scheduleService';
 import { googleDriveService } from '../../services/googleDriveService';
 import { authService } from '../../services/authService';
-import { leaveService } from '../../services/leaveService';
-import { permissionService } from '../../services/permissionService';
-import { maternityLeaveService } from '../../services/maternityLeaveService';
 import { accountService } from '../../services/accountService';
-import { DispensationRequest, DispensationIssueType, DispensationIssue, Attendance, ScheduleRule, Account, Schedule } from '../../types';
+import { locationService } from '../../services/locationService';
+import { DispensationRequest, DispensationIssueType, DispensationIssue, Account, Location } from '../../types';
 import Swal from 'sweetalert2';
 
 interface DispensationFormProps {
@@ -19,160 +14,69 @@ interface DispensationFormProps {
   editData: DispensationRequest | null;
 }
 
-interface AttendanceProblem {
+interface EligibleDate {
   date: string;
   presence_id: string | null;
   issues: DispensationIssueType[];
-  details: string;
 }
 
 const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess, editData }) => {
   const user = authService.getCurrentUser();
   const [isLoading, setIsLoading] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
-  const [problems, setProblems] = useState<AttendanceProblem[]>([]);
-  const [selectedProblem, setSelectedProblem] = useState<AttendanceProblem | null>(null);
+  const [eligibleDates, setEligibleDates] = useState<EligibleDate[]>([]);
+  const [selectedDate, setSelectedDate] = useState<EligibleDate | null>(null);
   const [selectedIssues, setSelectedIssues] = useState<DispensationIssueType[]>([]);
   const [reason, setReason] = useState(editData?.reason || '');
-  const [file, setFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [account, setAccount] = useState<Account | null>(null);
+  const [locations, setLocations] = useState<Location[]>([]);
+  
+  // Manual Input for ABSENT
+  const [manualCheckIn, setManualCheckIn] = useState('');
+  const [manualCheckOut, setManualCheckOut] = useState('');
+  const [manualLocationId, setManualLocationId] = useState('');
+  const [inPhoto, setInPhoto] = useState<File | null>(null);
+  const [outPhoto, setOutPhoto] = useState<File | null>(null);
+  const [additionalFiles, setAdditionalFiles] = useState<File[]>([]);
 
   useEffect(() => {
+    fetchInitialData();
     if (!editData) {
-      detectProblems();
+      loadEligibleDates();
     } else {
-      // If editing, we just show the current data
-      setReason(editData.reason);
-      setSelectedIssues(editData.issues.map(i => i.type));
-      // We still need to show the date info
-      setSelectedProblem({
+      setSelectedDate({
         date: editData.date,
         presence_id: editData.presence_id,
-        issues: editData.issues.map(i => i.type),
-        details: 'Mode Edit Pengajuan'
+        issues: editData.issues.map(i => i.type)
       });
+      setSelectedIssues(editData.issues.map(i => i.type));
+      const absentIssue = editData.issues.find(i => i.type === 'ABSENT');
+      if (absentIssue) {
+        setManualCheckIn(absentIssue.manual_check_in || '');
+        setManualCheckOut(absentIssue.manual_check_out || '');
+        setManualLocationId(absentIssue.manual_location_id || '');
+      }
     }
   }, [editData]);
 
-  const detectProblems = async () => {
+  const fetchInitialData = async () => {
+    try {
+      const [acc, locs] = await Promise.all([
+        accountService.getById(user!.id),
+        locationService.getAll()
+      ]);
+      setAccount(acc as any);
+      setLocations(locs);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const loadEligibleDates = async () => {
     try {
       setIsDetecting(true);
-      
-      // Fetch full account details to get location_id and schedule_id
-      const fullAccount = await accountService.getById(user!.id);
-      if (!fullAccount) throw new Error("Data akun tidak ditemukan");
-
-      const settings = await settingsService.getAll();
-      const windowDays = settings.find(s => s.key === 'dispensation_window_days')?.value || 7;
-      
-      // Gunakan waktu lokal Jakarta (WIB)
-      const now = new Date();
-      const startDate = new Date(now);
-      startDate.setDate(now.getDate() - (windowDays - 1));
-      
-      const startDateStr = startDate.toISOString().split('T')[0];
-      const endDateStr = now.toISOString().split('T')[0];
-
-      // Fetch all relevant data for the window in parallel
-      const [
-        attendance,
-        annualLeaves,
-        mandatoryLeaves,
-        permissions,
-        maternityLeaves,
-        existingRequests,
-        specialHolidays
-      ] = await Promise.all([
-        presenceService.getAttendanceByRange(startDateStr, endDateStr, user!.id),
-        leaveService.getAnnualByRange(user!.id, startDateStr, endDateStr),
-        leaveService.getMandatoryByRange(user!.id, startDateStr, endDateStr),
-        permissionService.getByRange(user!.id, startDateStr, endDateStr),
-        maternityLeaveService.getByRange(user!.id, startDateStr, endDateStr),
-        dispensationService.getByRange(user!.id, startDateStr, endDateStr),
-        scheduleService.getSpecialHolidaysByRange(fullAccount.location_id, startDateStr, endDateStr)
-      ]);
-
-      const filteredAttendance = attendance; // Already filtered by range
-
-      // Fetch schedule rules
-      const scheduleId = fullAccount.schedule_id;
-      let rules: ScheduleRule[] = [];
-      if (scheduleId) {
-        const schedule = await scheduleService.getById(scheduleId);
-        rules = schedule.rules || [];
-      }
-
-      // Detect issues for each day in window
-      const detected: AttendanceProblem[] = [];
-      for (let i = 0; i < windowDays; i++) {
-        const d = new Date(now);
-        d.setDate(now.getDate() - i);
-        const dStr = d.toISOString().split('T')[0];
-        
-        // Skip if it's today (cannot request dispensation for today yet)
-        if (dStr === now.toISOString().split('T')[0]) continue;
-
-        // Check if this date is a Special Holiday (Type 3)
-        const isSpecialHoliday = specialHolidays.some(h => {
-          if (!h.start_date || !h.end_date) return false;
-          const isDateInRange = dStr >= h.start_date && dStr <= h.end_date;
-          const isUserExcluded = h.excluded_account_ids?.includes(user!.id);
-          return isDateInRange && !isUserExcluded;
-        });
-
-        if (isSpecialHoliday) continue;
-
-        const dayOfWeek = d.getDay(); // 0 (Sun) to 6 (Sat)
-        
-        const rule = rules.find(r => r.day_of_week === dayOfWeek);
-        if (!rule || rule.is_holiday) continue; // Skip holidays or no rule
-
-        // Check if there is already an approved or pending leave/permission/maternity leave for this date
-        const hasAnnual = annualLeaves.some(l => dStr >= l.start_date && dStr <= l.end_date);
-        const hasMandatory = mandatoryLeaves.some(l => dStr >= l.start_date && dStr <= l.end_date);
-        const hasPermission = permissions.some(p => dStr >= p.start_date && dStr <= p.end_date);
-        const hasMaternity = maternityLeaves.some(m => dStr >= m.start_date && dStr <= m.end_date);
-        
-        if (hasAnnual || hasMandatory || hasPermission || hasMaternity) continue;
-
-        // Check if there is already a pending or approved dispensation request for this date
-        const hasExistingRequest = existingRequests.some(r => r.date === dStr);
-        if (hasExistingRequest) continue;
-
-        const dailyPresence = filteredAttendance.find(a => a.created_at?.split('T')[0] === dStr);
-        
-        const issues: DispensationIssueType[] = [];
-        let details = "";
-
-        if (!dailyPresence) {
-          issues.push('ABSENT');
-          details = "Tidak ada data presensi (Mangkir)";
-        } else {
-          if (dailyPresence.late_minutes > 0) {
-            issues.push('LATE');
-            details += `Terlambat ${dailyPresence.late_minutes}m. `;
-          }
-          if (dailyPresence.early_departure_minutes > 0) {
-            issues.push('EARLY_LEAVE');
-            details += `Pulang Awal ${dailyPresence.early_departure_minutes}m. `;
-          }
-          if (dailyPresence.check_in && !dailyPresence.check_out) {
-            issues.push('NO_CLOCK_OUT');
-            details += "Tanpa Presensi Pulang. ";
-          }
-        }
-
-        if (issues.length > 0) {
-          detected.push({
-            date: dStr,
-            presence_id: dailyPresence?.id || null,
-            issues,
-            details: details.trim()
-          });
-        }
-      }
-
-      setProblems(detected);
+      const dates = await dispensationService.getEligibleDates(user!.id);
+      setEligibleDates(dates);
     } catch (error) {
       console.error(error);
     } finally {
@@ -188,43 +92,75 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProblem || selectedIssues.length === 0 || !reason) {
+    
+    if (!selectedDate || selectedIssues.length === 0 || !reason) {
       Swal.fire('Peringatan', 'Mohon lengkapi data pengajuan.', 'warning');
       return;
     }
 
+    const isAbsent = selectedIssues.includes('ABSENT');
+    if (isAbsent) {
+      if (!manualCheckIn || !manualCheckOut) {
+        Swal.fire('Peringatan', 'Mohon isi jam masuk dan jam pulang.', 'warning');
+        return;
+      }
+      if (!account?.location_id && !manualLocationId) {
+        Swal.fire('Peringatan', 'Mohon pilih lokasi kerja.', 'warning');
+        return;
+      }
+      if (!editData && (!inPhoto || !outPhoto)) {
+        Swal.fire('Peringatan', 'Mohon lampirkan foto verifikasi masuk dan pulang.', 'warning');
+        return;
+      }
+    }
+
     try {
       setIsLoading(true);
-      let fileId = editData?.file_id || null;
+      const folderId = (import.meta as any).env.VITE_DRIVE_FOLDER_DISPENSATION || '';
+      
+      let inPhotoId = null;
+      let outPhotoId = null;
+      const fileIds: string[] = editData?.file_ids || [];
 
-      if (file) {
-        setIsUploading(true);
-        // Upload to Google Drive (folder Dispensasi)
-        const folderId = (import.meta as any).env.VITE_DRIVE_FOLDER_DISPENSATION || '';
-        fileId = await googleDriveService.uploadFile(file, folderId);
-        setIsUploading(false);
+      // Upload photos for ABSENT
+      if (inPhoto) inPhotoId = await googleDriveService.uploadFile(inPhoto, folderId);
+      if (outPhoto) outPhotoId = await googleDriveService.uploadFile(outPhoto, folderId);
+
+      // Upload additional files
+      for (const f of additionalFiles) {
+        const fid = await googleDriveService.uploadFile(f, folderId);
+        fileIds.push(fid);
       }
 
-      const issues: DispensationIssue[] = selectedIssues.map(type => ({
-        type,
-        status: 'PENDING'
-      }));
+      const issues: DispensationIssue[] = selectedIssues.map(type => {
+        const issue: DispensationIssue = { type, status: 'PENDING' };
+        if (type === 'ABSENT') {
+          issue.manual_check_in = manualCheckIn;
+          issue.manual_check_out = manualCheckOut;
+          issue.in_photo_id = inPhotoId;
+          issue.out_photo_id = outPhotoId;
+          issue.manual_location_id = manualLocationId || null;
+        }
+        return issue;
+      });
 
       if (editData) {
         await dispensationService.update(editData.id, {
           issues,
           reason,
-          file_id: fileId
+          file_ids: fileIds
         });
       } else {
         await dispensationService.create({
           account_id: user!.id,
-          presence_id: selectedProblem.presence_id,
-          date: selectedProblem.date,
+          presence_id: selectedDate.presence_id,
+          date: selectedDate.date,
           issues,
           reason,
-          file_id: fileId
-        });
+          file_ids: fileIds,
+          status: 'PENDING',
+          is_read: false
+        } as any);
       }
 
       Swal.fire({
@@ -240,74 +176,77 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
       Swal.fire('Gagal', 'Terjadi kesalahan saat menyimpan data.', 'error');
     } finally {
       setIsLoading(false);
-      setIsUploading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center animate-in fade-in duration-300">
+      <div className="bg-white w-full max-w-lg rounded-t-[40px] sm:rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="px-8 py-6 bg-gradient-to-r from-[#006E62] to-[#008a7b] text-white flex items-center justify-between">
+        <div className="px-8 pt-8 pb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-              <ClipboardList size={24} />
+            <div className="w-12 h-12 bg-[#006E62]/10 rounded-2xl flex items-center justify-center text-[#006E62]">
+              <ClipboardList size={28} />
             </div>
             <div>
-              <h3 className="text-lg font-bold tracking-tight">{editData ? 'Edit Pengajuan' : 'Buat Pengajuan Dispensasi'}</h3>
-              <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest">Lengkapi Detail Koreksi Presensi</p>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">{editData ? 'Edit Pengajuan' : 'Buat Pengajuan'}</h3>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Dispensasi Presensi</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-            <X size={24} />
+          <button onClick={onClose} className="w-10 h-10 bg-gray-50 text-gray-400 rounded-full flex items-center justify-center active:scale-90 transition-all">
+            <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-8">
-          {/* Step 1: Pilih Tanggal & Masalah */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-8 pb-8 space-y-8">
+          {/* Step 1: Pilih Tanggal */}
           {!editData && (
             <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Calendar size={18} className="text-[#006E62]" />
-                <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wider">1. Pilih Tanggal Bermasalah</h4>
+              <div className="flex items-center gap-2">
+                <Calendar size={16} className="text-[#006E62]" />
+                <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">1. Pilih Tanggal</h4>
               </div>
               
               {isDetecting ? (
-                <div className="py-8 flex flex-col items-center justify-center text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                  <Loader2 className="animate-spin mb-2" size={24} />
-                  <p className="text-[10px] font-bold uppercase tracking-widest">Mendeteksi masalah presensi...</p>
+                <div className="py-10 flex flex-col items-center justify-center text-gray-400 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                  <Loader2 className="animate-spin mb-3 text-[#006E62]" size={24} />
+                  <p className="text-[10px] font-bold uppercase tracking-widest">Mencari tanggal bermasalah...</p>
                 </div>
-              ) : problems.length === 0 ? (
-                <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-4">
+              ) : eligibleDates.length === 0 ? (
+                <div className="p-6 bg-emerald-50 rounded-3xl border border-emerald-100 flex items-center gap-4">
                   <CheckCircle2 className="text-emerald-500 shrink-0" size={24} />
-                  <p className="text-xs text-emerald-700 font-medium">Luar biasa! Tidak ditemukan masalah presensi dalam batas hari yang ditentukan.</p>
+                  <p className="text-xs text-emerald-700 font-bold">Tidak ditemukan masalah presensi dalam 31 hari terakhir.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-3">
-                  {problems.map((p, idx) => (
+                <div className="grid grid-cols-1 gap-2">
+                  {eligibleDates.map((d, idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => {
-                        setSelectedProblem(p);
-                        setSelectedIssues([]); // Reset issues when date changes
+                        setSelectedDate(d);
+                        setSelectedIssues(d.issues); // Auto-select detected issues
                       }}
-                      className={`p-4 rounded-2xl border text-left transition-all flex items-center justify-between ${
-                        selectedProblem?.date === p.date 
-                        ? 'bg-[#006E62]/5 border-[#006E62] shadow-md shadow-[#006E62]/5' 
-                        : 'bg-white border-gray-100 hover:border-gray-300'
+                      className={`p-4 rounded-3xl border text-left transition-all flex items-center justify-between ${
+                        selectedDate?.date === d.date 
+                        ? 'bg-[#006E62] border-[#006E62] text-white shadow-lg shadow-[#006E62]/20' 
+                        : 'bg-gray-50 border-gray-100 text-gray-700 hover:bg-white hover:border-gray-300'
                       }`}
                     >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedProblem?.date === p.date ? 'bg-[#006E62] text-white' : 'bg-gray-100 text-gray-400'}`}>
-                          <Calendar size={20} />
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedDate?.date === d.date ? 'bg-white/20' : 'bg-white shadow-sm text-gray-400'}`}>
+                          <Calendar size={18} />
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-gray-800">{new Date(p.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-                          <p className="text-[10px] text-gray-500 italic">{p.details}</p>
+                          <p className="text-xs font-black">
+                            {new Date(d.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' })}
+                          </p>
+                          <p className={`text-[9px] font-bold uppercase tracking-tighter ${selectedDate?.date === d.date ? 'text-white/70' : 'text-gray-400'}`}>
+                            {d.issues.map(i => i.replace('_', ' ')).join(', ')}
+                          </p>
                         </div>
                       </div>
-                      {selectedProblem?.date === p.date && <CheckCircle2 className="text-[#006E62]" size={20} />}
+                      {selectedDate?.date === d.date && <CheckCircle2 size={20} />}
                     </button>
                   ))}
                 </div>
@@ -315,84 +254,106 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
             </div>
           )}
 
-          {/* Step 2: Pilih Jenis Dispensasi */}
-          {selectedProblem && (
-            <div className="space-y-4 animate-in slide-in-from-top-4 duration-500">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock size={18} className="text-[#006E62]" />
-                <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wider">2. Pilih Masalah yang Diajukan</h4>
+          {/* Step 2: Detail Masalah */}
+          {selectedDate && (
+            <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="flex items-center gap-2">
+                <Clock size={16} className="text-[#006E62]" />
+                <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">2. Detail Dispensasi</h4>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {selectedProblem.issues.map((issue, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleIssueToggle(issue)}
-                    className={`p-4 rounded-2xl border text-left transition-all flex items-center gap-3 ${
-                      selectedIssues.includes(issue)
-                      ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
-                      : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${selectedIssues.includes(issue) ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-gray-200'}`}>
-                      {selectedIssues.includes(issue) && <CheckCircle2 size={14} />}
+              {/* Manual Input for ABSENT */}
+              {selectedIssues.includes('ABSENT') && (
+                <div className="space-y-4 bg-gray-50 p-6 rounded-[32px] border border-gray-100">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Jam Masuk</label>
+                      <input 
+                        type="time"
+                        value={manualCheckIn}
+                        onChange={(e) => setManualCheckIn(e.target.value)}
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#006E62] outline-none"
+                      />
                     </div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider">{issue.replace('_', ' ')}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Jam Pulang</label>
+                      <input 
+                        type="time"
+                        value={manualCheckOut}
+                        onChange={(e) => setManualCheckOut(e.target.value)}
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#006E62] outline-none"
+                      />
+                    </div>
+                  </div>
 
-          {/* Step 3: Alasan & Bukti */}
-          {selectedIssues.length > 0 && (
-            <div className="space-y-6 animate-in slide-in-from-top-4 duration-500">
-              <div className="flex items-center gap-2 mb-2">
-                <FileText size={18} className="text-[#006E62]" />
-                <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wider">3. Alasan & Bukti Pendukung</h4>
-              </div>
+                  {!account?.location_id && (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Lokasi Kerja</label>
+                      <select
+                        value={manualLocationId}
+                        onChange={(e) => setManualLocationId(e.target.value)}
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#006E62] outline-none"
+                      >
+                        <option value="">Pilih Lokasi</option>
+                        {locations.map(loc => (
+                          <option key={loc.id} value={loc.id}>{loc.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Foto Masuk</label>
+                      <label className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${inPhoto ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-gray-200'}`}>
+                        <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => setInPhoto(e.target.files?.[0] || null)} />
+                        {inPhoto ? <CheckCircle2 className="text-emerald-500" size={24} /> : <Camera className="text-gray-300" size={24} />}
+                        <span className="text-[8px] font-bold text-gray-400 uppercase mt-1">{inPhoto ? 'Terpilih' : 'Ambil Foto'}</span>
+                      </label>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Foto Pulang</label>
+                      <label className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${outPhoto ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-gray-200'}`}>
+                        <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => setOutPhoto(e.target.files?.[0] || null)} />
+                        {outPhoto ? <CheckCircle2 className="text-emerald-500" size={24} /> : <Camera className="text-gray-300" size={24} />}
+                        <span className="text-[8px] font-bold text-gray-400 uppercase mt-1">{outPhoto ? 'Terpilih' : 'Ambil Foto'}</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Alasan Pengajuan</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Alasan Pengajuan</label>
                 <textarea
                   required
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder="Jelaskan alasan Anda mengajukan dispensasi ini..."
-                  className="w-full px-5 py-4 rounded-2xl border border-gray-200 text-sm focus:ring-4 focus:ring-[#006E62]/10 focus:border-[#006E62] outline-none transition-all min-h-[120px] resize-none"
+                  placeholder="Jelaskan alasan Anda..."
+                  className="w-full px-5 py-4 rounded-3xl border border-gray-100 bg-gray-50 text-sm font-medium focus:ring-4 focus:ring-[#006E62]/5 focus:border-[#006E62] outline-none transition-all min-h-[100px] resize-none"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Upload Bukti (Foto/Dokumen)</label>
-                <div className="relative group">
-                  <input
-                    type="file"
-                    onChange={(e) => setFile(e.target.files?.[0] || null)}
-                    className="hidden"
-                    id="evidence-upload"
-                    accept="image/*,application/pdf"
-                  />
-                  <label
-                    htmlFor="evidence-upload"
-                    className={`flex flex-col items-center justify-center w-full p-8 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${
-                      file ? 'bg-emerald-50 border-emerald-300' : 'bg-gray-50 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
-                    }`}
-                  >
-                    {file ? (
-                      <>
-                        <CheckCircle2 className="text-emerald-500 mb-2" size={32} />
-                        <p className="text-xs font-bold text-emerald-700">{file.name}</p>
-                        <p className="text-[10px] text-emerald-500 mt-1 uppercase tracking-widest">Klik untuk mengganti file</p>
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="text-gray-400 mb-2 group-hover:scale-110 transition-transform" size={32} />
-                        <p className="text-xs font-bold text-gray-600">Pilih File Bukti</p>
-                        <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest text-center">Format: JPG, PNG, PDF (Maks. 5MB)</p>
-                      </>
-                    )}
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Lampiran Tambahan</label>
+                <div className="flex flex-wrap gap-2">
+                  {additionalFiles.map((f, i) => (
+                    <div key={i} className="relative w-16 h-16 bg-gray-100 rounded-xl overflow-hidden group">
+                      <img src={URL.createObjectURL(f)} className="w-full h-full object-cover" />
+                      <button 
+                        type="button"
+                        onClick={() => setAdditionalFiles(prev => prev.filter((_, idx) => idx !== i))}
+                        className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 hover:border-[#006E62] hover:text-[#006E62] transition-all cursor-pointer">
+                    <input type="file" multiple className="hidden" onChange={(e) => {
+                      if (e.target.files) setAdditionalFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+                    }} />
+                    <Upload size={20} />
                   </label>
                 </div>
               </div>
@@ -404,34 +365,16 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
         <div className="px-8 py-6 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2 text-blue-600">
             <Info size={14} />
-            <p className="text-[10px] font-medium italic">Pengajuan akan diverifikasi oleh Admin.</p>
+            <p className="text-[9px] font-bold uppercase tracking-tighter italic">Verifikasi Admin Diperlukan</p>
           </div>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-3 rounded-xl text-xs font-bold text-gray-500 uppercase tracking-wider hover:bg-gray-200 transition-all"
-            >
-              Batal
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={isLoading || isUploading || !selectedProblem || selectedIssues.length === 0 || !reason}
-              className="flex items-center gap-2 bg-[#006E62] text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-[#005c52] transition-all shadow-lg shadow-[#006E62]/20 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading || isUploading ? (
-                <>
-                  <Loader2 className="animate-spin" size={18} />
-                  {isUploading ? 'Mengupload...' : 'Menyimpan...'}
-                </>
-              ) : (
-                <>
-                  <Save size={18} />
-                  Kirim Pengajuan
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading || !selectedDate || selectedIssues.length === 0 || !reason}
+            className="flex items-center gap-2 bg-[#006E62] text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#005c52] transition-all shadow-xl shadow-[#006E62]/20 disabled:opacity-50"
+          >
+            {isLoading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+            {editData ? 'Simpan' : 'Kirim'}
+          </button>
         </div>
       </div>
     </div>

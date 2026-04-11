@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { X, CheckCircle2, XCircle, AlertCircle, Calendar, User, FileText, Download, Clock, Save, Loader2, Info, MessageSquare, ClipboardList } from 'lucide-react';
+import { X, CheckCircle2, XCircle, AlertCircle, Calendar, User, FileText, Download, Clock, Save, Loader2, Info, MessageSquare, ClipboardList, MapPin, Camera, Eye } from 'lucide-react';
 import { DispensationRequest, DispensationIssue, DispensationIssueStatus } from '../../../types';
 import { dispensationService } from '../../../services/dispensationService';
+import { googleDriveService } from '../../../services/googleDriveService';
+import { authService } from '../../../services/authService';
 import Swal from 'sweetalert2';
 
 interface DispensationDetailProps {
@@ -14,7 +16,6 @@ interface DispensationDetailProps {
 const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClose, onSuccess, isAdmin }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [issues, setIssues] = useState<DispensationIssue[]>([...request.issues]);
-  const [globalStatus, setGlobalStatus] = useState(request.status);
 
   const handleIssueStatusChange = (index: number, status: DispensationIssueStatus) => {
     const newIssues = [...issues];
@@ -32,7 +33,6 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
     try {
       setIsLoading(true);
       
-      // Determine global status based on issues
       const allApproved = issues.every(i => i.status === 'APPROVED');
       const allRejected = issues.every(i => i.status === 'REJECTED');
       const anyApproved = issues.some(i => i.status === 'APPROVED');
@@ -42,7 +42,8 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
       else if (allRejected) finalStatus = 'REJECTED';
       else if (anyApproved) finalStatus = 'PARTIAL';
 
-      await dispensationService.updateStatus(request.id, finalStatus, issues);
+      const verifier = authService.getCurrentUser();
+      await dispensationService.verify(request.id, finalStatus, issues, verifier!.id);
 
       Swal.fire({
         title: 'Berhasil!',
@@ -61,149 +62,200 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
     }
   };
 
+  const getPhotoUrl = (id: string | null) => {
+    if (!id) return null;
+    return googleDriveService.getFileUrl(id);
+  };
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white w-full max-w-3xl rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="px-8 py-6 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#006E62]/10 rounded-xl flex items-center justify-center text-[#006E62]">
-              <ClipboardList size={24} />
+            <div className="w-12 h-12 bg-[#006E62]/10 rounded-2xl flex items-center justify-center text-[#006E62]">
+              <ClipboardList size={28} />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-800 tracking-tight">Detail Pengajuan Dispensasi</h3>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Informasi Lengkap & Status Verifikasi</p>
+              <h3 className="text-lg font-black text-gray-800 tracking-tight">Detail Pengajuan</h3>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Verifikasi Dispensasi Presensi</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
-            <X size={24} />
+          <button onClick={onClose} className="w-10 h-10 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center active:scale-90 transition-all">
+            <X size={20} />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-8 space-y-8">
           {/* Info Pegawai & Tanggal */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 space-y-3">
-              <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                <User size={12} />
-                <span>Data Pegawai</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400">
+                <User size={24} />
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-800">{request.account?.full_name || 'N/A'}</p>
-                <p className="text-[11px] text-gray-500 font-medium">{request.account?.internal_nik || 'N/A'}</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Karyawan</p>
+                <p className="text-sm font-black text-gray-800">{request.account?.full_name}</p>
+                <p className="text-[11px] text-gray-500 font-bold">{request.account?.internal_nik}</p>
               </div>
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 space-y-3">
-              <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                <Calendar size={12} />
-                <span>Tanggal Bermasalah</span>
+            <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400">
+                <Calendar size={24} />
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-800">{new Date(request.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                <p className="text-[11px] text-gray-500 font-medium italic">Diajukan pada: {new Date(request.created_at).toLocaleString('id-ID')}</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tanggal</p>
+                <p className="text-sm font-black text-gray-800">
+                  {new Date(request.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                </p>
+                <p className="text-[11px] text-gray-500 font-bold">Diajukan: {new Date(request.created_at).toLocaleDateString('id-ID')}</p>
               </div>
             </div>
           </div>
 
           {/* Alasan & Bukti */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-              <FileText size={14} />
-              <span>Alasan Pengajuan</span>
+            <div className="flex items-center gap-2">
+              <FileText size={16} className="text-[#006E62]" />
+              <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Alasan & Lampiran</h4>
             </div>
-            <div className="p-5 bg-white border border-gray-100 rounded-2xl shadow-sm italic text-sm text-gray-600 leading-relaxed">
+            <div className="p-6 bg-white border border-gray-100 rounded-3xl shadow-sm italic text-sm text-gray-600 leading-relaxed">
               "{request.reason}"
             </div>
 
-            {request.file_id && (
-              <div className="pt-2">
-                <a 
-                  href={`https://drive.google.com/uc?id=${request.file_id}&export=download`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-blue-100 transition-all border border-blue-100"
-                >
-                  <Download size={14} />
-                  Lihat File Bukti
-                </a>
+            {request.file_ids && request.file_ids.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {request.file_ids.map((fid, i) => (
+                  <a 
+                    key={i}
+                    href={googleDriveService.getFileUrl(fid)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-blue-100 transition-all border border-blue-100"
+                  >
+                    <Download size={14} />
+                    Lampiran {i + 1}
+                  </a>
+                ))}
               </div>
             )}
           </div>
 
           {/* Daftar Masalah & Verifikasi */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-              <AlertCircle size={14} />
-              <span>Daftar Masalah & Keputusan</span>
+            <div className="flex items-center gap-2">
+              <AlertCircle size={16} className="text-[#006E62]" />
+              <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Daftar Masalah & Keputusan</h4>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               {issues.map((issue, idx) => (
-                <div key={idx} className={`p-5 rounded-2xl border transition-all ${
+                <div key={idx} className={`p-6 rounded-[32px] border transition-all ${
                   issue.status === 'APPROVED' ? 'bg-emerald-50/50 border-emerald-100' :
                   issue.status === 'REJECTED' ? 'bg-rose-50/50 border-rose-100' :
                   'bg-white border-gray-100'
                 }`}>
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                         issue.status === 'APPROVED' ? 'bg-emerald-500 text-white' :
                         issue.status === 'REJECTED' ? 'bg-rose-500 text-white' :
                         'bg-blue-500 text-white'
                       }`}>
-                        <AlertCircle size={16} />
+                        <AlertCircle size={20} />
                       </div>
-                      <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">{issue.type.replace('_', ' ')}</span>
+                      <div>
+                        <span className="text-xs font-black text-gray-800 uppercase tracking-wider">{issue.type.replace('_', ' ')}</span>
+                        {issue.type === 'ABSENT' && (
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter flex items-center gap-1">
+                              <Clock size={10} /> {issue.manual_check_in} - {issue.manual_check_out}
+                            </span>
+                            <span className="text-gray-300">•</span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter flex items-center gap-1">
+                              <MapPin size={10} /> {issue.manual_location_id || 'Lokasi Default'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {isAdmin && request.status === 'PENDING' ? (
-                      <div className="flex bg-gray-100 p-1 rounded-xl w-fit">
+                      <div className="flex bg-gray-100 p-1 rounded-2xl w-fit">
                         <button 
                           onClick={() => handleIssueStatusChange(idx, 'APPROVED')}
-                          className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase transition-all flex items-center gap-1 ${issue.status === 'APPROVED' ? 'bg-emerald-500 text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
+                          className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2 ${issue.status === 'APPROVED' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-gray-400'}`}
                         >
-                          <CheckCircle2 size={12} /> Setujui
+                          <CheckCircle2 size={14} /> Setuju
                         </button>
                         <button 
                           onClick={() => handleIssueStatusChange(idx, 'REJECTED')}
-                          className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase transition-all flex items-center gap-1 ${issue.status === 'REJECTED' ? 'bg-rose-500 text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
+                          className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2 ${issue.status === 'REJECTED' ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20' : 'text-gray-400'}`}
                         >
-                          <XCircle size={12} /> Tolak
+                          <XCircle size={14} /> Tolak
                         </button>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
                         {issue.status === 'APPROVED' ? (
-                          <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-1"><CheckCircle2 size={12} /> Disetujui</span>
+                          <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1"><CheckCircle2 size={12} /> Disetujui</span>
                         ) : issue.status === 'REJECTED' ? (
-                          <span className="text-[10px] font-bold text-rose-600 uppercase tracking-widest flex items-center gap-1"><XCircle size={12} /> Ditolak</span>
+                          <span className="px-3 py-1 bg-rose-100 text-rose-700 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1"><XCircle size={12} /> Ditolak</span>
                         ) : (
-                          <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest flex items-center gap-1"><Clock size={12} /> Pending</span>
+                          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1"><Clock size={12} /> Pending</span>
                         )}
                       </div>
                     )}
                   </div>
 
+                  {/* Manual Photos for ABSENT */}
+                  {issue.type === 'ABSENT' && (issue.in_photo_id || issue.out_photo_id) && (
+                    <div className="mt-4 grid grid-cols-2 gap-4">
+                      {issue.in_photo_id && (
+                        <div className="space-y-2">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Foto Masuk</p>
+                          <div className="aspect-video rounded-2xl overflow-hidden border border-gray-100 shadow-sm relative group">
+                            <img src={getPhotoUrl(issue.in_photo_id)!} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            <a href={getPhotoUrl(issue.in_photo_id)!} target="_blank" rel="noreferrer" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                              <Eye size={20} />
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                      {issue.out_photo_id && (
+                        <div className="space-y-2">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Foto Pulang</p>
+                          <div className="aspect-video rounded-2xl overflow-hidden border border-gray-100 shadow-sm relative group">
+                            <img src={getPhotoUrl(issue.out_photo_id)!} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            <a href={getPhotoUrl(issue.out_photo_id)!} target="_blank" rel="noreferrer" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                              <Eye size={20} />
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Admin Notes */}
                   {(isAdmin && request.status === 'PENDING') ? (
                     <div className="mt-4 space-y-2">
-                      <div className="flex items-center gap-2 text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                        <MessageSquare size={10} />
-                        <span>Catatan Admin (Opsional)</span>
+                      <div className="flex items-center gap-2 text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                        <MessageSquare size={12} />
+                        <span>Catatan Admin</span>
                       </div>
                       <input 
                         type="text"
                         value={issue.admin_notes || ''}
                         onChange={(e) => handleAdminNotesChange(idx, e.target.value)}
-                        placeholder="Berikan alasan atau catatan..."
-                        className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-[#006E62] outline-none transition-all"
+                        placeholder="Tambahkan catatan..."
+                        className="w-full px-5 py-3 bg-white border border-gray-200 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-[#006E62] outline-none transition-all"
                       />
                     </div>
                   ) : issue.admin_notes && (
-                    <div className="mt-4 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Catatan Admin:</p>
-                      <p className="text-xs text-gray-600 italic">"{issue.admin_notes}"</p>
+                    <div className="mt-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Catatan Admin:</p>
+                      <p className="text-xs text-gray-600 font-medium italic">"{issue.admin_notes}"</p>
                     </div>
                   )}
                 </div>
@@ -216,14 +268,14 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
         <div className="px-8 py-6 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2 text-gray-400">
             <Info size={14} />
-            <p className="text-[10px] font-medium italic">
-              {isAdmin ? 'Pastikan bukti sudah sesuai sebelum memberikan keputusan.' : 'Keputusan admin bersifat final dan akan mempengaruhi payroll.'}
+            <p className="text-[9px] font-bold uppercase tracking-tighter italic">
+              {isAdmin ? 'Verifikasi teliti sebelum menyimpan.' : 'Keputusan admin bersifat final.'}
             </p>
           </div>
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-6 py-3 rounded-xl text-xs font-bold text-gray-500 uppercase tracking-wider hover:bg-gray-200 transition-all"
+              className="px-6 py-3 rounded-xl text-xs font-black text-gray-500 uppercase tracking-widest hover:bg-gray-200 transition-all"
             >
               Tutup
             </button>
@@ -231,16 +283,10 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
               <button
                 onClick={handleProcess}
                 disabled={isLoading}
-                className="flex items-center gap-2 bg-[#006E62] text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-[#005c52] transition-all shadow-lg shadow-[#006E62]/20 disabled:opacity-50"
+                className="flex items-center gap-2 bg-[#006E62] text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#005c52] transition-all shadow-xl shadow-[#006E62]/20 disabled:opacity-50"
               >
-                {isLoading ? (
-                  <Loader2 className="animate-spin" size={18} />
-                ) : (
-                  <>
-                    <Save size={18} />
-                    Simpan Keputusan
-                  </>
-                )}
+                {isLoading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                Simpan
               </button>
             )}
           </div>

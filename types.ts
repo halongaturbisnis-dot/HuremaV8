@@ -911,6 +911,11 @@ export interface DispensationIssue {
   type: DispensationIssueType;
   status: DispensationIssueStatus;
   admin_notes?: string;
+  manual_check_in?: string | null;
+  manual_check_out?: string | null;
+  in_photo_id?: string | null;
+  out_photo_id?: string | null;
+  manual_location_id?: string | null;
 }
 
 export interface DispensationRequest {
@@ -920,7 +925,7 @@ export interface DispensationRequest {
   date: string;
   issues: DispensationIssue[];
   reason: string;
-  file_id: string | null;
+  file_ids: string[]; // Changed from file_id to file_ids
   is_read: boolean;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'PARTIAL';
   created_at: string;
@@ -928,6 +933,8 @@ export interface DispensationRequest {
   account?: {
     full_name: string;
     internal_nik: string;
+    photo_google_id?: string | null;
+    location_id?: string | null;
   };
 }
 
