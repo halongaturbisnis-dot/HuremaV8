@@ -197,20 +197,44 @@ export const dispensationService = {
    */
   async getEligibleDates(accountId: string) {
     const { settingsService } = await import('./settingsService');
-    const maxDays = await settingsService.getSetting('dispensation_window_days', 7);
+    const windowDays = await settingsService.getSetting('dispensation_window_days', 7);
     
     const today = new Date();
     const startDate = new Date();
-    startDate.setDate(today.getDate() - Number(maxDays));
+    startDate.setDate(today.getDate() - Number(windowDays));
 
-    // 1. Get user account info (for location and schedule)
+    // 1. Get user account info and location timezone
     const { data: account } = await supabase
       .from('accounts')
-      .select('location_id, schedule_id')
+      .select('location_id, schedule_id, locations(timezone)')
       .eq('id', accountId)
       .single();
 
     if (!account) return [];
+    const locationTimezone = (account as any).locations?.timezone || 'Asia/Jakarta';
+
+    // Helper to convert UTC to Local Date String based on timezone
+    const toLocalDate = (date: Date | string, tz: string = locationTimezone) => {
+      try {
+        return new Intl.DateTimeFormat('en-CA', {
+          timeZone: tz,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(new Date(date));
+      } catch (e) {
+        // Fallback if timezone is invalid
+        return new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Jakarta',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(new Date(date));
+      }
+    };
+
+    const startDateStr = toLocalDate(startDate);
+    const todayStr = toLocalDate(today);
 
     // 2. Get attendances in range
     const { data: attendances } = await supabase
@@ -220,7 +244,7 @@ export const dispensationService = {
       .gte('check_in', startDate.toISOString())
       .lte('check_in', today.toISOString());
 
-    // 3. Get existing requests to avoid duplicates
+    // 3. Get existing requests
     const { data: existingRequests } = await supabase
       .from('dispensation_requests')
       .select('date, presence_id')
@@ -229,24 +253,53 @@ export const dispensationService = {
     const requestedDates = new Set(existingRequests?.map(r => r.date));
     const requestedPresenceIds = new Set(existingRequests?.filter(r => r.presence_id).map(r => r.presence_id));
 
-    // 4. Get submissions (Leaves, Permissions, etc.)
-    const { data: submissions } = await supabase
-      .from('account_submissions')
-      .select('*')
-      .eq('account_id', accountId)
-      .eq('status', 'Disetujui')
-      .in('type', ['Cuti', 'Izin', 'Libur Mandiri', 'Cuti Tahunan', 'Cuti Melahirkan']);
+    // 4. Get all types of leaves/permissions
+    const [
+      { data: annualLeaves },
+      { data: leaveRequests },
+      { data: maternityLeaves },
+      { data: permissionRequests },
+      { data: submissions }
+    ] = await Promise.all([
+      supabase.from('account_annual_leaves').select('*').eq('account_id', accountId).eq('status', 'approved').gte('end_date', startDateStr).lte('start_date', todayStr),
+      supabase.from('account_leave_requests').select('*').eq('account_id', accountId).eq('status', 'approved').gte('end_date', startDateStr).lte('start_date', todayStr),
+      supabase.from('account_maternity_leaves').select('*').eq('account_id', accountId).eq('status', 'approved').gte('end_date', startDateStr).lte('start_date', todayStr),
+      supabase.from('account_permission_requests').select('*').eq('account_id', accountId).eq('status', 'approved').gte('end_date', startDateStr).lte('start_date', todayStr),
+      supabase.from('account_submissions').select('*').eq('account_id', accountId).eq('status', 'Disetujui').gte('updated_at', startDate.toISOString())
+    ]);
 
-    // 5. Get Special Holidays (Type 3)
-    const { data: specialHolidays } = await supabase
+    // 5. Get Special Assignments for this user
+    const { data: assignmentLinks } = await supabase
+      .from('special_assignment_accounts')
+      .select('assignment_id')
+      .eq('account_id', accountId);
+    
+    const assignmentIds = assignmentLinks?.map(al => al.assignment_id) || [];
+    
+    const { data: assignments } = assignmentIds.length > 0 
+      ? await supabase
+          .from('special_assignments')
+          .select('*')
+          .in('id', assignmentIds)
+          .gte('end_date', startDateStr)
+          .lte('start_date', todayStr)
+      : { data: [] };
+
+    // 6. Get Schedules (Type 3 & 4)
+    const { data: specialSchedules } = await supabase
       .from('schedules')
       .select('*, schedule_locations!inner(location_id)')
-      .eq('type', 3)
+      .in('type', [3, 4])
       .eq('schedule_locations.location_id', account.location_id)
-      .lte('start_date', today.toISOString().split('T')[0])
-      .gte('end_date', startDate.toISOString().split('T')[0]);
+      .gte('end_date', startDateStr)
+      .lte('start_date', todayStr);
+    
+    // Filter out schedules where user is excluded
+    const filteredSpecialSchedules = specialSchedules?.filter(s => 
+      !s.excluded_account_ids?.includes(accountId)
+    );
 
-    // 6. Get User's Schedule Rules
+    // 7. Get User's Schedule Rules
     const { data: schedule } = await supabase
       .from('schedules')
       .select('*, schedule_rules(*)')
@@ -265,39 +318,50 @@ export const dispensationService = {
 
       if (issues.length > 0) {
         eligible.push({
-          date: att.check_in.split('T')[0],
+          date: toLocalDate(att.check_in, att.in_timezone || locationTimezone),
           presence_id: att.id,
           issues
         });
       }
     });
 
-    // For "Absen Kerja"
+    // Check for "Absen Kerja"
     for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = toLocalDate(d);
       if (requestedDates.has(dateStr)) continue;
       
-      const hasAttendance = attendances?.some(att => att.check_in.startsWith(dateStr));
+      const hasAttendance = attendances?.some(att => toLocalDate(att.check_in, att.in_timezone || locationTimezone) === dateStr);
       if (hasAttendance) continue;
 
-      // Check if user is "libur"
-      
-      // a. Check Submissions (Leaves/Permissions)
+      // Syarat 2: Tidak ada cuti/izin/libur mandiri
+      const isOffByLeave = [
+        ...(annualLeaves || []),
+        ...(leaveRequests || []),
+        ...(maternityLeaves || []),
+        ...(permissionRequests || [])
+      ].some(l => dateStr >= l.start_date && dateStr <= l.end_date);
+
+      if (isOffByLeave) continue;
+
       const isOffBySubmission = submissions?.some(s => {
-        const start = s.submission_data?.start_date;
-        const end = s.submission_data?.end_date;
-        return dateStr >= start && dateStr <= end;
+        const data = s.submission_data;
+        if (!data?.start_date || !data?.end_date) return false;
+        return dateStr >= data.start_date && dateStr <= data.end_date;
       });
       if (isOffBySubmission) continue;
 
-      // b. Check Special Holidays (Type 3)
-      const isOffBySpecialHoliday = specialHolidays?.some(sh => {
-        return dateStr >= sh.start_date && dateStr <= sh.end_date;
-      });
-      if (isOffBySpecialHoliday) continue;
+      // Syarat 3: Tidak ada penugasan khusus
+      const hasAssignment = assignments?.some(a => dateStr >= a.start_date && dateStr <= a.end_date);
+      if (hasAssignment) continue;
 
-      // c. Check Schedule Rules (Day off)
-      if (schedule) {
+      // Syarat 4 & 5: Jadwal & Libur Khusus
+      const specialHoliday = filteredSpecialSchedules?.find(s => s.type === 3 && dateStr >= s.start_date && dateStr <= s.end_date);
+      if (specialHoliday) continue;
+
+      const specialWorkDay = filteredSpecialSchedules?.find(s => s.type === 4 && dateStr >= s.start_date && dateStr <= s.end_date);
+      
+      // Jika bukan hari kerja khusus, cek jadwal rutin
+      if (!specialWorkDay && schedule && schedule.type === 1) {
         const dayOfWeek = d.getDay();
         const rule = schedule.schedule_rules?.find((r: any) => r.day_of_week === dayOfWeek);
         if (!rule || rule.is_holiday) continue;

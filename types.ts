@@ -925,7 +925,7 @@ export interface DispensationRequest {
   date: string;
   issues: DispensationIssue[];
   reason: string;
-  file_id: string | null;
+  file_ids: string[];
   is_read: boolean;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'PARTIAL';
   created_at: string;

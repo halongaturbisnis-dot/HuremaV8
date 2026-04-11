@@ -175,8 +175,8 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
             </div>
             <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Maks 31 Hari</span>
           </div>
-          <div className="flex flex-col gap-3">
-            <div className="relative">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 relative">
               <input 
                 type="date" 
                 value={dateRange.start}
@@ -184,7 +184,8 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
                 className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006E62] text-center appearance-none"
               />
             </div>
-            <div className="relative">
+            <div className="text-gray-300 font-bold text-xs">sampai</div>
+            <div className="flex-1 relative">
               <input 
                 type="date" 
                 value={dateRange.end}
@@ -279,7 +280,7 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-2">
             <Clock size={16} className="text-[#006E62]" />
-            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Riwayat Presensi</h3>
+            <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">RIWAYAT PRESENSI</h3>
           </div>
           <span className="text-[10px] font-bold text-gray-400">{attendances.length} Data</span>
         </div>

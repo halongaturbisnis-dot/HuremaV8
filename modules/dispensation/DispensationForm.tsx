@@ -142,15 +142,16 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
       
       let inPhotoId = null;
       let outPhotoId = null;
-      let finalFileId = editData?.file_id || null;
+      const fileIds: string[] = editData?.file_ids || [];
 
       // Upload photos for ABSEN_KERJA
       if (inPhoto) inPhotoId = await googleDriveService.uploadFile(inPhoto, folderId);
       if (outPhoto) outPhotoId = await googleDriveService.uploadFile(outPhoto, folderId);
 
-      // Upload additional files (take the first one for file_id)
-      if (additionalFiles.length > 0) {
-        finalFileId = await googleDriveService.uploadFile(additionalFiles[0], folderId);
+      // Upload additional files
+      for (const f of additionalFiles) {
+        const fid = await googleDriveService.uploadFile(f, folderId);
+        fileIds.push(fid);
       }
 
       const issues: DispensationIssue[] = selectedIssues.map(type => {
@@ -169,7 +170,7 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
         await dispensationService.update(editData.id, {
           issues,
           reason,
-          file_id: finalFileId
+          file_ids: fileIds
         });
       } else {
         await dispensationService.create({
@@ -178,7 +179,7 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
           date: selectedDate.date,
           issues,
           reason,
-          file_id: finalFileId,
+          file_ids: fileIds,
           status: 'PENDING',
           is_read: false
         } as any);
@@ -202,7 +203,7 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="px-8 pt-8 pb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -239,50 +240,51 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
                   <p className="text-xs text-emerald-700 font-bold">Tidak ditemukan masalah presensi dalam 31 hari terakhir.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   {eligibleDates.map((d, idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => {
                         setSelectedDate(d);
-                        setSelectedIssues(d.issues); // Auto-select detected issues
+                        setSelectedIssues(d.issues);
                       }}
-                      className={`p-4 rounded-3xl border text-left transition-all flex items-center justify-between ${
+                      className={`p-3 rounded-[24px] border text-left transition-all flex flex-col gap-2 relative overflow-hidden ${
                         selectedDate?.date === d.date 
                         ? 'bg-[#006E62] border-[#006E62] text-white shadow-lg shadow-[#006E62]/20' 
-                        : 'bg-gray-50 border-gray-100 text-gray-700 hover:bg-white hover:border-gray-300'
+                        : 'bg-white border-gray-100 text-gray-700 hover:border-red-200 hover:bg-red-50/30'
                       }`}
                     >
-                      <div className="grid grid-cols-4 gap-3 items-center">
-                        <div className={`flex flex-col items-center justify-center p-2 rounded-2xl border ${selectedDate?.date === d.date ? 'bg-white/20 border-white/30' : 'bg-red-50 border-red-100'}`}>
-                          <span className={`text-[8px] font-black uppercase ${selectedDate?.date === d.date ? 'text-white/70' : 'text-red-400'}`}>
-                            {new Date(d.date).toLocaleDateString('id-ID', { month: 'short' })}
-                          </span>
-                          <span className={`text-lg font-black leading-none ${selectedDate?.date === d.date ? 'text-white' : 'text-red-600'}`}>
-                            {new Date(d.date).getDate()}
+                      <div className="flex items-center justify-between">
+                        <div className={`px-2 py-1 rounded-lg ${selectedDate?.date === d.date ? 'bg-white/20' : 'bg-red-50'}`}>
+                          <span className={`text-[10px] font-black ${selectedDate?.date === d.date ? 'text-white' : 'text-red-600'}`}>
+                            {new Date(d.date).getDate()} {new Date(d.date).toLocaleDateString('id-ID', { month: 'short' })}
                           </span>
                         </div>
-                        <div className="col-span-2">
-                          <p className={`text-[10px] font-black uppercase tracking-tight ${selectedDate?.date === d.date ? 'text-white' : 'text-gray-800'}`}>
-                            {new Date(d.date).toLocaleDateString('id-ID', { weekday: 'long' })}
-                          </p>
-                          <div className="flex flex-wrap gap-1 mt-0.5">
-                            {d.issues.map((i, idx2) => (
-                              <span key={idx2} className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-md ${
-                                selectedDate?.date === d.date 
-                                ? 'bg-white/20 text-white' 
-                                : 'bg-red-50 text-red-600'
-                              }`}>
-                                {i.replace('_', ' ')}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="flex justify-end">
-                          {selectedDate?.date === d.date && <CheckCircle2 size={20} />}
+                        {selectedDate?.date === d.date && <CheckCircle2 size={14} className="text-white" />}
+                      </div>
+                      
+                      <div>
+                        <p className={`text-[9px] font-bold uppercase tracking-tight ${selectedDate?.date === d.date ? 'text-white/80' : 'text-gray-400'}`}>
+                          {new Date(d.date).toLocaleDateString('id-ID', { weekday: 'long' })}
+                        </p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {d.issues.map((i, idx2) => (
+                            <span key={idx2} className={`text-[8px] font-black uppercase ${
+                              selectedDate?.date === d.date 
+                              ? 'text-white' 
+                              : 'text-red-600'
+                            }`}>
+                              {i.replace('_', ' ')}
+                            </span>
+                          ))}
                         </div>
                       </div>
+
+                      {/* Red Accent for Absen/Terlambat */}
+                      {selectedDate?.date !== d.date && (
+                        <div className="absolute top-0 right-0 w-1 h-full bg-red-500/20" />
+                      )}
                     </button>
                   ))}
                 </div>
