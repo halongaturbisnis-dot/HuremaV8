@@ -324,7 +324,10 @@ export const dispensationService = {
     });
 
     // Step 2-5: Check for "Absen Kerja"
-    for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+    for (let i = 0; i <= Number(windowDays); i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      
       const dateStr = toLocalDate(d);
       if (requestedDates.has(dateStr)) continue;
       
@@ -377,7 +380,8 @@ export const dispensationService = {
 
       // e. Cek Jenis Jadwal (Tipe 1)
       if (account.schedule_type === 'Jadwal Hari Kerja' && schedule && schedule.type === 1) {
-        const dayOfWeek = d.getDay();
+        // Fix: Get day of week from date string to avoid timezone shift
+        const dayOfWeek = new Date(dateStr).getDay();
         const rule = schedule.schedule_rules?.find((r: any) => r.day_of_week === dayOfWeek);
         if (!rule || rule.is_holiday) continue;
         
