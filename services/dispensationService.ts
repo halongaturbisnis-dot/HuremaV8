@@ -297,11 +297,15 @@ export const dispensationService = {
     );
 
     // 7. Get User's Schedule Rules
-    const { data: schedule } = await supabase
-      .from('schedules')
-      .select('*, schedule_rules(*)')
-      .eq('id', account.schedule_id)
-      .single();
+    let schedule = null;
+    if (account.schedule_id) {
+      const { data } = await supabase
+        .from('schedules')
+        .select('*, schedule_rules(*)')
+        .eq('id', account.schedule_id)
+        .single();
+      schedule = data;
+    }
 
     const eligible: any[] = [];
 
@@ -378,11 +382,16 @@ export const dispensationService = {
       });
       if (isOffBySubmission) continue;
 
-      // e. Cek Jenis Jadwal (Tipe 1)
-      if (account.schedule_type === 'Jadwal Hari Kerja' && schedule && schedule.type === 1) {
-        // Fix: Get day of week from date string to avoid timezone shift
-        const dayOfWeek = new Date(dateStr).getDay();
+      // e. Cek Jenis Jadwal
+      if (schedule?.type === 1) {
+        // Jadwal Reguler (Tipe 1): Cek aturan libur rutin (Senin-Minggu)
+        // Fix: Get day of week from date string (YYYY-MM-DD) safely to avoid timezone shift
+        const [y, m, d_num] = dateStr.split('-').map(Number);
+        const dayOfWeek = new Date(y, m - 1, d_num).getDay();
+        
         const rule = schedule.schedule_rules?.find((r: any) => r.day_of_week === dayOfWeek);
+        
+        // Jika diatur sebagai hari libur (is_holiday: true), maka BUKAN ABSEN
         if (!rule || rule.is_holiday) continue;
         
         eligible.push({ 
@@ -391,13 +400,14 @@ export const dispensationService = {
           issues: ['ABSEN_KERJA'],
           scheduleName: schedule.name
         });
-      } else if (account.schedule_type !== 'Jadwal Hari Kerja') {
-        // Shift/Dinamis/Fleksibel -> ABSEN
+      } else {
+        // Jadwal Non-Reguler (Shift, Shift Dinamis, Fleksibel)
+        // Semuanya dianggap hari kerja jika tidak ada presensi (kecuali ada Izin/Penugasan di atas)
         eligible.push({ 
           date: dateStr, 
           presence_id: null, 
           issues: ['ABSEN_KERJA'],
-          scheduleName: account.schedule_type || 'Jadwal Non-Reguler'
+          scheduleName: schedule?.name || account.schedule_type || 'Jadwal Non-Reguler'
         });
       }
     }
