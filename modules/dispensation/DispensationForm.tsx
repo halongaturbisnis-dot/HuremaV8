@@ -18,6 +18,7 @@ interface EligibleDate {
   date: string;
   presence_id: string | null;
   issues: DispensationIssueType[];
+  scheduleName?: string;
 }
 
 const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess, editData }) => {
@@ -242,53 +243,60 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
                   <p className="text-xs text-emerald-700 font-bold">Tidak ditemukan masalah presensi dalam {windowDays} hari terakhir.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  {eligibleDates.map((d, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setSelectedDate(d);
-                        setSelectedIssues(d.issues);
-                      }}
-                      className={`p-3 rounded-[24px] border text-left transition-all flex flex-col gap-2 relative overflow-hidden ${
-                        selectedDate?.date === d.date 
-                        ? 'bg-[#006E62] border-[#006E62] text-white shadow-lg shadow-[#006E62]/20' 
-                        : 'bg-white border-gray-100 text-gray-700 hover:border-red-200 hover:bg-red-50/30'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className={`px-2 py-1 rounded-lg ${selectedDate?.date === d.date ? 'bg-white/20' : 'bg-red-50'}`}>
-                          <span className={`text-[10px] font-black ${selectedDate?.date === d.date ? 'text-white' : 'text-red-600'}`}>
-                            {new Date(d.date).getDate()} {new Date(d.date).toLocaleDateString('id-ID', { month: 'short' })}
-                          </span>
-                        </div>
-                        {selectedDate?.date === d.date && <CheckCircle2 size={14} className="text-white" />}
-                      </div>
-                      
-                      <div>
-                        <p className={`text-[9px] font-bold uppercase tracking-tight ${selectedDate?.date === d.date ? 'text-white/80' : 'text-gray-400'}`}>
-                          {new Date(d.date).toLocaleDateString('id-ID', { weekday: 'long' })}
-                        </p>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {d.issues.map((i, idx2) => (
-                            <span key={idx2} className={`text-[8px] font-black uppercase ${
-                              selectedDate?.date === d.date 
-                              ? 'text-white' 
-                              : 'text-red-600'
-                            }`}>
-                              {i.replace('_', ' ')}
+                <div className="max-h-[320px] overflow-y-auto pr-2 space-y-3 scrollbar-hide">
+                  <div className="grid grid-cols-1 gap-3">
+                    {eligibleDates.map((d, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setSelectedDate(d);
+                          setSelectedIssues(d.issues);
+                        }}
+                        className={`p-4 rounded-[28px] border text-left transition-all flex items-center justify-between relative overflow-hidden ${
+                          selectedDate?.date === d.date 
+                          ? 'bg-[#006E62] border-[#006E62] text-white shadow-lg shadow-[#006E62]/20' 
+                          : 'bg-white border-gray-100 text-gray-700 hover:border-red-200 hover:bg-red-50/30'
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-14 h-14 rounded-2xl flex flex-col items-center justify-center border ${selectedDate?.date === d.date ? 'bg-white/20 border-white/30' : 'bg-red-50 border-red-100'}`}>
+                            <span className={`text-[10px] font-black uppercase ${selectedDate?.date === d.date ? 'text-white/70' : 'text-red-400'}`}>
+                              {new Date(d.date).toLocaleDateString('id-ID', { month: 'short' })}
                             </span>
-                          ))}
+                            <span className={`text-lg font-black leading-none ${selectedDate?.date === d.date ? 'text-white' : 'text-red-600'}`}>
+                              {new Date(d.date).getDate()}
+                            </span>
+                          </div>
+                          
+                          <div>
+                            <p className={`text-[10px] font-black uppercase tracking-widest ${selectedDate?.date === d.date ? 'text-white' : 'text-gray-800'}`}>
+                              {new Date(d.date).toLocaleDateString('id-ID', { weekday: 'long' })}
+                            </p>
+                            <p className={`text-[9px] font-bold uppercase tracking-[0.2em] mt-0.5 ${selectedDate?.date === d.date ? 'text-white/60' : 'text-gray-400'}`}>
+                              {d.scheduleName || 'Jadwal Reguler'}
+                            </p>
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {d.issues.map((i, idx2) => (
+                                <span key={idx2} className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-lg ${
+                                  selectedDate?.date === d.date 
+                                  ? 'bg-white/20 text-white' 
+                                  : 'bg-red-50 text-red-600'
+                                }`}>
+                                  {i.replace('_', ' ')}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Red Accent for Absen/Terlambat */}
-                      {selectedDate?.date !== d.date && (
-                        <div className="absolute top-0 right-0 w-1 h-full bg-red-500/20" />
-                      )}
-                    </button>
-                  ))}
+                        <div className="flex items-center gap-3">
+                          {selectedDate?.date === d.date && <CheckCircle2 size={24} className="text-white" />}
+                          <div className={`w-1 h-12 rounded-full ${selectedDate?.date === d.date ? 'bg-white/20' : 'bg-red-500/20'}`} />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

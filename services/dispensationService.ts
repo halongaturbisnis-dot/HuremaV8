@@ -317,7 +317,8 @@ export const dispensationService = {
         eligible.push({
           date: toLocalDate(att.check_in, att.in_timezone || 'Asia/Jakarta'),
           presence_id: att.id,
-          issues
+          issues,
+          scheduleName: att.schedule_name_snapshot || schedule?.name || 'Jadwal Reguler'
         });
       }
     });
@@ -331,16 +332,26 @@ export const dispensationService = {
       if (hasAttendance) continue;
 
       // a. Cek Penugasan Khusus
-      const hasAssignment = assignments?.some(a => dateStr >= a.start_date && dateStr <= a.end_date);
-      if (hasAssignment) {
-        eligible.push({ date: dateStr, presence_id: null, issues: ['ABSEN_KERJA'] });
+      const assignment = assignments?.find(a => dateStr >= a.start_date && dateStr <= a.end_date);
+      if (assignment) {
+        eligible.push({ 
+          date: dateStr, 
+          presence_id: null, 
+          issues: ['ABSEN_KERJA'],
+          scheduleName: assignment.title
+        });
         continue;
       }
 
       // b. Cek Jadwal Kerja Khusus (Tipe 4)
       const specialWorkDay = filteredSpecialSchedules?.find(s => s.type === 4 && dateStr >= s.start_date && dateStr <= s.end_date);
       if (specialWorkDay) {
-        eligible.push({ date: dateStr, presence_id: null, issues: ['ABSEN_KERJA'] });
+        eligible.push({ 
+          date: dateStr, 
+          presence_id: null, 
+          issues: ['ABSEN_KERJA'],
+          scheduleName: specialWorkDay.name
+        });
         continue;
       }
 
@@ -370,10 +381,20 @@ export const dispensationService = {
         const rule = schedule.schedule_rules?.find((r: any) => r.day_of_week === dayOfWeek);
         if (!rule || rule.is_holiday) continue;
         
-        eligible.push({ date: dateStr, presence_id: null, issues: ['ABSEN_KERJA'] });
+        eligible.push({ 
+          date: dateStr, 
+          presence_id: null, 
+          issues: ['ABSEN_KERJA'],
+          scheduleName: schedule.name
+        });
       } else if (account.schedule_type !== 'Jadwal Hari Kerja') {
         // Shift/Dinamis/Fleksibel -> ABSEN
-        eligible.push({ date: dateStr, presence_id: null, issues: ['ABSEN_KERJA'] });
+        eligible.push({ 
+          date: dateStr, 
+          presence_id: null, 
+          issues: ['ABSEN_KERJA'],
+          scheduleName: account.schedule_type || 'Jadwal Non-Reguler'
+        });
       }
     }
 
