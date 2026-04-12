@@ -176,16 +176,17 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
           file_ids: fileIds
         });
       } else {
-        await dispensationService.create({
+        // Clean up input to avoid RLS issues with default columns
+        const input = {
           account_id: user!.id,
-          presence_id: selectedDate.presence_id,
+          presence_id: selectedDate.presence_id || null,
           date: selectedDate.date,
           issues,
           reason,
-          file_ids: fileIds,
-          status: 'PENDING',
-          is_read: false
-        } as any);
+          file_ids: fileIds
+        };
+        
+        await dispensationService.create(input as any);
       }
 
       Swal.fire({

@@ -68,9 +68,15 @@ export const dispensationService = {
   },
 
   async create(input: DispensationRequestInput) {
+    // Ensure presence_id is null if not provided or empty
+    const cleanInput = {
+      ...input,
+      presence_id: input.presence_id || null
+    };
+
     const { data, error } = await supabase
       .from('dispensation_requests')
-      .insert([input])
+      .insert([cleanInput])
       .select();
     if (error) throw error;
     return data[0] as DispensationRequest;
