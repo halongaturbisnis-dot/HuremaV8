@@ -67,6 +67,24 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
     return googleDriveService.getFileUrl(id);
   };
 
+  const formatDateFull = (date: string | Date) => {
+    return new Intl.DateTimeFormat('id-ID', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    }).format(new Date(date));
+  };
+
+  const formatDateSimple = (date: string | Date | undefined) => {
+    if (!date) return '-';
+    return new Intl.DateTimeFormat('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    }).format(new Date(date));
+  };
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-3xl rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -88,31 +106,63 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
 
         <div className="flex-1 overflow-y-auto p-8 space-y-8">
           {/* Info Pegawai & Tanggal */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400">
-                <User size={24} />
+          {isAdmin ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Admin View: Employee Info */}
+              <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center overflow-hidden text-gray-400">
+                  {request.account?.photo_google_id ? (
+                    <img 
+                      src={googleDriveService.getFileUrl(request.account.photo_google_id)} 
+                      className="w-full h-full object-cover" 
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <User size={24} />
+                  )}
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Karyawan</p>
+                  <p className="text-sm font-black text-gray-800 leading-tight">{request.account?.full_name}</p>
+                  <p className="text-[11px] text-gray-500 font-bold">{request.account?.internal_nik}</p>
+                  <p className="text-[10px] text-gray-400 font-bold mt-0.5">
+                    {request.account?.department} • {request.account?.position}
+                  </p>
+                  <p className="text-[10px] text-gray-400 font-bold">
+                    {request.account?.location?.name || 'Lokasi tidak diketahui'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Karyawan</p>
-                <p className="text-sm font-black text-gray-800">{request.account?.full_name}</p>
-                <p className="text-[11px] text-gray-500 font-bold">{request.account?.internal_nik}</p>
+
+              {/* Admin View: Date Info */}
+              <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400">
+                  <Calendar size={24} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tanggal</p>
+                  <p className="text-sm font-black text-gray-800">
+                    {formatDateFull(request.date)}
+                  </p>
+                  <p className="text-[11px] text-gray-500 font-bold">Diajukan: {formatDateSimple(request.created_at)}</p>
+                </div>
               </div>
             </div>
-
-            <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400">
-                <Calendar size={24} />
+          ) : (
+            /* User View: Only Date Info */
+            <div className="bg-gray-50 p-6 rounded-[32px] border border-gray-100 flex items-center gap-5">
+              <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400">
+                <Calendar size={28} />
               </div>
               <div>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tanggal</p>
-                <p className="text-sm font-black text-gray-800">
-                  {new Date(request.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                <p className="text-base font-black text-gray-800">
+                  {formatDateFull(request.date)}
                 </p>
-                <p className="text-[11px] text-gray-500 font-bold">Diajukan: {new Date(request.created_at).toLocaleDateString('id-ID')}</p>
+                <p className="text-xs text-gray-500 font-bold">Diajukan: {formatDateSimple(request.created_at)}</p>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Alasan & Bukti */}
           <div className="space-y-4">

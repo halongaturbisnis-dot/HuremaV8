@@ -1,21 +1,8 @@
--- Update attendances table to include schedule_id and special_assignment_id for mode locking
-ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS schedule_id uuid REFERENCES public.schedules(id) ON DELETE SET NULL;
-ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS special_assignment_id uuid REFERENCES public.special_assignments(id) ON DELETE SET NULL;
+-- Nonaktifkan RLS untuk dispensation_requests karena login menggunakan tabel kustom
+ALTER TABLE public.dispensation_requests DISABLE ROW LEVEL SECURITY;
 
--- Add snapshot columns for target location
-ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_latitude numeric;
-ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_longitude numeric;
-ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_radius integer;
-
--- Add snapshot columns for schedule rules
-ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS schedule_name_snapshot text;
-ALTER TABLE public.attendances DROP COLUMN IF EXISTS target_check_in;
-ALTER TABLE public.attendances DROP COLUMN IF EXISTS target_check_out;
-ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_check_in timestamptz;
-ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_check_out timestamptz;
-ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_late_tolerance integer;
-ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS target_early_tolerance integer;
-ALTER TABLE public.attendances ADD COLUMN IF NOT EXISTS late_checkout_reason text;
-
--- Tambahkan kolom toleransi checkout ke tabel schedules
-ALTER TABLE public.schedules ADD COLUMN IF NOT EXISTS tolerance_checkout_minutes integer DEFAULT 0;
+-- Hapus policy yang sebelumnya dibuat agar bersih
+DROP POLICY IF EXISTS "Users can view their own dispensation requests" ON public.dispensation_requests;
+DROP POLICY IF EXISTS "Users can insert their own dispensation requests" ON public.dispensation_requests;
+DROP POLICY IF EXISTS "Users can update their own pending dispensation requests" ON public.dispensation_requests;
+DROP POLICY IF EXISTS "Admins can manage all dispensation requests" ON public.dispensation_requests;

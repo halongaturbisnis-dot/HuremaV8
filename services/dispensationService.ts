@@ -5,7 +5,7 @@ export const dispensationService = {
   async getAll() {
     let query = supabase
       .from('dispensation_requests')
-      .select('*, account:accounts!inner(full_name, internal_nik, photo_google_id, location_id)');
+      .select('*, account:accounts!inner(full_name, internal_nik, photo_google_id, location_id, department, position, location:locations(name))');
 
     // Apply Admin Location Scope
     const { authService } = await import('./authService');
@@ -60,7 +60,7 @@ export const dispensationService = {
   async getById(id: string) {
     const { data, error } = await supabase
       .from('dispensation_requests')
-      .select('*, account:accounts(full_name, internal_nik, photo_google_id, location_id)')
+      .select('*, account:accounts(full_name, internal_nik, photo_google_id, location_id, department, position, location:locations(name))')
       .eq('id', id)
       .single();
     if (error) throw error;
