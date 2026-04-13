@@ -424,10 +424,7 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
 
         {/* Footer */}
         <div className="px-8 py-6 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-blue-600">
-            <Info size={14} />
-            <p className="text-[9px] font-bold uppercase tracking-tighter italic">Verifikasi Admin Diperlukan</p>
-          </div>
+          
           <button
             onClick={handleSubmit}
             disabled={isLoading || !selectedDate || selectedIssues.length === 0 || !reason}

@@ -935,7 +935,7 @@ export interface DispensationRequest {
     internal_nik: string;
     photo_google_id?: string | null;
     location_id?: string | null;
-    department?: string;
+    grade?: string;
     position?: string;
     location?: { name: string };
   };

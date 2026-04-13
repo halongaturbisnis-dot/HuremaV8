@@ -126,7 +126,7 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
                   <p className="text-sm font-black text-gray-800 leading-tight">{request.account?.full_name}</p>
                   <p className="text-[11px] text-gray-500 font-bold">{request.account?.internal_nik}</p>
                   <p className="text-[10px] text-gray-400 font-bold mt-0.5">
-                    {request.account?.department} • {request.account?.position}
+                    {request.account?.grade} • {request.account?.position}
                   </p>
                   <p className="text-[10px] text-gray-400 font-bold">
                     {request.account?.location?.name || 'Lokasi tidak diketahui'}
@@ -316,12 +316,6 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
 
         {/* Footer */}
         <div className="px-8 py-6 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-gray-400">
-            <Info size={14} />
-            <p className="text-[9px] font-bold uppercase tracking-tighter italic">
-              {isAdmin ? 'Verifikasi teliti sebelum menyimpan.' : 'Keputusan admin bersifat final.'}
-            </p>
-          </div>
           <div className="flex gap-3">
             <button
               onClick={onClose}
