@@ -124,6 +124,9 @@ export const dispensationService = {
           const checkInDate = new Date(`${request.date}T${issue.manual_check_in}:00`);
           const checkOutDate = new Date(`${request.date}T${issue.manual_check_out}:00`);
 
+          const { timeUtils } = await import('../lib/timeUtils');
+          const timezone = timeUtils.getTimeZoneFromCoords(location.latitude, location.longitude);
+
           await supabase.from('attendances').insert([{
             account_id: request.account_id,
             check_in: checkInDate.toISOString(),
@@ -139,10 +142,14 @@ export const dispensationService = {
             out_photo_id: issue.out_photo_id,
             status_in: 'Tepat Waktu',
             status_out: 'Tepat Waktu',
-            check_in_validity: 'VALID',
-            check_out_validity: 'VALID',
-            check_in_type: 'MANUAL',
-            check_out_type: 'MANUAL',
+            check_in_validity: 'TRUE',
+            check_out_validity: 'TRUE',
+            check_in_type: 'Reguler',
+            check_out_type: 'Reguler',
+            target_check_in: issue.manual_check_in,
+            target_check_out: issue.manual_check_out,
+            in_timezone: timezone,
+            out_timezone: timezone,
             schedule_name_snapshot: 'DISPENSASI ABSEN',
             late_minutes: 0,
             early_departure_minutes: 0

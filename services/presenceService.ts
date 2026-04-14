@@ -155,6 +155,17 @@ export const presenceService = {
     return R * c; // Distance in meters
   },
 
+  async getById(id: string) {
+    const { data, error } = await supabase
+      .from('attendances')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    return data as Attendance;
+  },
+
   async getTodayAttendance(accountId: string, timeZone?: string) {
     const startOfToday = timeUtils.getStartOfLocalDayInUTC(timeZone);
     const { data, error } = await supabase

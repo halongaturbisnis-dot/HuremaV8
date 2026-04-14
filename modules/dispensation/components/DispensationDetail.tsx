@@ -5,6 +5,10 @@ import { dispensationService } from '../../../services/dispensationService';
 import { googleDriveService } from '../../../services/googleDriveService';
 import { authService } from '../../../services/authService';
 import DetailModulLayoutAdmin from '../../../components/ui/DetailModulLayoutAdmin';
+import AttendanceDetail from '../../monitoring/AttendanceDetail';
+import { locationService } from '../../../services/locationService';
+import { presenceService } from '../../../services/presenceService';
+import { Location, Account } from '../../../types';
 import Swal from 'sweetalert2';
 
 interface DispensationDetailProps {
@@ -17,6 +21,37 @@ interface DispensationDetailProps {
 const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClose, onSuccess, isAdmin }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [issues, setIssues] = useState<DispensationIssue[]>([...request.issues]);
+  const [locations, setLocations] = React.useState<Location[]>([]);
+  const [showAttendanceDetail, setShowAttendanceDetail] = useState(false);
+  const [selectedAttendance, setSelectedAttendance] = useState<any>(null);
+  const [isFetchingAttendance, setIsFetchingAttendance] = useState(false);
+
+  React.useEffect(() => {
+    fetchLocations();
+  }, []);
+
+  const fetchLocations = async () => {
+    try {
+      const data = await locationService.getAll();
+      setLocations(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleShowAttendance = async (presenceId: string) => {
+    try {
+      setIsFetchingAttendance(true);
+      const attendance = await presenceService.getById(presenceId);
+      setSelectedAttendance(attendance);
+      setShowAttendanceDetail(true);
+    } catch (error) {
+      console.error(error);
+      Swal.fire('Gagal', 'Gagal mengambil data presensi.', 'error');
+    } finally {
+      setIsFetchingAttendance(false);
+    }
+  };
 
   const handleIssueStatusChange = (index: number, status: DispensationIssueStatus) => {
     const newIssues = [...issues];
@@ -189,12 +224,28 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
                             </span>
                             <span className="text-gray-300">•</span>
                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter flex items-center gap-1">
-                              <MapPin size={10} /> {issue.manual_location_id || 'Lokasi Default'}
+                              <MapPin size={10} /> {issue.manual_location_id 
+                                ? (locations.find(l => l.id === issue.manual_location_id)?.name || 'Lokasi Khusus')
+                                : (request.account?.location?.name || 'Lokasi Penempatan')}
                             </span>
                           </div>
                         )}
                       </div>
                     </div>
+
+                    {/* Admin Action for TERLAMBAT / PULANG_AWAL */}
+                    {isAdmin && request.status === 'PENDING' && (issue.type === 'TERLAMBAT' || issue.type === 'PULANG_AWAL') && request.presence_id && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleShowAttendance(request.presence_id!)}
+                          disabled={isFetchingAttendance}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all active:scale-95"
+                        >
+                          {isFetchingAttendance ? <Loader2 size={14} className="animate-spin" /> : <Eye size={14} />}
+                          Lihat Detail Presensi
+                        </button>
+                      </div>
+                    )}
 
                     {isAdmin && request.status === 'PENDING' ? (
                       <div className="flex bg-gray-100 p-1 rounded-2xl w-fit">
@@ -278,7 +329,15 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
             </div>
           </div>
         </div>
-      </DetailModulLayoutAdmin>
+        {/* Attendance Detail Modal */}
+      {showAttendanceDetail && selectedAttendance && (
+        <AttendanceDetail 
+          attendance={selectedAttendance}
+          account={request.account as any}
+          onClose={() => setShowAttendanceDetail(false)}
+        />
+      )}
+    </DetailModulLayoutAdmin>
     );
   }
 
@@ -376,7 +435,9 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
                             </span>
                             <span className="text-gray-300">•</span>
                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter flex items-center gap-1">
-                              <MapPin size={10} /> {issue.manual_location_id || 'Lokasi Default'}
+                              <MapPin size={10} /> {issue.manual_location_id 
+                                ? (locations.find(l => l.id === issue.manual_location_id)?.name || 'Lokasi Khusus')
+                                : (request.account?.location?.name || 'Lokasi Penempatan')}
                             </span>
                           </div>
                         )}
