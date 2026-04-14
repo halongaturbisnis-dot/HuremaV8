@@ -55,7 +55,7 @@ const DetailModulLayoutAdmin: React.FC<DetailModulLayoutAdminProps> = ({
         <div className="flex-1 overflow-y-auto p-8 space-y-8">
           {/* Employee Info Section (3 Columns Full Width) */}
           {accountData && (
-            <div className="bg-gray-50 p-6 rounded-[32px] border border-gray-100 relative group">
+            <div className="bg-[#006E62]-50 p-6 rounded-[32px] border border-gray-100 relative group">
               <div className="grid grid-cols-1 md:grid-cols-[auto_1.5fr_1fr] gap-8 items-start">
                 {/* Col 1: Photo & Action */}
                 <div className="flex flex-col items-center shrink-0 gap-3">
@@ -73,7 +73,7 @@ const DetailModulLayoutAdmin: React.FC<DetailModulLayoutAdminProps> = ({
                   </div>
                   <button 
                     onClick={() => setShowProfile(true)}
-                    className="text-[#006E62] text-[10px] font-black uppercase tracking-widest hover:underline transition-all active:scale-90"
+                    className="px-3 py-1.5 bg-[#006E62]/10 text-[#006E62] rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-[#006E62] hover:text-white transition-all active:scale-95 shadow-sm border border-[#006E62]/5"
                   >
                     Lihat Profil
                   </button>
