@@ -55,7 +55,7 @@ const DetailModulLayoutAdmin: React.FC<DetailModulLayoutAdminProps> = ({
         <div className="flex-1 overflow-y-auto p-8 space-y-8">
           {/* Employee Info Section (3 Columns Full Width) */}
           {accountData && (
-            <div className="bg-[#006E62]/5 border border-[#006E62]/10 p-6 rounded-[32px] relative group backdrop-blur-sm">
+            <div className="bg-[#006E62]/20 border border-[#006E62]/20 p-6 rounded-[32px] relative group backdrop-blur-sm">
               <div className="grid grid-cols-1 md:grid-cols-[auto_1.5fr_1fr] gap-8 items-start">
                 {/* Col 1: Photo & Action */}
                 <div className="flex flex-col items-center shrink-0 gap-3">
