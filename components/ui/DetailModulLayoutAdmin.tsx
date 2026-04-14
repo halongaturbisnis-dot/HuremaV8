@@ -53,21 +53,12 @@ const DetailModulLayoutAdmin: React.FC<DetailModulLayoutAdminProps> = ({
         </div>
 
         <div className="flex-1 overflow-y-auto p-8 space-y-8">
-          {/* Employee Info Section (4 Columns Full Width) */}
+          {/* Employee Info Section (3 Columns Full Width) */}
           {accountData && (
             <div className="bg-gray-50 p-6 rounded-[32px] border border-gray-100 relative group">
-              {/* Profile Detail Button */}
-              <button 
-                onClick={() => setShowProfile(true)}
-                className="absolute top-4 right-4 p-2 bg-white text-[#006E62] rounded-xl shadow-sm border border-gray-100 hover:bg-[#006E62] hover:text-white transition-all active:scale-90"
-                title="Lihat Profil Lengkap"
-              >
-                <UserCircle size={20} />
-              </button>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
-                {/* Col 1: Photo */}
-                <div className="flex justify-center md:justify-start">
+              <div className="grid grid-cols-1 md:grid-cols-[auto_1.5fr_1fr] gap-8 items-start">
+                {/* Col 1: Photo & Action */}
+                <div className="flex flex-col items-center shrink-0 gap-3">
                   <div className="w-20 h-20 rounded-full bg-white shadow-md border-4 border-white overflow-hidden flex items-center justify-center text-gray-300">
                     {accountData.photo_google_id ? (
                       <img 
@@ -80,30 +71,33 @@ const DetailModulLayoutAdmin: React.FC<DetailModulLayoutAdminProps> = ({
                       <User size={40} />
                     )}
                   </div>
+                  <button 
+                    onClick={() => setShowProfile(true)}
+                    className="text-[#006E62] text-[10px] font-black uppercase tracking-widest hover:underline transition-all active:scale-90"
+                  >
+                    Lihat Profil
+                  </button>
                 </div>
 
                 {/* Col 2: Identity */}
                 <div className="text-center md:text-left">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Karyawan</p>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Karyawan</p>
                   <p className="text-base font-black text-gray-800 leading-tight">{accountData.full_name}</p>
                   <p className="text-xs text-gray-500 font-bold mt-1">{accountData.internal_nik}</p>
                 </div>
 
-                {/* Col 3: Organization */}
+                {/* Col 3: Career */}
                 <div className="text-center md:text-left">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Departemen & Jabatan</p>
-                  <p className="text-sm font-black text-gray-800 leading-tight">{accountData.grade || '-'}</p>
-                  <p className="text-xs text-gray-500 font-bold mt-1">{accountData.position || '-'}</p>
-                </div>
-
-                {/* Col 4: Location */}
-                <div className="text-center md:text-left">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Lokasi Penempatan</p>
-                  <div className="flex items-center justify-center md:justify-start gap-1.5">
-                    <MapPin size={14} className="text-[#006E62]" />
-                    <p className="text-sm font-black text-gray-800 leading-tight">
-                      {accountData.location?.name || 'Lokasi tidak diketahui'}
-                    </p>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Karir</p>
+                  <div className="space-y-1">
+                    <p className="text-sm font-black text-gray-800 leading-tight">{accountData.position || '-'}</p>
+                    <p className="text-sm font-bold text-gray-600 leading-tight">{accountData.grade || '-'}</p>
+                    <div className="flex items-center justify-center md:justify-start gap-1.5 text-gray-600">
+                      <MapPin size={14} className="text-[#006E62] shrink-0" />
+                      <p className="text-sm font-bold leading-tight">
+                        {accountData.location?.name || 'Lokasi tidak diketahui'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
