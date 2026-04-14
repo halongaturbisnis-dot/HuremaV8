@@ -73,7 +73,7 @@ const DetailModulLayoutAdmin: React.FC<DetailModulLayoutAdminProps> = ({
                   </div>
                   <button 
                     onClick={() => setShowProfile(true)}
-                    className="px-3 py-1.5 bg-[#006E62] text-[#FFFFFF] rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-[#FFFFFF] hover:text-[#006E62] transition-all active:scale-95 shadow-sm border border-[#006E62]/5"
+                    className="px-3 py-1.5 bg-[#006E62] text-[#FFFFFF] rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-[#004D45] hover:text-[#FFFFFF] transition-all active:scale-95 shadow-sm border border-[#006E62]/5"
                   >
                     Lihat Profil
                   </button>
