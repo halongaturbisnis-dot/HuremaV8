@@ -25,7 +25,7 @@ export const contractService = {
       .from('account_contracts')
       .select(`
         *,
-        account:accounts!inner(full_name, internal_nik, role, access_code, photo_google_id, department, position, location:locations(name))
+        account:accounts!inner(full_name, internal_nik, role, access_code, photo_google_id)
       `, { count: 'exact' })
       .not('account.access_code', 'ilike', '%SPADMIN%');
 

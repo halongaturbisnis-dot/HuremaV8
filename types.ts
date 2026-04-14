@@ -274,10 +274,6 @@ export interface AccountContractExtended extends AccountContract {
   account?: {
     full_name: string;
     internal_nik: string;
-    photo_google_id?: string | null;
-    department?: string;
-    position?: string;
-    location?: { name: string };
   };
 }
 

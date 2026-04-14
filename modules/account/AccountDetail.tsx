@@ -1017,17 +1017,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ id, onClose, onEdit, onDe
 
       {selectedContractDetail && (
         <ContractDetailModal 
-          contract={{
-            ...selectedContractDetail,
-            account: {
-              full_name: account.full_name,
-              internal_nik: account.internal_nik,
-              photo_google_id: account.photo_google_id,
-              department: account.grade,
-              position: account.position,
-              location: account.location
-            }
-          }} 
+          contract={selectedContractDetail} 
           onClose={() => setSelectedContractDetail(null)} 
           onEdit={!isReadOnly ? () => {
             setSelectedContractDetail(null);
