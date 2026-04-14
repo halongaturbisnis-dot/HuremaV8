@@ -4,6 +4,7 @@ import { DispensationRequest, DispensationIssue, DispensationIssueStatus } from 
 import { dispensationService } from '../../../services/dispensationService';
 import { googleDriveService } from '../../../services/googleDriveService';
 import { authService } from '../../../services/authService';
+import DetailModulLayoutAdmin from '../../../components/ui/DetailModulLayoutAdmin';
 import Swal from 'sweetalert2';
 
 interface DispensationDetailProps {
@@ -85,6 +86,186 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
     }).format(new Date(date));
   };
 
+  const renderContent = () => (
+    <div className="space-y-8">
+      {/* Alasan & Bukti */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <FileText size={16} className="text-[#006E62]" />
+          <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Alasan & Lampiran</h4>
+        </div>
+        <div className="p-6 bg-white border border-gray-100 rounded-3xl shadow-sm italic text-sm text-gray-600 leading-relaxed">
+          "{request.reason}"
+        </div>
+
+        {request.file_ids && request.file_ids.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {request.file_ids.map((fid, i) => (
+              <a 
+                key={i}
+                href={googleDriveService.getFileUrl(fid)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-blue-100 transition-all border border-blue-100"
+              >
+                <Download size={14} />
+                Lampiran {i + 1}
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Daftar Masalah & Verifikasi */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <AlertCircle size={16} className="text-[#006E62]" />
+          <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Daftar Masalah & Keputusan</h4>
+        </div>
+
+        <div className="space-y-4">
+          {issues.map((issue, idx) => (
+            <div key={idx} className={`p-6 rounded-[32px] border transition-all ${
+              issue.status === 'APPROVED' ? 'bg-emerald-50/50 border-emerald-100' :
+              issue.status === 'REJECTED' ? 'bg-rose-50/50 border-rose-100' :
+              'bg-white border-gray-100'
+            }`}>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    issue.status === 'APPROVED' ? 'bg-emerald-500 text-white' :
+                    issue.status === 'REJECTED' ? 'bg-rose-500 text-white' :
+                    'bg-blue-500 text-white'
+                  }`}>
+                    <AlertCircle size={20} />
+                  </div>
+                  <div>
+                    <span className="text-xs font-black text-gray-800 uppercase tracking-wider">{issue.type.replace('_', ' ')}</span>
+                    {issue.type === 'ABSEN_KERJA' && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter flex items-center gap-1">
+                          <Clock size={10} /> {issue.manual_check_in} - {issue.manual_check_out}
+                        </span>
+                        <span className="text-gray-300">•</span>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter flex items-center gap-1">
+                          <MapPin size={10} /> {issue.manual_location_id || 'Lokasi Default'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {isAdmin && request.status === 'PENDING' ? (
+                  <div className="flex bg-gray-100 p-1 rounded-2xl w-fit">
+                    <button 
+                      onClick={() => handleIssueStatusChange(idx, 'APPROVED')}
+                      className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2 ${issue.status === 'APPROVED' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-gray-400'}`}
+                    >
+                      <CheckCircle2 size={14} /> Setuju
+                    </button>
+                    <button 
+                      onClick={() => handleIssueStatusChange(idx, 'REJECTED')}
+                      className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2 ${issue.status === 'REJECTED' ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20' : 'text-gray-400'}`}
+                    >
+                      <XCircle size={14} /> Tolak
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {issue.status === 'APPROVED' ? (
+                      <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1"><CheckCircle2 size={12} /> Disetujui</span>
+                    ) : issue.status === 'REJECTED' ? (
+                      <span className="px-3 py-1 bg-rose-100 text-rose-700 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1"><XCircle size={12} /> Ditolak</span>
+                    ) : (
+                      <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1"><Clock size={12} /> Pending</span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Manual Photos for ABSEN_KERJA */}
+              {issue.type === 'ABSEN_KERJA' && (issue.in_photo_id || issue.out_photo_id) && (
+                <div className="mt-4 grid grid-cols-2 gap-4">
+                  {issue.in_photo_id && (
+                    <div className="space-y-2">
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Foto Masuk</p>
+                      <div className="aspect-video rounded-2xl overflow-hidden border border-gray-100 shadow-sm relative group">
+                        <img src={getPhotoUrl(issue.in_photo_id)!} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <a href={getPhotoUrl(issue.in_photo_id)!} target="_blank" rel="noreferrer" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                          <Eye size={20} />
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                  {issue.out_photo_id && (
+                    <div className="space-y-2">
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Foto Pulang</p>
+                      <div className="aspect-video rounded-2xl overflow-hidden border border-gray-100 shadow-sm relative group">
+                        <img src={getPhotoUrl(issue.out_photo_id)!} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <a href={getPhotoUrl(issue.out_photo_id)!} target="_blank" rel="noreferrer" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                          <Eye size={20} />
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Admin Notes */}
+              {(isAdmin && request.status === 'PENDING') ? (
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center gap-2 text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                    <MessageSquare size={12} />
+                    <span>Catatan Admin</span>
+                  </div>
+                  <input 
+                    type="text"
+                    value={issue.admin_notes || ''}
+                    onChange={(e) => handleAdminNotesChange(idx, e.target.value)}
+                    placeholder="Tambahkan catatan..."
+                    className="w-full px-5 py-3 bg-white border border-gray-200 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-[#006E62] outline-none transition-all"
+                  />
+                </div>
+              ) : issue.admin_notes && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Catatan Admin:</p>
+                  <p className="text-xs text-gray-600 font-medium italic">"{issue.admin_notes}"</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (isAdmin) {
+    return (
+      <DetailModulLayoutAdmin
+        title="Detail Pengajuan"
+        subtitle="Verifikasi Dispensasi Presensi"
+        account={request.account as any}
+        date={request.date}
+        createdAt={request.created_at}
+        onClose={onClose}
+        footerActions={
+          isAdmin && request.status === 'PENDING' && (
+            <button
+              onClick={handleProcess}
+              disabled={isLoading}
+              className="flex items-center gap-2 bg-[#006E62] text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#005c52] transition-all shadow-xl shadow-[#006E62]/20 disabled:opacity-50"
+            >
+              {isLoading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+              Simpan
+            </button>
+          )
+        }
+      >
+        {renderContent()}
+      </DetailModulLayoutAdmin>
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-3xl rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -105,213 +286,21 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
         </div>
 
         <div className="flex-1 overflow-y-auto p-8 space-y-8">
-          {/* Info Pegawai & Tanggal */}
-          {isAdmin ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Admin View: Employee Info */}
-              <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center overflow-hidden text-gray-400">
-                  {request.account?.photo_google_id ? (
-                    <img 
-                      src={googleDriveService.getFileUrl(request.account.photo_google_id)} 
-                      className="w-full h-full object-cover" 
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <User size={24} />
-                  )}
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Karyawan</p>
-                  <p className="text-sm font-black text-gray-800 leading-tight">{request.account?.full_name}</p>
-                  <p className="text-[11px] text-gray-500 font-bold">{request.account?.internal_nik}</p>
-                  <p className="text-[10px] text-gray-400 font-bold mt-0.5">
-                    {request.account?.grade} • {request.account?.position}
-                  </p>
-                  <p className="text-[10px] text-gray-400 font-bold">
-                    {request.account?.location?.name || 'Lokasi tidak diketahui'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Admin View: Date Info */}
-              <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400">
-                  <Calendar size={24} />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tanggal</p>
-                  <p className="text-sm font-black text-gray-800">
-                    {formatDateFull(request.date)}
-                  </p>
-                  <p className="text-[11px] text-gray-500 font-bold">Diajukan: {formatDateSimple(request.created_at)}</p>
-                </div>
-              </div>
+          {/* User View: Only Date Info */}
+          <div className="bg-gray-50 p-6 rounded-[32px] border border-gray-100 flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400">
+              <Calendar size={28} />
             </div>
-          ) : (
-            /* User View: Only Date Info */
-            <div className="bg-gray-50 p-6 rounded-[32px] border border-gray-100 flex items-center gap-5">
-              <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400">
-                <Calendar size={28} />
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tanggal</p>
-                <p className="text-base font-black text-gray-800">
-                  {formatDateFull(request.date)}
-                </p>
-                <p className="text-xs text-gray-500 font-bold">Diajukan: {formatDateSimple(request.created_at)}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Alasan & Bukti */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <FileText size={16} className="text-[#006E62]" />
-              <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Alasan & Lampiran</h4>
-            </div>
-            <div className="p-6 bg-white border border-gray-100 rounded-3xl shadow-sm italic text-sm text-gray-600 leading-relaxed">
-              "{request.reason}"
-            </div>
-
-            {request.file_ids && request.file_ids.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {request.file_ids.map((fid, i) => (
-                  <a 
-                    key={i}
-                    href={googleDriveService.getFileUrl(fid)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-blue-100 transition-all border border-blue-100"
-                  >
-                    <Download size={14} />
-                    Lampiran {i + 1}
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Daftar Masalah & Verifikasi */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <AlertCircle size={16} className="text-[#006E62]" />
-              <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Daftar Masalah & Keputusan</h4>
-            </div>
-
-            <div className="space-y-4">
-              {issues.map((issue, idx) => (
-                <div key={idx} className={`p-6 rounded-[32px] border transition-all ${
-                  issue.status === 'APPROVED' ? 'bg-emerald-50/50 border-emerald-100' :
-                  issue.status === 'REJECTED' ? 'bg-rose-50/50 border-rose-100' :
-                  'bg-white border-gray-100'
-                }`}>
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                        issue.status === 'APPROVED' ? 'bg-emerald-500 text-white' :
-                        issue.status === 'REJECTED' ? 'bg-rose-500 text-white' :
-                        'bg-blue-500 text-white'
-                      }`}>
-                        <AlertCircle size={20} />
-                      </div>
-                      <div>
-                        <span className="text-xs font-black text-gray-800 uppercase tracking-wider">{issue.type.replace('_', ' ')}</span>
-                        {issue.type === 'ABSEN_KERJA' && (
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter flex items-center gap-1">
-                              <Clock size={10} /> {issue.manual_check_in} - {issue.manual_check_out}
-                            </span>
-                            <span className="text-gray-300">•</span>
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter flex items-center gap-1">
-                              <MapPin size={10} /> {issue.manual_location_id || 'Lokasi Default'}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {isAdmin && request.status === 'PENDING' ? (
-                      <div className="flex bg-gray-100 p-1 rounded-2xl w-fit">
-                        <button 
-                          onClick={() => handleIssueStatusChange(idx, 'APPROVED')}
-                          className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2 ${issue.status === 'APPROVED' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-gray-400'}`}
-                        >
-                          <CheckCircle2 size={14} /> Setuju
-                        </button>
-                        <button 
-                          onClick={() => handleIssueStatusChange(idx, 'REJECTED')}
-                          className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-2 ${issue.status === 'REJECTED' ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20' : 'text-gray-400'}`}
-                        >
-                          <XCircle size={14} /> Tolak
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        {issue.status === 'APPROVED' ? (
-                          <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1"><CheckCircle2 size={12} /> Disetujui</span>
-                        ) : issue.status === 'REJECTED' ? (
-                          <span className="px-3 py-1 bg-rose-100 text-rose-700 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1"><XCircle size={12} /> Ditolak</span>
-                        ) : (
-                          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1"><Clock size={12} /> Pending</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Manual Photos for ABSEN_KERJA */}
-                  {issue.type === 'ABSEN_KERJA' && (issue.in_photo_id || issue.out_photo_id) && (
-                    <div className="mt-4 grid grid-cols-2 gap-4">
-                      {issue.in_photo_id && (
-                        <div className="space-y-2">
-                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Foto Masuk</p>
-                          <div className="aspect-video rounded-2xl overflow-hidden border border-gray-100 shadow-sm relative group">
-                            <img src={getPhotoUrl(issue.in_photo_id)!} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                            <a href={getPhotoUrl(issue.in_photo_id)!} target="_blank" rel="noreferrer" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
-                              <Eye size={20} />
-                            </a>
-                          </div>
-                        </div>
-                      )}
-                      {issue.out_photo_id && (
-                        <div className="space-y-2">
-                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Foto Pulang</p>
-                          <div className="aspect-video rounded-2xl overflow-hidden border border-gray-100 shadow-sm relative group">
-                            <img src={getPhotoUrl(issue.out_photo_id)!} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                            <a href={getPhotoUrl(issue.out_photo_id)!} target="_blank" rel="noreferrer" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
-                              <Eye size={20} />
-                            </a>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Admin Notes */}
-                  {(isAdmin && request.status === 'PENDING') ? (
-                    <div className="mt-4 space-y-2">
-                      <div className="flex items-center gap-2 text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">
-                        <MessageSquare size={12} />
-                        <span>Catatan Admin</span>
-                      </div>
-                      <input 
-                        type="text"
-                        value={issue.admin_notes || ''}
-                        onChange={(e) => handleAdminNotesChange(idx, e.target.value)}
-                        placeholder="Tambahkan catatan..."
-                        className="w-full px-5 py-3 bg-white border border-gray-200 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-[#006E62] outline-none transition-all"
-                      />
-                    </div>
-                  ) : issue.admin_notes && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Catatan Admin:</p>
-                      <p className="text-xs text-gray-600 font-medium italic">"{issue.admin_notes}"</p>
-                    </div>
-                  )}
-                </div>
-              ))}
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tanggal</p>
+              <p className="text-base font-black text-gray-800">
+                {formatDateFull(request.date)}
+              </p>
+              <p className="text-xs text-gray-500 font-bold">Diajukan: {formatDateSimple(request.created_at)}</p>
             </div>
           </div>
+
+          {renderContent()}
         </div>
 
         {/* Footer */}
@@ -323,16 +312,6 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
             >
               Tutup
             </button>
-            {isAdmin && request.status === 'PENDING' && (
-              <button
-                onClick={handleProcess}
-                disabled={isLoading}
-                className="flex items-center gap-2 bg-[#006E62] text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#005c52] transition-all shadow-xl shadow-[#006E62]/20 disabled:opacity-50"
-              >
-                {isLoading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                Simpan
-              </button>
-            )}
           </div>
         </div>
       </div>
