@@ -156,19 +156,22 @@ export const dispensationService = {
             late_minutes: 0,
             early_departure_minutes: 0,
             work_duration: workDuration,
-            notes: 'TERDISPENSASI'
+            check_in_reason: 'TERDISPENSASI',
+            check_out_reason: 'TERDISPENSASI'
           }]);
         } else if (request.presence_id) {
           // UPDATE existing attendance record
-          const updateData: any = {
-            notes: `(TERDISPENSASI) ${request.reason}`
-          };
+          const updateData: any = {};
+          const issueReason = issue.reason || request.reason;
+
           if (issue.type === 'TERLAMBAT') {
             updateData.status_in = 'Tepat Waktu';
             updateData.late_minutes = 0;
+            updateData.late_reason = `(TERDISPENSASI) ${issueReason}`;
           } else if (issue.type === 'PULANG_AWAL') {
             updateData.status_out = 'Tepat Waktu';
             updateData.early_departure_minutes = 0;
+            updateData.early_departure_reason = `(TERDISPENSASI) ${issueReason}`;
           }
           
           await supabase.from('attendances')

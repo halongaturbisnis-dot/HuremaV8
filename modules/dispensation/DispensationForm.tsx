@@ -29,7 +29,8 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
   const [windowDays, setWindowDays] = useState<number>(7);
   const [selectedDate, setSelectedDate] = useState<EligibleDate | null>(null);
   const [selectedIssues, setSelectedIssues] = useState<DispensationIssueType[]>([]);
-  const [reason, setReason] = useState(editData?.reason || '');
+  const [issueReasons, setIssueReasons] = useState<Record<string, string>>({});
+  const [issueFiles, setIssueFiles] = useState<Record<string, File[]>>({});
   const [account, setAccount] = useState<Account | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   
@@ -74,6 +75,13 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
         issues: editData.issues.map(i => i.type)
       });
       setSelectedIssues(editData.issues.map(i => i.type));
+      
+      const reasons: Record<string, string> = {};
+      editData.issues.forEach(i => {
+        if (i.reason) reasons[i.type] = i.reason;
+      });
+      setIssueReasons(reasons);
+
       const absentIssue = editData.issues.find(i => i.type === 'ABSEN_KERJA');
       if (absentIssue) {
         setManualCheckIn(absentIssue.manual_check_in || '');
@@ -118,9 +126,17 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedDate || selectedIssues.length === 0 || !reason || additionalFiles.length === 0) {
-      Swal.fire('Peringatan', 'Mohon lengkapi data pengajuan. Semua kolom termasuk lampiran wajib diisi.', 'warning');
+    if (!selectedDate || selectedIssues.length === 0) {
+      Swal.fire('Peringatan', 'Mohon lengkapi data pengajuan.', 'warning');
       return;
+    }
+
+    // Validate each issue has reason and files
+    for (const type of selectedIssues) {
+      if (!issueReasons[type] || (!editData && (!issueFiles[type] || issueFiles[type].length === 0))) {
+        Swal.fire('Peringatan', `Mohon isi alasan dan lampiran untuk ${type.replace('_', ' ')}.`, 'warning');
+        return;
+      }
     }
 
     const isAbsent = selectedIssues.includes('ABSEN_KERJA');
@@ -157,8 +173,24 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
         fileIds.push(fid);
       }
 
-      const issues: DispensationIssue[] = selectedIssues.map(type => {
-        const issue: DispensationIssue = { type, status: 'PENDING' };
+      const issues: DispensationIssue[] = [];
+      
+      for (const type of selectedIssues) {
+        const issueFileIds: string[] = [];
+        if (issueFiles[type]) {
+          for (const f of issueFiles[type]) {
+            const fid = await googleDriveService.uploadFile(f, folderId);
+            issueFileIds.push(fid);
+          }
+        }
+
+        const issue: DispensationIssue = { 
+          type, 
+          status: 'PENDING',
+          reason: issueReasons[type],
+          file_ids: issueFileIds
+        };
+
         if (type === 'ABSEN_KERJA') {
           issue.manual_check_in = manualCheckIn;
           issue.manual_check_out = manualCheckOut;
@@ -166,14 +198,14 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
           issue.out_photo_id = outPhotoId;
           issue.manual_location_id = manualLocationId || null;
         }
-        return issue;
-      });
+        issues.push(issue);
+      }
 
       if (editData) {
         await dispensationService.update(editData.id, {
           issues,
-          reason,
-          file_ids: fileIds
+          reason: Object.values(issueReasons).join('; '), // Fallback global reason
+          file_ids: [] // Global file_ids can be empty now as we use per-issue
         });
       } else {
         // Clean up input to avoid RLS issues with default columns
@@ -182,8 +214,8 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
           presence_id: selectedDate.presence_id || null,
           date: selectedDate.date,
           issues,
-          reason,
-          file_ids: fileIds
+          reason: Object.values(issueReasons).join('; '),
+          file_ids: []
         };
         
         await dispensationService.create(input as any);
@@ -305,123 +337,137 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
 
           {/* Step 2: Detail Masalah */}
           {selectedDate && (
-            <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
               <div className="flex items-center gap-2">
                 <Clock size={16} className="text-[#006E62]" />
                 <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">2. Detail Dispensasi</h4>
               </div>
 
-              {/* Manual Input for ABSEN_KERJA */}
-              {selectedIssues.includes('ABSEN_KERJA') && (
-                <div className="space-y-4 bg-gray-50 p-6 rounded-[32px] border border-gray-100">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Jam Masuk</label>
-                      <input 
-                        type="time"
-                        value={manualCheckIn}
-                        onChange={(e) => setManualCheckIn(e.target.value)}
-                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#006E62] outline-none"
-                      />
+              {selectedIssues.map((type) => (
+                <div key={type} className="space-y-6 p-6 bg-gray-50 rounded-[32px] border border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-[#006E62] text-white rounded-lg flex items-center justify-center text-[10px] font-black">
+                      {type === 'TERLAMBAT' ? 'IN' : type === 'PULANG_AWAL' ? 'OUT' : 'ABS'}
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Jam Pulang</label>
-                      <input 
-                        type="time"
-                        value={manualCheckOut}
-                        onChange={(e) => setManualCheckOut(e.target.value)}
-                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#006E62] outline-none"
-                      />
-                    </div>
+                    <h5 className="text-xs font-black text-gray-800 uppercase tracking-wider">{type.replace('_', ' ')}</h5>
                   </div>
 
-                  {!account?.location_id && (
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Lokasi Kerja</label>
-                      <select
-                        value={manualLocationId}
-                        onChange={(e) => setManualLocationId(e.target.value)}
-                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#006E62] outline-none"
-                      >
-                        <option value="">Pilih Lokasi</option>
-                        {locations.map(loc => (
-                          <option key={loc.id} value={loc.id}>{loc.name}</option>
-                        ))}
-                      </select>
+                  {/* Manual Input for ABSEN_KERJA */}
+                  {type === 'ABSEN_KERJA' && (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Jam Masuk</label>
+                          <input 
+                            type="time"
+                            value={manualCheckIn}
+                            onChange={(e) => setManualCheckIn(e.target.value)}
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#006E62] outline-none"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Jam Pulang</label>
+                          <input 
+                            type="time"
+                            value={manualCheckOut}
+                            onChange={(e) => setManualCheckOut(e.target.value)}
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#006E62] outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {!account?.location_id && (
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Lokasi Kerja</label>
+                          <select
+                            value={manualLocationId}
+                            onChange={(e) => setManualLocationId(e.target.value)}
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-[#006E62] outline-none"
+                          >
+                            <option value="">Pilih Lokasi</option>
+                            {locations.map(loc => (
+                              <option key={loc.id} value={loc.id}>{loc.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Foto Masuk</label>
+                          <label className={`relative flex flex-col items-center justify-center h-32 rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden ${inPhoto ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-gray-200'}`}>
+                            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => setInPhoto(e.target.files?.[0] || null)} />
+                            {inPhotoPreview ? (
+                              <img src={inPhotoPreview} className="w-full h-full object-cover" />
+                            ) : (
+                              <>
+                                <Camera className="text-gray-300" size={24} />
+                                <span className="text-[8px] font-bold text-gray-400 uppercase mt-1">Ambil Foto</span>
+                              </>
+                            )}
+                          </label>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Foto Pulang</label>
+                          <label className={`relative flex flex-col items-center justify-center h-32 rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden ${outPhoto ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-gray-200'}`}>
+                            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => setOutPhoto(e.target.files?.[0] || null)} />
+                            {outPhotoPreview ? (
+                              <img src={outPhotoPreview} className="w-full h-full object-cover" />
+                            ) : (
+                              <>
+                                <Camera className="text-gray-300" size={24} />
+                                <span className="text-[8px] font-bold text-gray-400 uppercase mt-1">Ambil Foto</span>
+                              </>
+                            )}
+                          </label>
+                        </div>
+                      </div>
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Foto Masuk</label>
-                      <label className={`relative flex flex-col items-center justify-center h-32 rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden ${inPhoto ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-gray-200'}`}>
-                        <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => setInPhoto(e.target.files?.[0] || null)} />
-                        {inPhotoPreview ? (
-                          <img src={inPhotoPreview} className="w-full h-full object-cover" />
-                        ) : (
-                          <>
-                            <Camera className="text-gray-300" size={24} />
-                            <span className="text-[8px] font-bold text-gray-400 uppercase mt-1">Ambil Foto</span>
-                          </>
-                        )}
-                      </label>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Foto Pulang</label>
-                      <label className={`relative flex flex-col items-center justify-center h-32 rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden ${outPhoto ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-gray-200'}`}>
-                        <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => setOutPhoto(e.target.files?.[0] || null)} />
-                        {outPhotoPreview ? (
-                          <img src={outPhotoPreview} className="w-full h-full object-cover" />
-                        ) : (
-                          <>
-                            <Camera className="text-gray-300" size={24} />
-                            <span className="text-[8px] font-bold text-gray-400 uppercase mt-1">Ambil Foto</span>
-                          </>
-                        )}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Alasan {type.replace('_', ' ')}</label>
+                    <textarea
+                      required
+                      value={issueReasons[type] || ''}
+                      onChange={(e) => setIssueReasons(prev => ({ ...prev, [type]: e.target.value }))}
+                      placeholder={`Jelaskan alasan ${type.replace('_', ' ')} Anda...`}
+                      className="w-full px-5 py-4 rounded-3xl border border-gray-100 bg-white text-sm font-medium focus:ring-4 focus:ring-[#006E62]/5 focus:border-[#006E62] outline-none transition-all min-h-[80px] resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Lampiran {type.replace('_', ' ')}</label>
+                    <div className="flex flex-wrap gap-2">
+                      {issueFiles[type]?.map((f, i) => (
+                        <div key={i} className="relative w-16 h-16 bg-gray-100 rounded-xl overflow-hidden group flex items-center justify-center">
+                          {f.type.startsWith('image/') ? (
+                            <img src={URL.createObjectURL(f)} className="w-full h-full object-cover" />
+                          ) : (
+                            <FileCheck className="text-[#006E62]" size={24} />
+                          )}
+                          <button 
+                            type="button"
+                            onClick={() => setIssueFiles(prev => ({ ...prev, [type]: prev[type].filter((_, idx) => idx !== i) }))}
+                            className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ))}
+                      <label className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 hover:border-[#006E62] hover:text-[#006E62] transition-all cursor-pointer bg-white">
+                        <input type="file" multiple className="hidden" onChange={(e) => {
+                          if (e.target.files) {
+                            const files = Array.from(e.target.files);
+                            setIssueFiles(prev => ({ ...prev, [type]: [...(prev[type] || []), ...files] }));
+                          }
+                        }} />
+                        <Upload size={20} />
                       </label>
                     </div>
                   </div>
                 </div>
-              )}
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Alasan Pengajuan</label>
-                <textarea
-                  required
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="Jelaskan alasan Anda..."
-                  className="w-full px-5 py-4 rounded-3xl border border-gray-100 bg-gray-50 text-sm font-medium focus:ring-4 focus:ring-[#006E62]/5 focus:border-[#006E62] outline-none transition-all min-h-[100px] resize-none"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Lampiran Tambahan</label>
-                <div className="flex flex-wrap gap-2">
-                  {additionalFiles.map((f, i) => (
-                    <div key={i} className="relative w-16 h-16 bg-gray-100 rounded-xl overflow-hidden group flex items-center justify-center">
-                      {f.type.startsWith('image/') ? (
-                        <img src={URL.createObjectURL(f)} className="w-full h-full object-cover" />
-                      ) : (
-                        <FileCheck className="text-[#006E62]" size={24} />
-                      )}
-                      <button 
-                        type="button"
-                        onClick={() => setAdditionalFiles(prev => prev.filter((_, idx) => idx !== i))}
-                        className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  ))}
-                  <label className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 hover:border-[#006E62] hover:text-[#006E62] transition-all cursor-pointer">
-                    <input type="file" multiple className="hidden" onChange={(e) => {
-                      if (e.target.files) setAdditionalFiles(prev => [...prev, ...Array.from(e.target.files!)]);
-                    }} />
-                    <Upload size={20} />
-                  </label>
-                </div>
-              </div>
+              ))}
             </div>
           )}
         </form>
@@ -431,7 +477,7 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
           
           <button
             onClick={handleSubmit}
-            disabled={isLoading || !selectedDate || selectedIssues.length === 0 || !reason || additionalFiles.length === 0}
+            disabled={isLoading || !selectedDate || selectedIssues.length === 0 || selectedIssues.some(type => !issueReasons[type] || (!editData && (!issueFiles[type] || issueFiles[type].length === 0)))}
             className="flex items-center gap-2 bg-[#006E62] text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#005c52] transition-all shadow-xl shadow-[#006E62]/20 disabled:opacity-50"
           >
             {isLoading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}

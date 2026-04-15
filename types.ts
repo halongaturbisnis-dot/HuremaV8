@@ -911,6 +911,8 @@ export interface DispensationIssue {
   type: DispensationIssueType;
   status: DispensationIssueStatus;
   admin_notes?: string;
+  reason?: string;
+  file_ids?: string[];
   manual_check_in?: string | null;
   manual_check_out?: string | null;
   in_photo_id?: string | null;

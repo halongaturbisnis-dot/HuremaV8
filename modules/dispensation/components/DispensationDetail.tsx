@@ -164,36 +164,38 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
             </div>
           </div>
 
-          {/* Alasan & Bukti */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <FileText size={16} className="text-[#006E62]" />
-              <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Alasan & Lampiran</h4>
-            </div>
-            <div className="p-6 bg-white border border-gray-100 rounded-3xl shadow-sm italic text-sm text-gray-600 leading-relaxed">
-              "{request.reason}"
-            </div>
-
-            {request.file_ids && request.file_ids.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {request.file_ids.map((fid, i) => {
-                  const isImage = !fid.includes('|') || /\.(jpg|jpeg|png|webp|gif|svg|bmp)$/i.test(fid.split('|')[1]);
-                  return (
-                    <a 
-                      key={i}
-                      href={googleDriveService.getViewerUrl(fid)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-blue-100 transition-all border border-blue-100"
-                    >
-                      {isImage ? <Download size={14} /> : <FileCheck size={14} />}
-                      Lampiran {i + 1}
-                    </a>
-                  );
-                })}
+          {/* Alasan & Bukti Global (Optional fallback) */}
+          {(request.reason && !request.issues.some(i => i.reason)) && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <FileText size={16} className="text-[#006E62]" />
+                <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Alasan & Lampiran</h4>
               </div>
-            )}
-          </div>
+              <div className="p-6 bg-white border border-gray-100 rounded-3xl shadow-sm italic text-sm text-gray-600 leading-relaxed">
+                "{request.reason}"
+              </div>
+
+              {request.file_ids && request.file_ids.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {request.file_ids.map((fid, i) => {
+                    const isImage = !fid.includes('|') || /\.(jpg|jpeg|png|webp|gif|svg|bmp)$/i.test(fid.split('|')[1]);
+                    return (
+                      <a 
+                        key={i}
+                        href={googleDriveService.getViewerUrl(fid)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-blue-100 transition-all border border-blue-100"
+                      >
+                        {isImage ? <Download size={14} /> : <FileCheck size={14} />}
+                        Lampiran {i + 1}
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Daftar Masalah & Verifikasi */}
           <div className="space-y-4">
@@ -277,6 +279,33 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
                       </div>
                     )}
                   </div>
+
+                  {/* Per-Issue Reason & Files */}
+                  {issue.reason && (
+                    <div className="mt-4 p-4 bg-white/50 rounded-2xl border border-gray-100 italic text-xs text-gray-600 leading-relaxed">
+                      "{issue.reason}"
+                    </div>
+                  )}
+
+                  {issue.file_ids && issue.file_ids.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {issue.file_ids.map((fid, i) => {
+                        const isImage = !fid.includes('|') || /\.(jpg|jpeg|png|webp|gif|svg|bmp)$/i.test(fid.split('|')[1]);
+                        return (
+                          <a 
+                            key={i}
+                            href={googleDriveService.getViewerUrl(fid)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-white text-blue-600 rounded-lg text-[9px] font-bold uppercase tracking-wider hover:bg-blue-50 transition-all border border-blue-50"
+                          >
+                            {isImage ? <Download size={12} /> : <FileCheck size={12} />}
+                            Bukti {i + 1}
+                          </a>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   {/* Manual Photos for ABSEN_KERJA */}
                   {issue.type === 'ABSEN_KERJA' && (issue.in_photo_id || issue.out_photo_id) && (
@@ -378,36 +407,38 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
             </div>
           </div>
 
-          {/* Alasan & Bukti */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <FileText size={16} className="text-[#006E62]" />
-              <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Alasan & Lampiran</h4>
-            </div>
-            <div className="p-6 bg-white border border-gray-100 rounded-3xl shadow-sm italic text-sm text-gray-600 leading-relaxed">
-              "{request.reason}"
-            </div>
-
-            {request.file_ids && request.file_ids.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {request.file_ids.map((fid, i) => {
-                  const isImage = !fid.includes('|') || /\.(jpg|jpeg|png|webp|gif|svg|bmp)$/i.test(fid.split('|')[1]);
-                  return (
-                    <a 
-                      key={i}
-                      href={googleDriveService.getViewerUrl(fid)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-blue-100 transition-all border border-blue-100"
-                    >
-                      {isImage ? <Download size={14} /> : <FileCheck size={14} />}
-                      Lampiran {i + 1}
-                    </a>
-                  );
-                })}
+          {/* Alasan & Bukti Global (Optional fallback) */}
+          {(request.reason && !request.issues.some(i => i.reason)) && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <FileText size={16} className="text-[#006E62]" />
+                <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Alasan & Lampiran</h4>
               </div>
-            )}
-          </div>
+              <div className="p-6 bg-white border border-gray-100 rounded-3xl shadow-sm italic text-sm text-gray-600 leading-relaxed">
+                "{request.reason}"
+              </div>
+
+              {request.file_ids && request.file_ids.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {request.file_ids.map((fid, i) => {
+                    const isImage = !fid.includes('|') || /\.(jpg|jpeg|png|webp|gif|svg|bmp)$/i.test(fid.split('|')[1]);
+                    return (
+                      <a 
+                        key={i}
+                        href={googleDriveService.getViewerUrl(fid)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-blue-100 transition-all border border-blue-100"
+                      >
+                        {isImage ? <Download size={14} /> : <FileCheck size={14} />}
+                        Lampiran {i + 1}
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Daftar Masalah & Verifikasi */}
           <div className="space-y-4">
@@ -477,6 +508,33 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
                       </div>
                     )}
                   </div>
+
+                  {/* Per-Issue Reason & Files */}
+                  {issue.reason && (
+                    <div className="mt-4 p-4 bg-white/50 rounded-2xl border border-gray-100 italic text-xs text-gray-600 leading-relaxed">
+                      "{issue.reason}"
+                    </div>
+                  )}
+
+                  {issue.file_ids && issue.file_ids.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {issue.file_ids.map((fid, i) => {
+                        const isImage = !fid.includes('|') || /\.(jpg|jpeg|png|webp|gif|svg|bmp)$/i.test(fid.split('|')[1]);
+                        return (
+                          <a 
+                            key={i}
+                            href={googleDriveService.getViewerUrl(fid)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-white text-blue-600 rounded-lg text-[9px] font-bold uppercase tracking-wider hover:bg-blue-50 transition-all border border-blue-50"
+                          >
+                            {isImage ? <Download size={12} /> : <FileCheck size={12} />}
+                            Bukti {i + 1}
+                          </a>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   {/* Manual Photos for ABSEN_KERJA */}
                   {issue.type === 'ABSEN_KERJA' && (issue.in_photo_id || issue.out_photo_id) && (
