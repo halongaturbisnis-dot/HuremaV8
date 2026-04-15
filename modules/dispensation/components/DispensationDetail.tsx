@@ -21,6 +21,7 @@ interface DispensationDetailProps {
 const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClose, onSuccess, isAdmin }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [issues, setIssues] = useState<DispensationIssue[]>([...request.issues]);
+  const isAllVerified = issues.every(issue => issue.status !== 'PENDING');
   const [locations, setLocations] = React.useState<Location[]>([]);
   const [showAttendanceDetail, setShowAttendanceDetail] = useState(false);
   const [selectedAttendance, setSelectedAttendance] = useState<any>(null);
@@ -140,7 +141,7 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
           isAdmin && request.status === 'PENDING' && (
             <button
               onClick={handleProcess}
-              disabled={isLoading}
+              disabled={isLoading || !isAllVerified}
               className="flex items-center gap-2 bg-[#006E62] text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#005c52] transition-all shadow-xl shadow-[#006E62]/20 disabled:opacity-50"
             >
               {isLoading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
@@ -603,7 +604,7 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
             {isAdmin && request.status === 'PENDING' && (
               <button
                 onClick={handleProcess}
-                disabled={isLoading}
+                disabled={isLoading || !isAllVerified}
                 className="flex items-center gap-2 bg-[#006E62] text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#005c52] transition-all shadow-xl shadow-[#006E62]/20 disabled:opacity-50"
               >
                 {isLoading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
