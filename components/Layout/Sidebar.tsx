@@ -221,7 +221,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <NavItem 
                     id="admin_settings" 
                     icon={UserKey} 
-                    label="Pengaturan Admin" 
+                    label="Admin" 
                     indent 
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
@@ -343,7 +343,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <NavItem 
                   id="admin_dispensation" 
                   icon={ClipboardList} 
-                  label="Antrean Dispensasi" 
+                  label="Dispensasi" 
                   indent 
                   badge={unreadDispensations} 
                   activeTab={activeTab}
@@ -534,7 +534,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <NavItem 
             id="feedback" 
             icon={MessagesSquare} 
-            label="Feedback Pegawai" 
+            label="Feedback" 
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             isCollapsed={isCollapsed}
@@ -542,7 +542,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <NavItem 
             id="lapor" 
             icon={AlertTriangle} 
-            label="Lapor Pelanggaran" 
+            label="Lapor" 
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             isCollapsed={isCollapsed}
@@ -552,7 +552,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <NavItem 
           id="document" 
           icon={Files} 
-          label="Dokumen Digital" 
+          label="Dokumen" 
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           isCollapsed={isCollapsed}
