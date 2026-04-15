@@ -335,12 +335,39 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
             </div>
           )}
 
-          {/* Step 2: Detail Masalah */}
-          {selectedDate && (
+          {/* Step 2: Pilih Masalah */}
+          {selectedDate && selectedDate.issues.length > 1 && (
+            <div className="space-y-4 animate-in fade-in duration-500">
+              <div className="flex items-center gap-2">
+                <AlertCircle size={16} className="text-[#006E62]" />
+                <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">2. Pilih Masalah</h4>
+              </div>
+              <div className="flex gap-3">
+                {selectedDate.issues.map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => handleIssueToggle(type)}
+                    className={`flex-1 py-4 px-4 rounded-3xl border-2 font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                      selectedIssues.includes(type)
+                      ? 'bg-[#006E62] border-[#006E62] text-white shadow-lg shadow-[#006E62]/20'
+                      : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200'
+                    }`}
+                  >
+                    {selectedIssues.includes(type) ? <CheckCircle2 size={16} /> : <div className="w-4 h-4 rounded-full border-2 border-gray-200" />}
+                    {type.replace('_', ' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Detail Masalah */}
+          {selectedDate && selectedIssues.length > 0 && (
             <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
               <div className="flex items-center gap-2">
                 <Clock size={16} className="text-[#006E62]" />
-                <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">2. Detail Dispensasi</h4>
+                <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">{selectedDate.issues.length > 1 ? '3' : '2'}. Detail Dispensasi</h4>
               </div>
 
               {selectedIssues.map((type) => (
