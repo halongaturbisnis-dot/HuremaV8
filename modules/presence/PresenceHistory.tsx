@@ -62,7 +62,9 @@ const PresenceHistory: React.FC<PresenceHistoryProps> = ({ logs, isLoading }) =>
                   <p className="text-[8px] font-bold text-emerald-600 uppercase tracking-tighter">Check In</p>
                   <div className="flex items-baseline gap-1">
                     <span className="text-lg font-sans font-bold text-gray-800">{formatTime(log.check_in, log.in_timezone)}</span>
-                    <span className="text-[9px] font-bold text-[#006E62] uppercase">{log.status_in}</span>
+                    <span className={`text-[9px] font-bold uppercase ${
+                      log.status_in === 'Terlambat' ? 'text-[#ef4444]' : 'text-[#10b981]'
+                    }`}>{log.status_in}</span>
                   </div>
                   {log.in_address && (
                     <p className="text-[8px] text-gray-400 line-clamp-1 flex items-center gap-1">
@@ -82,7 +84,11 @@ const PresenceHistory: React.FC<PresenceHistoryProps> = ({ logs, isLoading }) =>
                   <p className="text-[8px] font-bold text-blue-600 uppercase tracking-tighter">Check Out</p>
                   <div className="flex items-baseline gap-1">
                     <span className="text-lg font-sans font-bold text-gray-800">{formatTime(log.check_out, log.out_timezone)}</span>
-                    <span className={`text-[9px] font-bold uppercase ${log.status_out === 'Pulang Cepat' ? 'text-rose-500' : 'text-blue-500'}`}>{log.status_out}</span>
+                    <span className={`text-[9px] font-bold uppercase ${
+                      log.status_out === 'Pulang Cepat' ? 'text-[#f59e0b]' : 
+                      log.status_out === 'Terlambat Pulang' ? 'text-[#3b82f6]' :
+                      'text-[#10b981]'
+                    }`}>{log.status_out}</span>
                   </div>
                   {log.out_address && (
                     <p className="text-[8px] text-gray-400 line-clamp-1 flex items-center gap-1">

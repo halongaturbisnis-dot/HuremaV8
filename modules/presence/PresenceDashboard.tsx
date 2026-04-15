@@ -319,15 +319,15 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
                 <div className="flex items-center gap-2">
                   <div className="text-right mr-2 space-y-0.5">
                     <p className={`text-[10px] font-black uppercase tracking-tighter ${
-                      log.status_in === 'Terlambat' ? 'text-rose-500' : 'text-emerald-600'
+                      log.status_in === 'Terlambat' ? 'text-[#ef4444]' : 'text-[#10b981]'
                     }`}>
                       {log.status_in}
                     </p>
                     {log.status_out && (
                       <p className={`text-[10px] font-black uppercase tracking-tighter ${
-                        log.status_out === 'Pulang Cepat' ? 'text-amber-500' : 
-                        log.status_out === 'Terlambat Pulang' ? 'text-blue-500' :
-                        'text-emerald-600'
+                        log.status_out === 'Pulang Cepat' ? 'text-[#f59e0b]' : 
+                        log.status_out === 'Terlambat Pulang' ? 'text-[#3b82f6]' :
+                        'text-[#10b981]'
                       }`}>
                         {log.status_out === 'Pulang Cepat' ? 'PULANG AWAL' : log.status_out}
                       </p>

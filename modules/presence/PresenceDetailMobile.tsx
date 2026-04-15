@@ -199,7 +199,9 @@ const PresenceDetailMobile: React.FC<PresenceDetailMobileProps> = ({ attendance,
                 </div>
                 <div>
                   <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Status Masuk</p>
-                  <p className={`text-sm font-bold ${attendance.late_minutes > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                  <p className={`text-sm font-bold ${
+                    attendance.status_in === 'Terlambat' ? 'text-[#ef4444]' : 'text-[#10b981]'
+                  }`}>
                     {attendance.status_in} {attendance.late_minutes > 0 ? `(${attendance.late_minutes} Menit)` : ''}
                   </p>
                 </div>
@@ -277,7 +279,11 @@ const PresenceDetailMobile: React.FC<PresenceDetailMobileProps> = ({ attendance,
                 </div>
                 <div>
                   <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Status Pulang</p>
-                  <p className={`text-sm font-bold ${attendance.early_departure_minutes > 0 || attendance.late_checkout_minutes > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                  <p className={`text-sm font-bold ${
+                    attendance.status_out === 'Pulang Cepat' ? 'text-[#f59e0b]' : 
+                    attendance.status_out === 'Terlambat Pulang' ? 'text-[#3b82f6]' :
+                    'text-[#10b981]'
+                  }`}>
                     {attendance.status_out || '-'}
                   </p>
                 </div>
