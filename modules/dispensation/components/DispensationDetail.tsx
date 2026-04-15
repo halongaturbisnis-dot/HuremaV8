@@ -234,7 +234,7 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
                     </div>
 
                     {/* Admin Action for TERLAMBAT / PULANG_AWAL */}
-                    {isAdmin && request.status === 'PENDING' && (issue.type === 'TERLAMBAT' || issue.type === 'PULANG_AWAL') && request.presence_id && (
+                    {isAdmin && (issue.type === 'TERLAMBAT' || issue.type === 'PULANG_AWAL') && request.presence_id && (
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleShowAttendance(request.presence_id!)}
