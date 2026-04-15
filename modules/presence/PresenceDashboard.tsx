@@ -156,10 +156,10 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
           </button>
           <div>
             <h2 className="text-lg font-bold text-gray-800 tracking-tight">Presensi</h2>
-            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Ringkasan Kehadiran</p>
           </div>
         </div>
       </div>
+      
 
       {/* Action Buttons */}
       <div className="px-6 pt-4 grid grid-cols-2 gap-4 relative z-20">
