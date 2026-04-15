@@ -239,7 +239,7 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
                         <button
                           onClick={() => handleShowAttendance(request.presence_id!)}
                           disabled={isFetchingAttendance}
-                          className="flex items-center gap-2 px-4 py-2 bg-[#006E62] text-[#FFFFFF]-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#004D45]-100 transition-all active:scale-95"
+                          className="flex items-center gap-2 px-4 py-2 bg-[#006E62] text-[#FFFFFF] rounded-xl text-[10px] font-white uppercase tracking-widest hover:bg-[#004D45] transition-all active:scale-95"
                         >
                           {isFetchingAttendance ? <Loader2 size={14} className="animate-spin" /> : <Eye size={14} />}
                           Lihat Detail Presensi
