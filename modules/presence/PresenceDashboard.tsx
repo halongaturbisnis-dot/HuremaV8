@@ -9,7 +9,8 @@ import {
   CheckCircle2, 
   AlertCircle,
   TrendingUp,
-  Filter
+  Filter,
+  ArrowLeft
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { authService } from '../../services/authService';
@@ -19,6 +20,8 @@ import { googleDriveService } from '../../services/googleDriveService';
 import { Attendance, Account } from '../../types';
 import PresenceDetailMobile from './PresenceDetailMobile';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
+import MobileDateRangeFilter from '../../components/Common/MobileDateRangeFilter';
+import { formatDateID } from '../../utils/dateFormatter';
 
 interface PresenceDashboardProps {
   onVerify: () => void;
@@ -142,8 +145,24 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
 
   return (
     <div className="min-h-screen bg-white pb-24">
+      {/* Header with Back Button */}
+      <div className="px-6 pt-8 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-30 pb-4">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setActiveTab ? setActiveTab('dashboard') : null}
+            className="w-10 h-10 bg-gray-50 text-gray-400 rounded-xl flex items-center justify-center active:scale-90 transition-all"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-lg font-bold text-gray-800 tracking-tight">Presensi</h2>
+            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Ringkasan Kehadiran</p>
+          </div>
+        </div>
+      </div>
+
       {/* Action Buttons */}
-      <div className="px-6 pt-8 grid grid-cols-2 gap-4 relative z-20">
+      <div className="px-6 pt-4 grid grid-cols-2 gap-4 relative z-20">
         <button 
           onClick={onVerify}
           className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100 flex flex-col items-center gap-3 group active:scale-95 transition-all"
@@ -167,34 +186,12 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
 
       {/* Filter Section */}
       <div className="px-6 mt-8">
-        <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Filter size={16} className="text-[#006E62]" />
-              <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Filter Riwayat</h3>
-            </div>
-            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Maks 31 Hari</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex-1 relative">
-              <input 
-                type="date" 
-                value={dateRange.start}
-                onChange={(e) => handleDateChange('start', e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006E62] text-center appearance-none"
-              />
-            </div>
-            <div className="text-gray-300 font-bold text-xs">sampai</div>
-            <div className="flex-1 relative">
-              <input 
-                type="date" 
-                value={dateRange.end}
-                onChange={(e) => handleDateChange('end', e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-[11px] font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006E62] text-center appearance-none"
-              />
-            </div>
-          </div>
-        </div>
+        <MobileDateRangeFilter 
+          startDate={dateRange.start}
+          endDate={dateRange.end}
+          onStartDateChange={(val) => handleDateChange('start', val)}
+          onEndDateChange={(val) => handleDateChange('end', val)}
+        />
       </div>
 
       {/* Statistics Section */}
@@ -306,7 +303,7 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
                 <div className="flex items-center gap-4">
                   <div className="text-left">
                     <p className="text-xs font-bold text-gray-800">
-                      {new Date(log.created_at!).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {formatDateID(log.created_at)}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
@@ -320,13 +317,19 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="text-right mr-2">
-                    <p className={`text-[10px] font-black uppercase tracking-tighter ${log.status_in === 'Terlambat' ? 'text-rose-500' : 'text-emerald-600'}`}>
+                  <div className="text-right mr-2 space-y-0.5">
+                    <p className={`text-[10px] font-black uppercase tracking-tighter ${
+                      log.status_in === 'Terlambat' ? 'text-rose-500' : 'text-emerald-600'
+                    }`}>
                       {log.status_in}
                     </p>
                     {log.status_out && (
-                      <p className={`text-[9px] font-bold uppercase tracking-tighter ${log.status_out === 'Pulang Cepat' ? 'text-amber-500' : 'text-blue-500'}`}>
-                        {log.status_out}
+                      <p className={`text-[10px] font-black uppercase tracking-tighter ${
+                        log.status_out === 'Pulang Cepat' ? 'text-amber-500' : 
+                        log.status_out === 'Terlambat Pulang' ? 'text-blue-500' :
+                        'text-emerald-600'
+                      }`}>
+                        {log.status_out === 'Pulang Cepat' ? 'PULANG AWAL' : log.status_out}
                       </p>
                     )}
                   </div>

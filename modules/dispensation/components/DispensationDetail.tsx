@@ -10,6 +10,7 @@ import { locationService } from '../../../services/locationService';
 import { presenceService } from '../../../services/presenceService';
 import { Location, Account } from '../../../types';
 import Swal from 'sweetalert2';
+import { formatDateID, formatFullDateID } from '../../../utils/dateFormatter';
 
 interface DispensationDetailProps {
   request: DispensationRequest;
@@ -104,24 +105,6 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
     return googleDriveService.getFileUrl(id);
   };
 
-  const formatDateFull = (date: string | Date) => {
-    return new Intl.DateTimeFormat('id-ID', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    }).format(new Date(date));
-  };
-
-  const formatDateSimple = (date: string | Date | undefined) => {
-    if (!date) return '-';
-    return new Intl.DateTimeFormat('id-ID', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    }).format(new Date(date));
-  };
-
   if (isAdmin) {
     return (
       <DetailModulLayoutAdmin
@@ -159,9 +142,9 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
             <div>
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tanggal</p>
               <p className="text-sm font-black text-gray-800">
-                {formatDateFull(request.date)}
+                {formatFullDateID(request.date)}
               </p>
-              <p className="text-[11px] text-gray-500 font-bold">Diajukan: {formatDateSimple(request.created_at)}</p>
+              <p className="text-[11px] text-gray-500 font-bold">Diajukan: {formatDateID(request.created_at)}</p>
             </div>
           </div>
 
@@ -402,9 +385,9 @@ const DispensationDetail: React.FC<DispensationDetailProps> = ({ request, onClos
             <div>
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tanggal</p>
               <p className="text-base font-black text-gray-800">
-                {formatDateFull(request.date)}
+                {formatFullDateID(request.date)}
               </p>
-              <p className="text-xs text-gray-500 font-bold">Diajukan: {formatDateSimple(request.created_at)}</p>
+              <p className="text-xs text-gray-500 font-bold">Diajukan: {formatDateID(request.created_at)}</p>
             </div>
           </div>
 

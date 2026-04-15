@@ -4,6 +4,7 @@ import { X, Clock, User, MapPin, Calendar, AlertCircle, Check, AlertTriangle, Ca
 import { Attendance, Account } from '../../types';
 import { googleDriveService } from '../../services/googleDriveService';
 import PresenceMap from './PresenceMap';
+import { formatDateID } from '../../utils/dateFormatter';
 
 interface PresenceDetailMobileProps {
   attendance: Attendance;
@@ -16,15 +17,6 @@ const PresenceDetailMobile: React.FC<PresenceDetailMobileProps> = ({ attendance,
     if (!photoId) return null;
     if (photoId.startsWith('http')) return photoId;
     return googleDriveService.getFileUrl(photoId);
-  };
-
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
   };
 
   const formatTimeOnly = (timeStr: string | null, forceTimeZone?: string | null) => {
@@ -352,7 +344,7 @@ const PresenceDetailMobile: React.FC<PresenceDetailMobileProps> = ({ attendance,
               <Calendar size={16} />
             </div>
             <p className="text-[7px] font-bold text-gray-400 uppercase tracking-widest">Tanggal Kerja</p>
-            <p className="text-[9px] font-bold text-gray-800">{formatDate(attendance.created_at)}</p>
+            <p className="text-[9px] font-bold text-gray-800">{formatDateID(attendance.created_at)}</p>
           </div>
           <div className="flex flex-col items-center text-center border-x border-gray-200">
             <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500 mb-1">

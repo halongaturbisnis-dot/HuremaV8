@@ -4,6 +4,7 @@ import { Fingerprint, Clock, MapPin, ExternalLink, Calendar, MessageSquare } fro
 import { Attendance } from '../../types';
 import { googleDriveService } from '../../services/googleDriveService';
 import Swal from 'sweetalert2';
+import { formatDateID } from '../../utils/dateFormatter';
 
 interface PresenceHistoryProps {
   logs: Attendance[];
@@ -12,12 +13,7 @@ interface PresenceHistoryProps {
 
 const PresenceHistory: React.FC<PresenceHistoryProps> = ({ logs, isLoading }) => {
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
+    return formatDateID(dateStr);
   };
 
   const formatTime = (dateStr: string | null, forceTimeZone?: string | null) => {

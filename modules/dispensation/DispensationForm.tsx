@@ -7,6 +7,7 @@ import { accountService } from '../../services/accountService';
 import { locationService } from '../../services/locationService';
 import { DispensationRequest, DispensationIssueType, DispensationIssue, Account, Location } from '../../types';
 import Swal from 'sweetalert2';
+import { formatDateID } from '../../utils/dateFormatter';
 
 interface DispensationFormProps {
   onClose: () => void;
@@ -295,10 +296,10 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
                         <div className="flex items-center gap-4">
                           <div className={`w-14 h-14 rounded-2xl flex flex-col items-center justify-center border ${selectedDate?.date === d.date ? 'bg-white/20 border-white/30' : 'bg-red-50 border-red-100'}`}>
                             <span className={`text-[10px] font-black uppercase ${selectedDate?.date === d.date ? 'text-white/70' : 'text-red-400'}`}>
-                              {new Date(d.date).toLocaleDateString('id-ID', { month: 'short' })}
+                              {formatDateID(d.date).split(' ')[1]}
                             </span>
                             <span className={`text-lg font-black leading-none ${selectedDate?.date === d.date ? 'text-white' : 'text-red-600'}`}>
-                              {new Date(d.date).getDate()}
+                              {formatDateID(d.date).split(' ')[0]}
                             </span>
                           </div>
                           

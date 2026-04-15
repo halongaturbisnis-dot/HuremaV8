@@ -269,7 +269,7 @@ const App: React.FC = () => {
           ) : activeTab === 'out_of_range_submission' ? (
             <div className="p-4"><SubmissionMain type="Presensi Luar" /></div>
           ) : activeTab === 'dispensation' ? (
-            <div className="p-4"><DispensationMain user={user} /></div>
+            <div className="p-4"><DispensationMain user={user} setActiveTab={setActiveTab} /></div>
           ) : activeTab === 'admin_dispensation' ? (
             <div className="p-4"><AdminDispensationMain user={user} /></div>
           ) : activeTab === 'attendance_report' ? (

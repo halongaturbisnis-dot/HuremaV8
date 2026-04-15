@@ -1,5 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { ClipboardList, Plus, Search, Filter, Clock, CheckCircle2, XCircle, AlertCircle, Eye, Edit2, Trash2, FileText, Calendar } from 'lucide-react';
+import { 
+  ClipboardList, 
+  Plus, 
+  Search, 
+  Filter, 
+  Clock, 
+  CheckCircle2, 
+  XCircle, 
+  AlertCircle, 
+  Eye, 
+  Edit2, 
+  Trash2, 
+  FileText, 
+  Calendar,
+  ArrowLeft
+} from 'lucide-react';
 import { dispensationService } from '../../services/dispensationService';
 import { DispensationRequest, AuthUser } from '../../types';
 import { authService } from '../../services/authService';
@@ -7,12 +22,14 @@ import { supabase } from '../../lib/supabase';
 import Swal from 'sweetalert2';
 import DispensationForm from './DispensationForm';
 import DispensationDetail from './components/DispensationDetail';
+import { formatDateID } from '../../utils/dateFormatter';
 
 interface DispensationMainProps {
   user: AuthUser;
+  setActiveTab?: (tab: string) => void;
 }
 
-const DispensationMain: React.FC<DispensationMainProps> = ({ user }) => {
+const DispensationMain: React.FC<DispensationMainProps> = ({ user, setActiveTab }) => {
   const [requests, setRequests] = useState<DispensationRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -122,11 +139,14 @@ const DispensationMain: React.FC<DispensationMainProps> = ({ user }) => {
       {/* Header */}
       <div className="px-6 pt-8 pb-4 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-30">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#006E62]/10 rounded-xl flex items-center justify-center text-[#006E62]">
-            <ClipboardList size={24} />
-          </div>
+          <button 
+            onClick={() => setActiveTab ? setActiveTab('presence') : null}
+            className="w-10 h-10 bg-gray-50 text-gray-400 rounded-xl flex items-center justify-center active:scale-90 transition-all"
+          >
+            <ArrowLeft size={20} />
+          </button>
           <div>
-            <h2 className="text-lg font-bold text-gray-800 tracking-tight">Dispensasi Presensi</h2>
+            <h2 className="text-lg font-bold text-gray-800 tracking-tight">Dispensasi</h2>
             <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Koreksi Data Kehadiran</p>
           </div>
         </div>
@@ -165,12 +185,19 @@ const DispensationMain: React.FC<DispensationMainProps> = ({ user }) => {
           </div>
         ) : (
           requests.map((req) => (
-            <div key={req.id} className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm space-y-3">
+            <div 
+              key={req.id} 
+              onClick={() => {
+                setSelectedRequest(req);
+                setShowDetail(true);
+              }}
+              className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm space-y-3 active:scale-[0.98] transition-all cursor-pointer"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Calendar size={14} className="text-gray-400" />
                   <span className="text-xs font-bold text-gray-700">
-                    {new Date(req.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {formatDateID(req.date)}
                   </span>
                 </div>
                 {getStatusBadge(req.status)}
@@ -192,22 +219,17 @@ const DispensationMain: React.FC<DispensationMainProps> = ({ user }) => {
 
               <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
                 <span className="text-[8px] text-gray-300 font-bold uppercase tracking-widest">
-                  Dibuat {new Date(req.created_at).toLocaleDateString('id-ID')}
+                  Dibuat {formatDateID(req.created_at)}
                 </span>
                 <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => {
-                      setSelectedRequest(req);
-                      setShowDetail(true);
-                    }}
-                    className="p-2 text-gray-400 hover:text-[#006E62] active:scale-90 transition-all"
-                  >
+                  <div className="p-2 text-gray-400 hover:text-[#006E62] active:scale-90 transition-all">
                     <Eye size={18} />
-                  </button>
+                  </div>
                   {req.status === 'PENDING' && (
                     <>
                       <button 
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setEditingRequest(req);
                           setShowForm(true);
                         }}
@@ -216,7 +238,10 @@ const DispensationMain: React.FC<DispensationMainProps> = ({ user }) => {
                         <Edit2 size={18} />
                       </button>
                       <button 
-                        onClick={() => handleDelete(req.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(req.id);
+                        }}
                         className="p-2 text-gray-400 hover:text-rose-600 active:scale-90 transition-all"
                       >
                         <Trash2 size={18} />
