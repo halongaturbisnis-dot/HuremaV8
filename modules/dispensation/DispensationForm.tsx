@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, AlertCircle, Calendar, Clock, FileText, Upload, CheckCircle2, Loader2, Info, ClipboardList, MapPin, Camera } from 'lucide-react';
+import { X, Save, AlertCircle, Calendar, Clock, FileText, Upload, CheckCircle2, Loader2, Info, ClipboardList, MapPin, Camera, FileCheck } from 'lucide-react';
 import { dispensationService } from '../../services/dispensationService';
 import { googleDriveService } from '../../services/googleDriveService';
 import { authService } from '../../services/authService';
@@ -118,8 +118,8 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedDate || selectedIssues.length === 0 || !reason) {
-      Swal.fire('Peringatan', 'Mohon lengkapi data pengajuan. Semua kolom wajib diisi.', 'warning');
+    if (!selectedDate || selectedIssues.length === 0 || !reason || additionalFiles.length === 0) {
+      Swal.fire('Peringatan', 'Mohon lengkapi data pengajuan. Semua kolom termasuk lampiran wajib diisi.', 'warning');
       return;
     }
 
@@ -399,8 +399,12 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Lampiran Tambahan</label>
                 <div className="flex flex-wrap gap-2">
                   {additionalFiles.map((f, i) => (
-                    <div key={i} className="relative w-16 h-16 bg-gray-100 rounded-xl overflow-hidden group">
-                      <img src={URL.createObjectURL(f)} className="w-full h-full object-cover" />
+                    <div key={i} className="relative w-16 h-16 bg-gray-100 rounded-xl overflow-hidden group flex items-center justify-center">
+                      {f.type.startsWith('image/') ? (
+                        <img src={URL.createObjectURL(f)} className="w-full h-full object-cover" />
+                      ) : (
+                        <FileCheck className="text-[#006E62]" size={24} />
+                      )}
                       <button 
                         type="button"
                         onClick={() => setAdditionalFiles(prev => prev.filter((_, idx) => idx !== i))}
@@ -427,7 +431,7 @@ const DispensationForm: React.FC<DispensationFormProps> = ({ onClose, onSuccess,
           
           <button
             onClick={handleSubmit}
-            disabled={isLoading || !selectedDate || selectedIssues.length === 0 || !reason}
+            disabled={isLoading || !selectedDate || selectedIssues.length === 0 || !reason || additionalFiles.length === 0}
             className="flex items-center gap-2 bg-[#006E62] text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#005c52] transition-all shadow-xl shadow-[#006E62]/20 disabled:opacity-50"
           >
             {isLoading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}

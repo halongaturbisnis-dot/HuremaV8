@@ -155,11 +155,14 @@ export const dispensationService = {
             schedule_name_snapshot: 'DISPENSASI ABSEN',
             late_minutes: 0,
             early_departure_minutes: 0,
-            work_duration: workDuration
+            work_duration: workDuration,
+            notes: 'TERDISPENSASI'
           }]);
         } else if (request.presence_id) {
           // UPDATE existing attendance record
-          const updateData: any = {};
+          const updateData: any = {
+            notes: `(TERDISPENSASI) ${request.reason}`
+          };
           if (issue.type === 'TERLAMBAT') {
             updateData.status_in = 'Tepat Waktu';
             updateData.late_minutes = 0;

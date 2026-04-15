@@ -31,7 +31,7 @@ const AdminDispensationMain: React.FC<AdminDispensationMainProps> = ({ user }) =
         schema: 'public', 
         table: 'dispensation_requests' 
       }, () => {
-        fetchRequests();
+        fetchRequests(true);
       })
       .subscribe();
 
@@ -40,15 +40,34 @@ const AdminDispensationMain: React.FC<AdminDispensationMainProps> = ({ user }) =
     };
   }, []);
 
-  const fetchRequests = async () => {
+  const fetchRequests = async (isSilent = false) => {
     try {
-      setIsLoading(true);
+      if (!isSilent) setIsLoading(true);
       const data = await dispensationService.getAll();
       setRequests(data);
+      
+      if (isSilent) {
+        const Toast = Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+          didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer);
+            toast.addEventListener('mouseleave', Swal.resumeTimer);
+          }
+        });
+
+        Toast.fire({
+          icon: 'info',
+          title: 'Data Antrean Diperbarui'
+        });
+      }
     } catch (error) {
       console.error(error);
     } finally {
-      setIsLoading(false);
+      if (!isSilent) setIsLoading(false);
     }
   };
 
