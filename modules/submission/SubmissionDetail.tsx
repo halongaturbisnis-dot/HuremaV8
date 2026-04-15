@@ -310,7 +310,7 @@ const SubmissionDetail: React.FC<SubmissionDetailProps> = ({ submission, onClose
                             {lateEarly || 0} Menit
                           </p>
                         </div>
-                        {(lateEarly > 0 || att?.status_out === 'Terlambat Pulang') && (
+                        {(lateEarly > 0 || att?.status_out === 'Terlambat Pulang' || reason) && (
                           <div className="pt-1">
                             <p className="text-[8px] font-bold text-gray-400 uppercase">Alasan {isIN ? 'Terlambat' : (att?.status_out === 'Terlambat Pulang' ? 'Terlambat' : 'Pulang Awal')}</p>
                             <p className="text-[10px] text-gray-500 italic leading-tight">"{reason || '-'}"</p>

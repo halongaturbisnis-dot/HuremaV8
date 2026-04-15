@@ -264,9 +264,9 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                       <div>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Alasan</p>
                         <p className="text-[11px] text-gray-600 italic leading-tight">
-                          {attendance.late_minutes > 0 
-                            ? (attendance.late_reason || 'Tidak ada alasan') 
-                            : (attendance.check_in ? 'Tepat Waktu' : '-')}
+                          {attendance.late_reason 
+                            ? attendance.late_reason 
+                            : (attendance.late_minutes > 0 ? 'Tidak ada alasan' : (attendance.check_in ? 'Tepat Waktu' : '-'))}
                         </p>
                       </div>
                     </div>
@@ -378,9 +378,11 @@ const AttendanceDetail: React.FC<AttendanceDetailProps> = ({ attendance, account
                         <p className="text-[11px] text-gray-600 italic leading-tight">
                           {attendance.status_out === 'Terlambat Pulang'
                             ? (attendance.late_checkout_reason || 'Tidak ada alasan')
-                            : (attendance.early_departure_minutes > 0 
-                                ? (attendance.early_departure_reason || 'Tidak ada alasan') 
-                                : (attendance.check_out ? 'Sesuai Jadwal' : '-'))}
+                            : (attendance.early_departure_reason 
+                                ? attendance.early_departure_reason 
+                                : (attendance.early_departure_minutes > 0 
+                                    ? 'Tidak ada alasan' 
+                                    : (attendance.check_out ? 'Sesuai Jadwal' : '-')))}
                         </p>
                       </div>
                     </div>

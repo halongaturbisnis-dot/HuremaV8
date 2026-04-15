@@ -213,7 +213,11 @@ const PresenceDetailMobile: React.FC<PresenceDetailMobileProps> = ({ attendance,
                 </div>
                 <div>
                   <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Alasan</p>
-                  <p className="text-sm font-medium text-gray-600 italic">{attendance.late_reason || '-'}</p>
+                  <p className="text-sm font-medium text-gray-600 italic">
+                    {attendance.late_reason 
+                      ? attendance.late_reason 
+                      : (attendance.late_minutes > 0 ? 'Tidak ada alasan' : (attendance.check_in ? 'Tepat Waktu' : '-'))}
+                  </p>
                 </div>
                 <div>
                   <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Jenis Presensi Luar</p>
@@ -287,7 +291,15 @@ const PresenceDetailMobile: React.FC<PresenceDetailMobileProps> = ({ attendance,
                 </div>
                 <div>
                   <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Alasan</p>
-                  <p className="text-sm font-medium text-gray-600 italic">{attendance.early_departure_reason || attendance.late_checkout_reason || '-'}</p>
+                  <p className="text-sm font-medium text-gray-600 italic">
+                    {attendance.early_departure_reason 
+                      ? attendance.early_departure_reason 
+                      : (attendance.late_checkout_reason 
+                          ? attendance.late_checkout_reason 
+                          : (attendance.early_departure_minutes > 0 || attendance.late_checkout_minutes > 0 
+                              ? 'Tidak ada alasan' 
+                              : (attendance.check_out ? 'Sesuai Jadwal' : '-')))}
+                  </p>
                 </div>
               </div>
             </div>
