@@ -3,6 +3,7 @@ import { ClipboardList, Plus, Search, Filter, Clock, CheckCircle2, XCircle, Aler
 import { dispensationService } from '../../services/dispensationService';
 import { DispensationRequest, AuthUser } from '../../types';
 import { authService } from '../../services/authService';
+import { supabase } from '../../lib/supabase';
 import Swal from 'sweetalert2';
 import DispensationForm from './DispensationForm';
 import DispensationDetail from './components/DispensationDetail';
@@ -22,6 +23,23 @@ const DispensationMain: React.FC<DispensationMainProps> = ({ user }) => {
   useEffect(() => {
     if (user?.id) {
       fetchRequests();
+
+      // Realtime subscription for User
+      const channel = supabase
+        .channel(`user-dispensation-${user.id}`)
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'dispensation_requests',
+          filter: `account_id=eq.${user.id}`
+        }, () => {
+          fetchRequests();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user?.id]);
 

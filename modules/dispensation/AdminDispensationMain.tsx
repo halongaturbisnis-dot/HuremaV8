@@ -3,6 +3,7 @@ import { ClipboardList, Search, Filter, Clock, CheckCircle2, XCircle, AlertCircl
 import { authService } from '../../services/authService';
 import { dispensationService } from '../../services/dispensationService';
 import { googleDriveService } from '../../services/googleDriveService';
+import { supabase } from '../../lib/supabase';
 import { DispensationRequest, AuthUser } from '../../types';
 import Swal from 'sweetalert2';
 import DispensationDetail from './components/DispensationDetail';
@@ -21,6 +22,22 @@ const AdminDispensationMain: React.FC<AdminDispensationMainProps> = ({ user }) =
 
   useEffect(() => {
     fetchRequests();
+
+    // Realtime subscription for Admin
+    const channel = supabase
+      .channel('admin-dispensation-realtime')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'dispensation_requests' 
+      }, () => {
+        fetchRequests();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchRequests = async () => {

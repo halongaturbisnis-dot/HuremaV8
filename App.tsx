@@ -47,6 +47,10 @@ const Login = lazy(() => import('./modules/auth/Login'));
 
 import { authService } from './services/authService';
 import { settingsService } from './services/settingsService';
+import { financeService } from './services/financeService';
+import { dispensationService } from './services/dispensationService';
+import { submissionService } from './services/submissionService';
+import { supabase } from './lib/supabase';
 import { AuthUser } from './types';
 
 const App: React.FC = () => {
@@ -63,8 +67,51 @@ const App: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [unreadReimbursements, setUnreadReimbursements] = useState(0);
+  const [unreadCompensations, setUnreadCompensations] = useState(0);
+  const [unreadDispensations, setUnreadDispensations] = useState(0);
+  const [pendingSubmissions, setPendingSubmissions] = useState<Record<string, number>>({});
 
   const isAdmin = user?.role === 'admin' || user?.is_hr_admin || user?.is_performance_admin || user?.is_finance_admin;
+
+  useEffect(() => {
+    if (isAdmin && user?.id) {
+      const fetchUnread = async () => {
+        try {
+          const [reimburseCount, compensationCount, dispensationCount, submissionCounts] = await Promise.all([
+            financeService.getUnreadCount(),
+            financeService.getUnreadCompensationCount(),
+            dispensationService.getUnreadCount(),
+            submissionService.getPendingCounts()
+          ]);
+          setUnreadReimbursements(reimburseCount);
+          setUnreadCompensations(compensationCount);
+          setUnreadDispensations(dispensationCount);
+          setPendingSubmissions(submissionCounts);
+        } catch (error) {
+          console.error('Error fetching unread counts in App:', error);
+        }
+      };
+
+      fetchUnread();
+
+      const channel = supabase
+        .channel('app-sidebar-notifications')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'finance_reimbursements' }, fetchUnread)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'account_compensation_logs' }, fetchUnread)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'dispensation_requests' }, fetchUnread)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'account_submissions' }, fetchUnread)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'attendances' }, fetchUnread)
+        .subscribe();
+
+      const interval = setInterval(fetchUnread, 300000);
+      
+      return () => {
+        supabase.removeChannel(channel);
+        clearInterval(interval);
+      };
+    }
+  }, [user?.id, isAdmin]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -134,17 +181,24 @@ const App: React.FC = () => {
     );
   }
 
-  const NavItemMobile = ({ id, icon: Icon, label, indent = false }: { id: any, icon: any, label: string, indent?: boolean }) => (
+  const NavItemMobile = ({ id, icon: Icon, label, indent = false, badge }: { id: any, icon: any, label: string, indent?: boolean, badge?: number }) => (
     <button
       onClick={() => { setActiveTab(id); setIsMobileMenuOpen(false); }}
-      className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 ${
+      className={`flex items-center justify-between px-4 py-3 rounded-md transition-all duration-200 w-full mb-1 ${
         activeTab === id 
           ? 'bg-[#006E62] text-white shadow-md' 
           : 'text-gray-600 hover:bg-gray-100'
       } ${indent ? 'ml-4 w-[calc(100%-1rem)]' : ''}`}
     >
-      <Icon size={20} />
-      <span className="font-medium text-sm">{label}</span>
+      <div className="flex items-center gap-3">
+        <Icon size={20} />
+        <span className="font-medium text-sm">{label}</span>
+      </div>
+      {badge !== undefined && badge > 0 && (
+        <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+          {badge}
+        </span>
+      )}
     </button>
   );
 
@@ -271,6 +325,10 @@ const App: React.FC = () => {
         setActiveTab={setActiveTab} 
         isCollapsed={isSidebarCollapsed} 
         setIsCollapsed={setIsSidebarCollapsed} 
+        unreadReimbursements={unreadReimbursements}
+        unreadCompensations={unreadCompensations}
+        unreadDispensations={unreadDispensations}
+        pendingSubmissions={pendingSubmissions}
       />
 
       {/* Mobile Menu Overlay */}
@@ -330,10 +388,10 @@ const App: React.FC = () => {
               {isAdmin && false && (
                 <NavItemMobile id="salary_adjustment" icon={Receipt} label="Kustom Gaji" indent />
               )}
-              <NavItemMobile id="reimbursement" icon={Receipt} label="Reimburse" indent={!isAdmin} />
+              <NavItemMobile id="reimbursement" icon={Receipt} label="Reimburse" indent={!isAdmin} badge={unreadReimbursements} />
               <NavItemMobile id="early_salary" icon={Receipt} label="Ambil Gaji Awal" indent={!isAdmin} />
               {isAdmin && (
-                <NavItemMobile id="compensation" icon={Receipt} label="Kompensasi" indent={false} />
+                <NavItemMobile id="compensation" icon={Receipt} label="Kompensasi" indent={false} badge={unreadCompensations} />
               )}
 
               {(isAdmin || user?.is_hr_admin) && (
@@ -352,7 +410,7 @@ const App: React.FC = () => {
                 <NavItemMobile id="maternity_leave" icon={Heart} label="Cuti Melahirkan" indent />
               )}
               {isAdmin && (
-                <NavItemMobile id="admin_dispensation" icon={ClipboardCheck} label="Dispensasi sisi admin" indent />
+                <NavItemMobile id="admin_dispensation" icon={ClipboardCheck} label="Dispensasi sisi admin" indent badge={unreadDispensations} />
               )}
 
               {!isAdmin && <NavItemMobile id="document" icon={Files} label="Dokumen Digital" />}

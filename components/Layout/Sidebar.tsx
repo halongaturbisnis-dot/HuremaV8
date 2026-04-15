@@ -67,62 +67,32 @@ interface SidebarProps {
   setActiveTab: (tab: any) => void;
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
+  unreadReimbursements?: number;
+  unreadCompensations?: number;
+  unreadDispensations?: number;
+  pendingSubmissions?: Record<string, number>;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isCollapsed, setIsCollapsed }) => {
+const Sidebar: React.FC<SidebarProps> = ({ 
+  activeTab, 
+  setActiveTab, 
+  isCollapsed, 
+  setIsCollapsed,
+  unreadReimbursements = 0,
+  unreadCompensations = 0,
+  unreadDispensations = 0,
+  pendingSubmissions = {}
+}) => {
   const [isMasterOpen, setIsMasterOpen] = useState(true);
   const [isSubmissionOpen, setIsSubmissionOpen] = useState(false);
   const [isPerformanceOpen, setIsPerformanceOpen] = useState(false);
   const [isFinanceOpen, setIsFinanceOpen] = useState(false);
   const [isPresenceOpen, setIsPresenceOpen] = useState(true);
   const [isReportOpen, setIsReportOpen] = useState(false);
-  const [unreadReimbursements, setUnreadReimbursements] = useState(0);
-  const [unreadCompensations, setUnreadCompensations] = useState(0);
-  const [unreadDispensations, setUnreadDispensations] = useState(0);
-  const [pendingSubmissions, setPendingSubmissions] = useState<Record<string, number>>({});
   const user = authService.getCurrentUser();
   const isAdmin = user?.role === 'admin' || user?.is_hr_admin || user?.is_performance_admin || user?.is_finance_admin;
 
-  useEffect(() => {
-    if (isAdmin && user?.id) {
-      const fetchUnread = async () => {
-        try {
-          const [reimburseCount, compensationCount, dispensationCount, submissionCounts] = await Promise.all([
-            financeService.getUnreadCount(),
-            financeService.getUnreadCompensationCount(),
-            dispensationService.getUnreadCount(),
-            submissionService.getPendingCounts()
-          ]);
-          setUnreadReimbursements(reimburseCount);
-          setUnreadCompensations(compensationCount);
-          setUnreadDispensations(dispensationCount);
-          setPendingSubmissions(submissionCounts);
-        } catch (error) {
-          console.error('Error fetching unread counts:', error);
-        }
-      };
 
-      fetchUnread();
-
-      // Subscribe to Realtime changes for silent updates
-      const channel = supabase
-        .channel('sidebar-notifications')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'finance_reimbursements' }, fetchUnread)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'account_compensation_logs' }, fetchUnread)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'dispensation_requests' }, fetchUnread)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'account_submissions' }, fetchUnread)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'attendances' }, fetchUnread)
-        .subscribe();
-
-      // Refresh every 5 minutes as fallback
-      const interval = setInterval(fetchUnread, 300000);
-      
-      return () => {
-        supabase.removeChannel(channel);
-        clearInterval(interval);
-      };
-    }
-  }, [user?.id, isAdmin]);
 
   const handleLogout = async () => {
     const result = await Swal.fire({

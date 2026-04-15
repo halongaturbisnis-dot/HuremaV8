@@ -125,7 +125,9 @@ export const dispensationService = {
           const checkOutDate = new Date(`${request.date}T${issue.manual_check_out}:00`);
 
           const { timeUtils } = await import('../lib/timeUtils');
+          const { presenceService } = await import('./presenceService');
           const timezone = timeUtils.getTimeZoneFromCoords(location.latitude, location.longitude);
+          const workDuration = presenceService.calculateWorkDuration(checkInDate, checkOutDate);
 
           await supabase.from('attendances').insert([{
             account_id: request.account_id,
@@ -152,7 +154,8 @@ export const dispensationService = {
             out_timezone: timezone,
             schedule_name_snapshot: 'DISPENSASI ABSEN',
             late_minutes: 0,
-            early_departure_minutes: 0
+            early_departure_minutes: 0,
+            work_duration: workDuration
           }]);
         } else if (request.presence_id) {
           // UPDATE existing attendance record
