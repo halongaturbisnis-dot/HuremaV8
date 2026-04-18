@@ -294,7 +294,11 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
           </div>
         ) : (
           <div className="space-y-3">
-            {attendances.slice().reverse().map((log) => (
+            {[...attendances].sort((a, b) => {
+              const dateA = a.check_in || a.created_at || '';
+              const dateB = b.check_in || b.created_at || '';
+              return dateB.localeCompare(dateA);
+            }).map((log) => (
               <button 
                 key={log.id}
                 onClick={() => setSelectedAttendance(log)}

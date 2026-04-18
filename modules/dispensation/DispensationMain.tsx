@@ -184,7 +184,7 @@ const DispensationMain: React.FC<DispensationMainProps> = ({ user, setActiveTab 
             <p className="text-xs font-bold uppercase tracking-widest">Belum ada pengajuan</p>
           </div>
         ) : (
-          requests.map((req) => (
+          [...requests].sort((a, b) => b.date.localeCompare(a.date)).map((req) => (
             <div 
               key={req.id} 
               onClick={() => {
