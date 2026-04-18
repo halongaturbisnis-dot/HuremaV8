@@ -167,47 +167,47 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
             <button 
               key={req.id} 
               onClick={() => setSelectedRequest(req)}
-              className={listCardStyleGuide.container}
+              className={`${listCardStyleGuide.container} flex-col items-stretch gap-3`}
             >
-              <div className={listCardStyleGuide.contentWrapper}>
-                <div className="flex items-center justify-between mb-1">
-                  <p className={listCardStyleGuide.title}>
-                    {formatDateID(req.start_date)}
-                  </p>
-                  {getStatusBadge(req.status)}
-                </div>
-                <p className={listCardStyleGuide.subtitle}>
-                  {req.description || 'Tanpa keterangan'}
+              {/* Line 1: Date (Left) | Status (Right) */}
+              <div className="flex items-center justify-between w-full">
+                <p className={listCardStyleGuide.title}>
+                  {formatDateID(req.start_date)}
                 </p>
+                {getStatusBadge(req.status)}
               </div>
 
-              <div className={listCardStyleGuide.rightWrapper}>
-                <div className={listCardStyleGuide.actionGroup}>
-                  {req.status === 'rejected' && (
-                    <div 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (onAjukan) onAjukan(req);
-                      }}
-                      className={`${listCardStyleGuide.actionButton} bg-amber-50 text-amber-600 border-amber-100`}
-                      title="Ajukan Ulang"
-                    >
-                      <RefreshCcw size={16} />
-                    </div>
-                  )}
-                  {(req.status === 'pending' || req.status === 'rejected') && (
-                    <div 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(req.id);
-                      }}
-                      className={`${listCardStyleGuide.actionButton} bg-rose-50 text-rose-500 border-rose-100`}
-                      title="Hapus"
-                    >
-                      <Trash2 size={16} />
-                    </div>
-                  )}
-                </div>
+              {/* Line 2: Description (Left) */}
+              <p className={`${listCardStyleGuide.subtitle} text-left opacity-80 normal-case font-medium`}>
+                {req.description || 'Tidak ada keterangan'}
+              </p>
+
+              {/* Line 3: Actions (Right) */}
+              <div className="flex items-center justify-end w-full gap-2 mt-1">
+                {req.status === 'rejected' && (
+                  <div 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onAjukan) onAjukan(req);
+                    }}
+                    className={`${listCardStyleGuide.actionButton} bg-[#006E62]/5 text-[#006E62] border-[#006E62]/10`}
+                    title="Ajukan Ulang"
+                  >
+                    <RefreshCcw size={16} />
+                  </div>
+                )}
+                {(req.status === 'pending' || req.status === 'rejected') && (
+                  <div 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(req.id);
+                    }}
+                    className={`${listCardStyleGuide.actionButton} bg-rose-50 text-rose-500 border-rose-100`}
+                    title="Hapus"
+                  >
+                    <Trash2 size={16} />
+                  </div>
+                )}
               </div>
             </button>
           ))
