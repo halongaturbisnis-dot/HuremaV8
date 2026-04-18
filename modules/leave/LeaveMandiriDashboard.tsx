@@ -19,6 +19,7 @@ import Swal from 'sweetalert2';
 import LeaveMandiriForm from './components/LeaveMandiriForm';
 import LeaveDetailModalUser from './components/LeaveDetailModalUser';
 import { formatDateID } from '../../utils/dateFormatter';
+import { listCardStyleGuide } from '../../utils/listCardStyleGuide';
 
 interface LeaveMandiriDashboardProps {
   user: AuthUser;
@@ -163,54 +164,52 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
           </div>
         ) : (
           [...requests].sort((a, b) => b.start_date.localeCompare(a.start_date)).map((req) => (
-            <div 
+            <button 
               key={req.id} 
               onClick={() => setSelectedRequest(req)}
-              className="bg-white border-b border-gray-400 p-5 flex flex-col gap-2 active:bg-gray-50 transition-colors"
+              className={listCardStyleGuide.container}
             >
-              {/* Line 1: Date & Status */}
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-black text-gray-800 tracking-tight leading-tight">
-                  {formatDateID(req.start_date)}
+              <div className={listCardStyleGuide.contentWrapper}>
+                <div className="flex items-center justify-between mb-1">
+                  <p className={listCardStyleGuide.title}>
+                    {formatDateID(req.start_date)}
+                  </p>
+                  {getStatusBadge(req.status)}
+                </div>
+                <p className={listCardStyleGuide.subtitle}>
+                  {req.description || 'Tanpa keterangan'}
                 </p>
-                {getStatusBadge(req.status)}
               </div>
-              
-              {/* Line 2: Description */}
-              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest line-clamp-1">
-                {req.description || 'Tanpa keterangan'}
-              </p>
 
-              {/* Line 3: Actions */}
-              <div className="flex items-center justify-end mt-1">
-                <div className="flex items-center gap-2">
+              <div className={listCardStyleGuide.rightWrapper}>
+                <div className={listCardStyleGuide.actionGroup}>
                   {req.status === 'rejected' && (
-                    <button 
+                    <div 
                       onClick={(e) => {
                         e.stopPropagation();
                         if (onAjukan) onAjukan(req);
                       }}
-                      className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-amber-100"
+                      className={`${listCardStyleGuide.actionButton} bg-amber-50 text-amber-600 border-amber-100`}
                       title="Ajukan Ulang"
                     >
                       <RefreshCcw size={16} />
-                    </button>
+                    </div>
                   )}
-                  {req.status === 'pending' || req.status === 'rejected' ? (
-                    <button 
+                  {(req.status === 'pending' || req.status === 'rejected') && (
+                    <div 
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDelete(req.id);
                       }}
-                      className="w-10 h-10 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-rose-100"
+                      className={`${listCardStyleGuide.actionButton} bg-rose-50 text-rose-500 border-rose-100`}
                       title="Hapus"
                     >
                       <Trash2 size={16} />
-                    </button>
-                  ) : null}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            </button>
           ))
         )}
       </div>
