@@ -139,8 +139,8 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({ user, set
         </button>
       </div>
 
-      {/* List - Card View */}
-      <div className="px-6 space-y-3 mt-4">
+      {/* List View - Like Presence History */}
+      <div className="px-6 space-y-4 mt-6">
         {requests.length === 0 ? (
           <div className="py-20 flex flex-col items-center justify-center text-gray-300">
             <Coffee size={48} className="mb-4 opacity-20" />
@@ -150,55 +150,55 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({ user, set
           [...requests].sort((a, b) => b.start_date.localeCompare(a.start_date)).map((req) => (
             <div 
               key={req.id} 
-              className="bg-white p-5 rounded-[32px] border border-gray-100 shadow-sm space-y-4 hover:border-[#006E62]/20 transition-all"
+              className="bg-white rounded-3xl border border-gray-100 p-4 shadow-sm border-l-4 border-l-[#006E62] space-y-4 hover:bg-gray-50/50 transition-all"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gray-50 text-gray-400 rounded-lg flex items-center justify-center">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-emerald-50 text-[#006E62] rounded-xl flex items-center justify-center">
                     <Calendar size={14} />
                   </div>
-                  <span className="text-xs font-black text-gray-700">
-                    {formatDateID(req.start_date)}
-                  </span>
+                  <div>
+                    <p className="text-xs font-black text-gray-800 leading-none">
+                      {formatDateID(req.start_date)}
+                    </p>
+                    <span className="text-[8px] text-gray-400 font-bold uppercase tracking-widest mt-1 inline-block">
+                      Dibuat {formatDateID(req.created_at)}
+                    </span>
+                  </div>
                 </div>
                 {getStatusBadge(req.status)}
               </div>
 
-              <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-50 relative group">
+              <div className="bg-gray-50/80 p-3 rounded-2xl border border-gray-50">
                 <p className="text-[11px] text-gray-500 leading-relaxed italic line-clamp-2">
                   "{req.description || 'Tidak ada keterangan.'}"
                 </p>
               </div>
 
-              <div className="pt-2 flex items-center justify-between">
-                <span className="text-[8px] text-gray-300 font-bold uppercase tracking-widest">
-                  Dibuat {formatDateID(req.created_at)}
-                </span>
-                <div className="flex items-center gap-2">
-                  {req.status === 'rejected' && (
-                    <button 
-                      onClick={() => {
-                        setEditingRequest(req);
-                        setShowForm(true);
-                      }}
-                      className="px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-[9px] font-black uppercase tracking-widest active:scale-90 transition-all flex items-center gap-1"
-                    >
-                      <RefreshCcw size={10} /> Ajukan Ulang
-                    </button>
-                  )}
-                  {req.status === 'pending' || req.status === 'rejected' ? (
-                    <button 
-                      onClick={() => handleDelete(req.id)}
-                      className="w-8 h-8 bg-rose-50 text-rose-500 rounded-lg flex items-center justify-center active:scale-90 transition-all"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  ) : (
-                    <div className="w-8 h-8 bg-gray-50 text-gray-300 rounded-lg flex items-center justify-center">
-                      <Eye size={14} />
-                    </div>
-                  )}
-                </div>
+              <div className="flex items-center justify-end gap-2 pt-1">
+                {req.status === 'rejected' && (
+                  <button 
+                    onClick={() => {
+                      setEditingRequest(req);
+                      setShowForm(true);
+                    }}
+                    className="px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-[9px] font-black uppercase tracking-widest active:scale-90 transition-all flex items-center gap-1 shadow-sm"
+                  >
+                    <RefreshCcw size={10} /> Ajukan Ulang
+                  </button>
+                )}
+                {req.status === 'pending' || req.status === 'rejected' ? (
+                  <button 
+                    onClick={() => handleDelete(req.id)}
+                    className="w-8 h-8 bg-rose-50 text-rose-500 rounded-lg flex items-center justify-center active:scale-90 transition-all shadow-sm"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                ) : (
+                  <div className="w-8 h-8 bg-gray-50 text-gray-300 rounded-lg flex items-center justify-center">
+                    <Eye size={14} />
+                  </div>
+                )}
               </div>
             </div>
           ))

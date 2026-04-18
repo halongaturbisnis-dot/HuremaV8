@@ -134,39 +134,43 @@ const LeaveMandiriForm: React.FC<LeaveMandiriFormProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          {isAdmin && (
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Karyawan</label>
-              <select 
-                required 
-                name="account_id" 
-                value={formData.account_id} 
-                onChange={handleChange} 
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-[#006E62] transition-all"
-              >
-                <option value="">-- Pilih Karyawan --</option>
-                {accounts.map(acc => (
-                  <option key={acc.id} value={acc.id}>{acc.full_name} ({acc.internal_nik})</option>
-                ))}
-              </select>
-            </div>
-          )}
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar" style={{ maxHeight: 'calc(85vh - 84px - 140px)' }}>
+            {isAdmin && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Pilih Karyawan (*)</label>
+                <select 
+                  required 
+                  name="account_id" 
+                  value={formData.account_id} 
+                  onChange={handleChange} 
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-[#006E62] transition-all"
+                >
+                  <option value="">-- Pilih Karyawan --</option>
+                  {accounts.map(acc => (
+                    <option key={acc.id} value={acc.id}>{acc.full_name} ({acc.internal_nik})</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tanggal Libur</label>
-              <input 
-                type="date"
-                required 
-                name="start_date" 
-                value={formData.start_date} 
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setFormData(prev => ({ ...prev, start_date: val, end_date: val }));
-                }} 
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-[#006E62] transition-all"
-              />
+              <div className="relative">
+                <input 
+                  type="date"
+                  required 
+                  name="start_date" 
+                  value={formData.start_date} 
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormData(prev => ({ ...prev, start_date: val, end_date: val }));
+                  }} 
+                  className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-base font-black text-gray-800 outline-none focus:ring-2 focus:ring-[#006E62] transition-all appearance-none"
+                />
+                <Calendar className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+              </div>
               <p className="text-[9px] text-amber-600 font-bold uppercase flex items-center gap-1 mt-1 ml-1">
                 <AlertCircle size={10} /> Berlaku untuk 1 hari kerja
               </p>
@@ -181,31 +185,32 @@ const LeaveMandiriForm: React.FC<LeaveMandiriFormProps> = ({
                 onChange={handleChange} 
                 rows={4} 
                 placeholder="Berikan alasan yang jelas..."
-                className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-[#006E62] transition-all resize-none" 
+                className="w-full px-5 py-5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-[#006E62] transition-all resize-none" 
               />
             </div>
           </div>
+        </div>
 
-          <div className="flex flex-col gap-3 pt-2">
-            <button 
-              type="submit" 
-              disabled={isSubmitting}
-              className="w-full h-14 bg-[#006E62] text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-[#006E62]/20 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              <Save size={18} />
-              {isSubmitting ? 'Memproses...' : editData ? 'Kirim Ulang' : 'Kirim Pengajuan'}
-            </button>
-            <button 
-              type="button" 
-              onClick={onClose}
-              className="w-full h-12 bg-gray-50 text-gray-400 rounded-2xl text-xs font-bold uppercase tracking-widest active:scale-[0.98] transition-all"
-            >
-              Batal
-            </button>
-          </div>
-        </form>
-      </div>
+        <div className="p-8 border-t border-gray-50 bg-white space-y-3">
+          <button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="w-full h-14 bg-[#006E62] text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-[#006E62]/20 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <Save size={18} />
+            {isSubmitting ? 'Memproses...' : editData ? 'Kirim Ulang' : 'Kirim Pengajuan'}
+          </button>
+          <button 
+            type="button" 
+            onClick={onClose}
+            className="w-full h-12 bg-gray-50 text-gray-400 rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-[0.98] transition-all"
+          >
+            Batal
+          </button>
+        </div>
+      </form>
     </div>
+  </div>
   );
 };
 

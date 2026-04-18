@@ -184,7 +184,7 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
                 <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Tanggal Pengajuan</th>
                 <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Keterangan</th>
                 <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
-                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Aksi</th>
+                <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -256,7 +256,7 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
                               e.stopPropagation();
                               handleDelete(req.id);
                             }}
-                            className="p-2 text-gray-300 hover:text-rose-500 transition-colors active:scale-90"
+                            className="p-2 text-gray-300 hover:text-rose-500 transition-colors active:scale-90 opacity-0 group-hover:opacity-100"
                             title="Hapus Data Admin"
                           >
                             <Trash2 size={16} />
