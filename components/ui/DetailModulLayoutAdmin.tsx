@@ -89,14 +89,23 @@ const DetailModulLayoutAdmin: React.FC<DetailModulLayoutAdminProps> = ({
                 {/* Col 3: Career */}
                 <div className="text-center md:text-left">
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Karir</p>
-                  <div className="space-y-1">
-                    <p className="text-sm font-black text-gray-800 leading-tight">{accountData.position || '-'}</p>
-                    <p className="text-sm font-bold text-gray-600 leading-tight">{accountData.grade || '-'}</p>
-                    <div className="flex items-center justify-center md:justify-start gap-1.5 text-gray-600">
-                      <MapPin size={14} className="text-[#006E62] shrink-0" />
-                      <p className="text-sm font-bold leading-tight">
-                        {accountData.location?.name || 'Lokasi tidak diketahui'}
-                      </p>
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jabatan</p>
+                      <p className="text-sm font-black text-gray-800 leading-tight">{accountData.position || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Departemen</p>
+                      <p className="text-sm font-bold text-gray-600 leading-tight">{accountData.grade || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Penempatan</p>
+                      <div className="flex items-center justify-center md:justify-start gap-1.5 text-gray-600">
+                        <MapPin size={12} className="text-[#006E62] shrink-0" />
+                        <p className="text-xs font-bold leading-tight">
+                          {accountData.location?.name || 'Tidak diketahui'}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

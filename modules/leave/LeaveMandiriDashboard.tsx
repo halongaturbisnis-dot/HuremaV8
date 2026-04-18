@@ -139,8 +139,8 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({ user, set
         </button>
       </div>
 
-      {/* List View - Like Presence History */}
-      <div className="px-6 space-y-4 mt-6">
+      {/* List View - Compact List like Presence History */}
+      <div className="px-5 space-y-1 mt-6">
         {requests.length === 0 ? (
           <div className="py-20 flex flex-col items-center justify-center text-gray-300">
             <Coffee size={48} className="mb-4 opacity-20" />
@@ -150,55 +150,58 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({ user, set
           [...requests].sort((a, b) => b.start_date.localeCompare(a.start_date)).map((req) => (
             <div 
               key={req.id} 
-              className="bg-white rounded-3xl border border-gray-100 p-4 shadow-sm border-l-4 border-l-[#006E62] space-y-4 hover:bg-gray-50/50 transition-all"
+              className="bg-white border-b border-gray-50 p-4 flex items-center justify-between gap-4 active:bg-gray-50 transition-colors"
             >
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-emerald-50 text-[#006E62] rounded-xl flex items-center justify-center">
-                    <Calendar size={14} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-gray-800 leading-none">
-                      {formatDateID(req.start_date)}
-                    </p>
-                    <span className="text-[8px] text-gray-400 font-bold uppercase tracking-widest mt-1 inline-block">
-                      Dibuat {formatDateID(req.created_at)}
-                    </span>
-                  </div>
+              <div className="flex items-center gap-4 min-w-0">
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+                  req.status === 'approved' ? 'bg-emerald-50 text-emerald-600' :
+                  req.status === 'rejected' ? 'bg-rose-50 text-rose-600' :
+                  'bg-blue-50 text-blue-600'
+                }`}>
+                  <Calendar size={18} />
                 </div>
-                {getStatusBadge(req.status)}
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-gray-800 truncate leading-tight">
+                    {formatDateID(req.start_date)}
+                  </p>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5 truncate">
+                    {req.description || 'Tanpa keterangan'}
+                  </p>
+                </div>
               </div>
 
-              <div className="bg-gray-50/80 p-3 rounded-2xl border border-gray-50">
-                <p className="text-[11px] text-gray-500 leading-relaxed italic line-clamp-2">
-                  "{req.description || 'Tidak ada keterangan.'}"
-                </p>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-1">
-                {req.status === 'rejected' && (
-                  <button 
-                    onClick={() => {
-                      setEditingRequest(req);
-                      setShowForm(true);
-                    }}
-                    className="px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-[9px] font-black uppercase tracking-widest active:scale-90 transition-all flex items-center gap-1 shadow-sm"
-                  >
-                    <RefreshCcw size={10} /> Ajukan Ulang
-                  </button>
-                )}
-                {req.status === 'pending' || req.status === 'rejected' ? (
-                  <button 
-                    onClick={() => handleDelete(req.id)}
-                    className="w-8 h-8 bg-rose-50 text-rose-500 rounded-lg flex items-center justify-center active:scale-90 transition-all shadow-sm"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                ) : (
-                  <div className="w-8 h-8 bg-gray-50 text-gray-300 rounded-lg flex items-center justify-center">
-                    <Eye size={14} />
-                  </div>
-                )}
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="flex flex-col items-end">
+                  {getStatusBadge(req.status)}
+                </div>
+                
+                <div className="flex items-center gap-1 border-l border-gray-100 pl-3">
+                  {req.status === 'rejected' && (
+                    <button 
+                      onClick={() => {
+                        setEditingRequest(req);
+                        setShowForm(true);
+                      }}
+                      className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center active:scale-90 transition-all shadow-sm"
+                      title="Ajukan Ulang"
+                    >
+                      <RefreshCcw size={14} />
+                    </button>
+                  )}
+                  {req.status === 'pending' || req.status === 'rejected' ? (
+                    <button 
+                      onClick={() => handleDelete(req.id)}
+                      className="w-8 h-8 bg-rose-50 text-rose-500 rounded-lg flex items-center justify-center active:scale-90 transition-all shadow-sm"
+                      title="Hapus"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  ) : (
+                    <div className="w-8 h-8 bg-blue-50 text-blue-500 rounded-lg flex items-center justify-center opacity-40">
+                      <CheckCircle2 size={14} />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))

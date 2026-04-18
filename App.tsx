@@ -461,53 +461,13 @@ const App: React.FC = () => {
             ) : activeTab === 'submission' ? (
               <SubmissionMain />
             ) : activeTab === 'leave' ? (
-              isAdmin ? (
-                <AdminSubmissionModule 
-                  user={user!} 
-                  type="Libur Mandiri" 
-                  title="Manajemen Libur Mandiri" 
-                  subtitle="Pusat Pengajuan Libur Mandiri Karyawan"
-                  icon={Coffee}
-                />
-              ) : (
-                <LeaveMain />
-              )
+              <LeaveMain />
             ) : activeTab === 'annual_leave' ? (
-              isAdmin ? (
-                <AdminSubmissionModule 
-                  user={user!} 
-                  type="Cuti Tahunan" 
-                  title="Manajemen Cuti Tahunan" 
-                  subtitle="Pusat Pengajuan Cuti Tahunan Karyawan"
-                  icon={Plane}
-                />
-              ) : (
-                <AnnualLeaveMain />
-              )
+              <AnnualLeaveMain />
             ) : activeTab === 'permission' ? (
-              isAdmin ? (
-                <AdminSubmissionModule 
-                  user={user!} 
-                  type="Izin" 
-                  title="Manajemen Izin" 
-                  subtitle="Pusat Pengajuan Izin Karyawan"
-                  icon={Calendar}
-                />
-              ) : (
-                <PermissionMain />
-              )
+              <PermissionMain />
             ) : activeTab === 'maternity_leave' ? (
-              isAdmin ? (
-                <AdminSubmissionModule 
-                  user={user!} 
-                  type="Cuti Melahirkan" 
-                  title="Manajemen Cuti Melahirkan" 
-                  subtitle="Pusat Pengajuan Cuti Melahirkan Karyawan"
-                  icon={Heart}
-                />
-              ) : (
-                <MaternityLeaveMain />
-              )
+              <MaternityLeaveMain />
             ) : activeTab === 'kpi' ? (
               <KPIMain />
             ) : activeTab === 'key_activity' ? (

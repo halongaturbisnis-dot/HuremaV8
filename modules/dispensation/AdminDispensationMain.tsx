@@ -182,7 +182,7 @@ const AdminDispensationMain: React.FC<AdminDispensationMainProps> = ({ user }) =
                 <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tanggal</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Masalah</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Aksi</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -206,7 +206,7 @@ const AdminDispensationMain: React.FC<AdminDispensationMainProps> = ({ user }) =
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-100 shrink-0 shadow-sm">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-100 shrink-0 shadow-sm transition-transform group-hover:scale-105">
                           {req.account?.photo_google_id ? (
                             <img 
                               src={googleDriveService.getFileUrl(req.account.photo_google_id)} 
@@ -230,9 +230,9 @@ const AdminDispensationMain: React.FC<AdminDispensationMainProps> = ({ user }) =
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 text-xs font-bold text-gray-700">
                         <Calendar size={14} className="text-gray-400" />
-                        <span className="text-xs font-bold text-gray-700">{new Date(req.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        <span>{new Date(req.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -254,17 +254,20 @@ const AdminDispensationMain: React.FC<AdminDispensationMainProps> = ({ user }) =
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end pr-2">
+                      <div className="flex justify-end items-center gap-3">
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDelete(req.id);
                           }}
-                          className="p-2 text-gray-300 hover:text-rose-500 transition-colors active:scale-90"
+                          className="p-2 text-gray-300 hover:text-rose-500 transition-colors active:scale-90 opacity-0 group-hover:opacity-100"
                           title="Hapus Pengajuan"
                         >
                           <Trash2 size={16} />
                         </button>
+                        <div className="p-1 text-gray-300 group-hover:text-[#006E62] transition-colors">
+                          <ArrowRight size={18} />
+                        </div>
                       </div>
                     </td>
                   </tr>
