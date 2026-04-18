@@ -22,12 +22,18 @@ import { formatDateID } from '../../utils/dateFormatter';
 interface LeaveMandiriDashboardProps {
   user: AuthUser;
   setActiveTab?: (tab: string) => void;
+  onAjukan?: (request?: LeaveRequest) => void;
+  onRequestsLoaded?: (requests: LeaveRequest[]) => void;
 }
 
-const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({ user, setActiveTab }) => {
+const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({ 
+  user, 
+  setActiveTab,
+  onAjukan,
+  onRequestsLoaded
+}) => {
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
   const [editingRequest, setEditingRequest] = useState<LeaveRequest | null>(null);
 
   useEffect(() => {
@@ -58,6 +64,7 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({ user, set
       if (!isSilent) setIsLoading(true);
       const data = await leaveService.getByAccountId(user!.id);
       setRequests(data);
+      if (onRequestsLoaded) onRequestsLoaded(data);
     } catch (error) {
       console.error(error);
     } finally {
@@ -118,20 +125,26 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({ user, set
       <div className="px-6 pt-8 pb-4 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-30">
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => setActiveTab ? setActiveTab('presence') : null}
-            className="w-10 h-10 bg-gray-50 text-gray-400 rounded-xl flex items-center justify-center active:scale-90 transition-all"
+            onClick={() => {
+              if (setActiveTab) {
+                setActiveTab('presence');
+              } else {
+                // Fallback for standalone mode or directly mounted
+                window.history.back();
+              }
+            }}
+            className="w-10 h-10 bg-gray-50 text-gray-400 rounded-xl flex items-center justify-center active:scale-90 transition-all font-bold"
           >
             <ArrowLeft size={20} />
           </button>
           <div>
             <h2 className="text-lg font-bold text-gray-800 tracking-tight">Libur Mandiri</h2>
-            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Riwayat & Pengajuan</p>
+            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-tight">Riwayat & Pengajuan</p>
           </div>
         </div>
         <button 
           onClick={() => {
-            setEditingRequest(null);
-            setShowForm(true);
+            if (onAjukan) onAjukan();
           }}
           className="bg-[#006E62] text-white px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#006E62]/20 active:scale-90 transition-all shrink-0 text-xs font-black uppercase tracking-widest"
         >
@@ -179,8 +192,7 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({ user, set
                   {req.status === 'rejected' && (
                     <button 
                       onClick={() => {
-                        setEditingRequest(req);
-                        setShowForm(true);
+                        if (onAjukan) onAjukan(req);
                       }}
                       className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center active:scale-90 transition-all shadow-sm"
                       title="Ajukan Ulang"
@@ -208,23 +220,6 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({ user, set
         )}
       </div>
 
-      {/* Form Modal */}
-      {showForm && (
-        <LeaveMandiriForm 
-          accountId={user.id}
-          onClose={() => {
-            setShowForm(false);
-            setEditingRequest(null);
-          }}
-          onSuccess={() => {
-            setShowForm(false);
-            setEditingRequest(null);
-            fetchRequests();
-          }}
-          editData={editingRequest}
-          existingRequests={requests}
-        />
-      )}
     </div>
   );
 };

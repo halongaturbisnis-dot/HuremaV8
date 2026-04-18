@@ -461,7 +461,7 @@ const App: React.FC = () => {
             ) : activeTab === 'submission' ? (
               <SubmissionMain />
             ) : activeTab === 'leave' ? (
-              <LeaveMain />
+              <LeaveMain setActiveTab={setActiveTab} />
             ) : activeTab === 'annual_leave' ? (
               <AnnualLeaveMain />
             ) : activeTab === 'permission' ? (
