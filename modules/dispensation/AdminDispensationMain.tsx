@@ -156,7 +156,7 @@ const AdminDispensationMain: React.FC<AdminDispensationMainProps> = ({ user }) =
                   <td colSpan={4} className="px-6 py-12 text-center text-gray-400 italic text-xs">Tidak ada data pengajuan yang ditemukan.</td>
                 </tr>
               ) : (
-                filteredRequests.map((req) => (
+                [...filteredRequests].sort((a, b) => b.date.localeCompare(a.date)).map((req) => (
                   <tr 
                     key={req.id} 
                     onClick={() => {

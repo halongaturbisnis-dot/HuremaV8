@@ -5,7 +5,8 @@ import {
   CheckSquare, FileText, Users, Wallet, CreditCard, 
   MessageSquare, AlertTriangle, ShieldCheck, ChevronRight, 
   ArrowLeft, User, MapPin, ExternalLink, Info, Plus, Building,
-  Plane, Heart, FileCheck, History, LogIn, LogOut, Target, Video, Files, Database, Star, Trophy, Bell
+  Plane, Heart, FileCheck, History, LogIn, LogOut, Target, Video, Files, Database, Star, Trophy, Bell,
+  Timer, Coffee, CalendarOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { authService } from '../../services/authService';
@@ -26,7 +27,7 @@ interface MobileDashboardProps {
   setActiveTab: (tab: string) => void;
 }
 
-type ViewMode = 'main' | 'presence_sub' | 'overtime_sub' | 'off_sub' | 'presence_history' | 'overtime_history' | 'admin';
+type ViewMode = 'main' | 'presence_sub' | 'overtime_sub' | 'presence_history' | 'overtime_history' | 'admin';
 
 const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab }) => {
   const [account, setAccount] = useState<Account | null>(null);
@@ -149,12 +150,27 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
     return new Date(dateStr).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
-  const canRequestLeave = account?.schedule_type === 'Fleksibel' || account?.schedule_type === 'Shift Dinamis' || account?.schedule_type === 'Shift' || isAdmin;
-
   const menuItems = [
     { id: 'presence', label: 'Presensi Reguler', icon: Fingerprint, color: 'bg-emerald-500', onClick: () => setActiveTab('presence') },
-    { id: 'overtime', label: 'Presensi Lembur', icon: Clock, color: 'bg-orange-500', onClick: () => setViewMode('overtime_sub') },
-    { id: 'off', label: 'OFF KERJA', icon: Calendar, color: 'bg-blue-500', onClick: () => setViewMode('off_sub') },
+    { id: 'overtime', label: 'Presensi Lembur', icon: Timer, color: 'bg-orange-500', onClick: () => setViewMode('overtime_sub') },
+    { 
+      id: 'leave', 
+      label: 'Libur Mandiri', 
+      icon: Coffee, 
+      color: 'bg-emerald-500', 
+      onClick: () => setActiveTab('leave'),
+      isFrozen: account?.schedule_type === 'Hari Kerja'
+    },
+    { id: 'permission', label: 'Izin', icon: CalendarOff, color: 'bg-blue-500', onClick: () => setActiveTab('permission') },
+    { id: 'annual_leave', label: 'Cuti', icon: Plane, color: 'bg-indigo-500', onClick: () => setActiveTab('annual_leave') },
+    { 
+      id: 'maternity_leave', 
+      label: 'Cuti Melahirkan', 
+      icon: Heart, 
+      color: 'bg-rose-500', 
+      onClick: () => setActiveTab('maternity_leave'),
+      isFrozen: !account?.gender || account?.gender !== 'Perempuan'
+    },
     { id: 'kpi', label: 'KPI', icon: Target, color: 'bg-indigo-500', onClick: () => setActiveTab('kpi') },
     { id: 'key_activity', label: 'Key Activities', icon: CheckSquare, color: 'bg-rose-500', onClick: () => setActiveTab('key_activity') },
     { id: 'sales_report', label: 'Sales Report', icon: MapPin, color: 'bg-amber-500', onClick: () => setActiveTab('sales_report') },
@@ -165,14 +181,14 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
     { id: 'feedback', label: 'Feedback', icon: MessageSquare, color: 'bg-blue-600', onClick: () => setActiveTab('feedback') },
     { id: 'lapor', label: 'Lapor', icon: AlertTriangle, color: 'bg-red-500', onClick: () => setActiveTab('lapor') },
     { id: 'document', label: 'Dokumen', icon: Files, color: 'bg-slate-600', onClick: () => setActiveTab('document') },
-    ...(isAdmin ? [{ id: 'admin', label: 'Menu Admin', icon: Database, color: 'bg-gray-800', onClick: () => setViewMode('admin') }] : [])
+    ...(isAdmin ? [{ id: 'admin', label: 'Menu Admin', icon: Database, color: 'bg-gray-800', onClick: () => setViewMode('admin'), isFrozen: false }] : [])
   ];
 
   const adminMenuItems = [
     { id: 'accounts', label: 'Karyawan', icon: Users, color: 'bg-blue-600', onClick: () => setActiveTab('accounts') },
     { id: 'schedules', label: 'Jadwal', icon: Calendar, color: 'bg-emerald-600', onClick: () => setActiveTab('schedules') },
     { id: 'presence_admin', label: 'Presensi', icon: Fingerprint, color: 'bg-orange-600', onClick: () => setActiveTab('presence') },
-    { id: 'overtime_admin', label: 'Lembur', icon: Clock, color: 'bg-amber-600', onClick: () => setActiveTab('overtime') },
+    { id: 'overtime_admin', label: 'Lembur', icon: Timer, color: 'bg-amber-600', onClick: () => setActiveTab('overtime') },
     { id: 'leave_admin', label: 'Libur', icon: Plane, color: 'bg-indigo-600', onClick: () => setActiveTab('leave') },
     { id: 'permission_admin', label: 'Izin', icon: FileText, color: 'bg-rose-600', onClick: () => setActiveTab('permission') },
     { id: 'payroll_admin', label: 'Payroll', icon: Wallet, color: 'bg-emerald-700', onClick: () => setActiveTab('payroll') },
@@ -183,11 +199,12 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
 
   const renderMainGrid = () => (
     <div className="grid grid-cols-3 gap-4 p-4">
-      {menuItems.map((item) => (
+      {menuItems.map((item: any) => (
         <button
           key={item.id}
-          onClick={item.onClick}
-          className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
+          onClick={() => !item.isFrozen && item.onClick()}
+          disabled={item.isFrozen}
+          className={`flex flex-col items-center gap-2 group active:scale-95 transition-all ${item.isFrozen ? 'opacity-40 grayscale pointer-events-none' : ''}`}
         >
           <div className={`w-14 h-14 ${item.color} rounded-2xl flex items-center justify-center text-white shadow-lg shadow-${item.color.split('-')[1]}-500/20 group-hover:scale-110 transition-transform`}>
             <item.icon size={28} />
@@ -260,7 +277,7 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
           className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
         >
           <div className="w-14 h-14 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform">
-            <Clock size={28} />
+            <Timer size={28} />
           </div>
           <span className="text-[10px] font-bold text-gray-600 text-center leading-tight uppercase tracking-tighter">
             Presensi In/Out
@@ -275,65 +292,6 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
           </div>
           <span className="text-[10px] font-bold text-gray-600 text-center leading-tight uppercase tracking-tighter">
             Riwayat Lembur
-          </span>
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderOffSub = () => (
-    <div className="p-4 space-y-6">
-      <div className="flex items-center gap-4 mb-2">
-        <button onClick={() => setViewMode('main')} className="p-2 bg-gray-100 rounded-full text-gray-600">
-          <ArrowLeft size={20} />
-        </button>
-        <h2 className="text-lg font-bold text-gray-800">OFF KERJA</h2>
-      </div>
-      <div className="grid grid-cols-3 gap-4">
-        {canRequestLeave && (
-          <button
-            onClick={() => setActiveTab('leave')}
-            className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
-          >
-            <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform">
-              <Calendar size={28} />
-            </div>
-            <span className="text-[10px] font-bold text-gray-600 text-center leading-tight uppercase tracking-tighter">
-              Libur Mandiri
-            </span>
-          </button>
-        )}
-        <button
-          onClick={() => setActiveTab('permission')}
-          className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
-        >
-          <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform">
-            <FileText size={28} />
-          </div>
-          <span className="text-[10px] font-bold text-gray-600 text-center leading-tight uppercase tracking-tighter">
-            Izin
-          </span>
-        </button>
-        <button
-          onClick={() => setActiveTab('annual_leave')}
-          className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
-        >
-          <div className="w-14 h-14 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform">
-            <Plane size={28} />
-          </div>
-          <span className="text-[10px] font-bold text-gray-600 text-center leading-tight uppercase tracking-tighter">
-            Cuti
-          </span>
-        </button>
-        <button
-          onClick={() => setActiveTab('maternity_leave')}
-          className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
-        >
-          <div className="w-14 h-14 bg-rose-500 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform">
-            <Heart size={28} />
-          </div>
-          <span className="text-[10px] font-bold text-gray-600 text-center leading-tight uppercase tracking-tighter">
-            Cuti Melahirkan
           </span>
         </button>
       </div>
@@ -663,7 +621,6 @@ const MobileDashboard: React.FC<MobileDashboardProps> = ({ user, setActiveTab })
           )}
           {viewMode === 'presence_sub' && renderPresenceSub()}
           {viewMode === 'overtime_sub' && renderOvertimeSub()}
-          {viewMode === 'off_sub' && renderOffSub()}
           {viewMode === 'presence_history' && renderPresenceHistory()}
           {viewMode === 'overtime_history' && renderOvertimeHistory()}
           {viewMode === 'admin' && renderAdminMenu()}

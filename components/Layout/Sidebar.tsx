@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   MapPin, LayoutDashboard, Settings, Users, MonitorCog, UserKey, Radar, Coffee, ChartPie, Toolbox, Handshake, Speech, MessagesSquare, 
-  CalendarClock, Files, ChevronDown, ChevronRight, DollarSign, Banknote, Coins, BanknoteArrowDown, HandCoins, Diff,
+  CalendarClock, Files, ChevronDown, ChevronRight, DollarSign, Banknote, Coins, BanknoteArrowDown, HandCoins, Diff, CalendarOff,
   Menu as MenuIcon, ChevronLeft, Database, Fingerprint, LogOut, Timer, ClipboardCheck, Plane, Calendar, ClipboardList, Heart, Target, BarChart3, CheckSquare, AlertTriangle, Video, Megaphone, Receipt, Trophy, Wallet, ShieldCheck, Activity, EarthLock, AlertCircle
 } from 'lucide-react';
 import { authService } from '../../services/authService';
@@ -159,7 +159,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               title={isCollapsed ? 'Master' : ''}
             >
               <span className="absolute bottom-0 left-0 h-0.5 bg-[#006E62] w-0 transition-all duration-300 group-hover:w-full"></span>
-              <MonitorCog size={20} className="shrink-0 text-gray-600" />
+              <Settings size={20} className="shrink-0 text-gray-600" />
               {!isCollapsed && (
                 <div className="flex items-center justify-between flex-1 overflow-hidden">
                   <span className="font-medium text-sm truncate">Master</span>
@@ -173,7 +173,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 {isAdmin && (
                   <NavItem 
                     id="master_app" 
-                    icon={Settings} 
+                    icon={MonitorCog} 
                     label="Master Aplikasi" 
                     indent 
                     activeTab={activeTab}
@@ -299,7 +299,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               />
               <NavItem 
                 id="permission" 
-                icon={Calendar} 
+                icon={CalendarOff} 
                 label="Izin" 
                 indent 
                 showNew={isAdmin && pendingSubmissions['Izin'] > 0} 
