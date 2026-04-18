@@ -386,6 +386,18 @@ export const leaveService = {
    * Menghapus pengajuan libur
    */
   async delete(id: string): Promise<void> {
+    // 1. Sinkronisasi hapus dari tabel submissions pusat
+    try {
+      await supabase
+        .from('account_submissions')
+        .delete()
+        .eq('type', 'Libur Mandiri')
+        .contains('submission_data', { leave_request_id: id });
+    } catch (subError) {
+      console.warn('Failed to cleanup associated submission:', subError);
+    }
+
+    // 2. Hapus dari tabel libur mandiri
     const { error } = await supabase
       .from('account_leave_requests')
       .delete()

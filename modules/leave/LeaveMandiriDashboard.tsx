@@ -17,6 +17,7 @@ import { LeaveRequest, AuthUser } from '../../types';
 import { supabase } from '../../lib/supabase';
 import Swal from 'sweetalert2';
 import LeaveMandiriForm from './components/LeaveMandiriForm';
+import LeaveDetailModalUser from './components/LeaveDetailModalUser';
 import { formatDateID } from '../../utils/dateFormatter';
 
 interface LeaveMandiriDashboardProps {
@@ -35,6 +36,7 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingRequest, setEditingRequest] = useState<LeaveRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -163,6 +165,7 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
           [...requests].sort((a, b) => b.start_date.localeCompare(a.start_date)).map((req) => (
             <div 
               key={req.id} 
+              onClick={() => setSelectedRequest(req)}
               className="bg-white border-b border-gray-50 p-4 flex items-center justify-between gap-4 active:bg-gray-50 transition-colors"
             >
               <div className="flex items-center gap-4 min-w-0">
@@ -191,7 +194,8 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
                 <div className="flex items-center gap-1 border-l border-gray-100 pl-3">
                   {req.status === 'rejected' && (
                     <button 
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         if (onAjukan) onAjukan(req);
                       }}
                       className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center active:scale-90 transition-all shadow-sm"
@@ -202,7 +206,10 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
                   )}
                   {req.status === 'pending' || req.status === 'rejected' ? (
                     <button 
-                      onClick={() => handleDelete(req.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(req.id);
+                      }}
                       className="w-8 h-8 bg-rose-50 text-rose-500 rounded-lg flex items-center justify-center active:scale-90 transition-all shadow-sm"
                       title="Hapus"
                     >
@@ -220,6 +227,13 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
         )}
       </div>
 
+      {/* Detail Modal */}
+      {selectedRequest && (
+        <LeaveDetailModalUser 
+          leave={selectedRequest}
+          onClose={() => setSelectedRequest(null)}
+        />
+      )}
     </div>
   );
 };

@@ -386,6 +386,26 @@ export const submissionService = {
   },
 
   async delete(id: string) {
+    // 1. Ambil data submission untuk pengecekan sinkronisasi
+    const { data: submission } = await supabase
+      .from('account_submissions')
+      .select('type, submission_data')
+      .eq('id', id)
+      .single();
+
+    // 2. Jika Libur Mandiri, hapus juga record aslinya
+    if (submission?.type === 'Libur Mandiri' && submission.submission_data?.leave_request_id) {
+      try {
+        await supabase
+          .from('account_leave_requests')
+          .delete()
+          .eq('id', submission.submission_data.leave_request_id);
+      } catch (leaveError) {
+        console.warn('Failed to cleanup associated leave request:', leaveError);
+      }
+    }
+
+    // 3. Hapus record submission
     const { error } = await supabase
       .from('account_submissions')
       .delete()
