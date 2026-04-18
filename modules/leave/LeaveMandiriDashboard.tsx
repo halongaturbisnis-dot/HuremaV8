@@ -127,7 +127,7 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
           <button 
             onClick={() => {
               if (setActiveTab) {
-                setActiveTab('presence');
+                setActiveTab('dashboard');
               } else {
                 // Fallback for standalone mode or directly mounted
                 window.history.back();

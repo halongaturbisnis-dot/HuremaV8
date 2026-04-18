@@ -3,7 +3,8 @@ import React from 'react';
 import { LeaveRequestExtended } from '../../../types';
 import DetailModulLayoutAdmin from '../../../components/ui/DetailModulLayoutAdmin';
 import { formatDateID } from '../../../utils/dateFormatter';
-import { FileText, Calendar, CheckCircle2, XCircle, Clock, Trash2, CheckCircle } from 'lucide-react';
+import { googleDriveService } from '../../../services/googleDriveService';
+import { FileText, Calendar, CheckCircle2, XCircle, Clock, Trash2, CheckCircle, FileUp, Eye } from 'lucide-react';
 
 interface LeaveDetailModalProps {
   leave: LeaveRequestExtended;
@@ -133,6 +134,35 @@ const LeaveDetailModal: React.FC<LeaveDetailModalProps> = ({
             </p>
           </div>
         </div>
+
+        {/* Attachment Section */}
+        {leave.file_id && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-1 h-4 bg-[#006E62] rounded-full"></div>
+              <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Lampiran Pendukung</h4>
+            </div>
+            <div className="flex items-center gap-3">
+              <a 
+                href={googleDriveService.getFileUrl(leave.file_id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl hover:bg-gray-100 transition-all group"
+              >
+                <div className="w-10 h-10 bg-white shadow-sm border border-gray-100 rounded-xl flex items-center justify-center text-[#006E62]">
+                  <FileUp size={20} />
+                </div>
+                <div>
+                  <p className="text-xs font-black text-gray-800 tracking-tight">Lihat Lampiran</p>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Klik untuk membuka di Google Drive</p>
+                </div>
+                <div className="ml-4 p-2 text-gray-300 group-hover:text-[#006E62] transition-colors">
+                  <Eye size={18} />
+                </div>
+              </a>
+            </div>
+          </div>
+        )}
       </div>
     </DetailModulLayoutAdmin>
   );
