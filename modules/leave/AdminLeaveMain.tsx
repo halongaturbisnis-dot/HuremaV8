@@ -11,7 +11,8 @@ import {
   XCircle, 
   AlertCircle,
   User,
-  LayoutList
+  LayoutList,
+  ArrowRight
 } from 'lucide-react';
 import { submissionService } from '../../services/submissionService';
 import { authService } from '../../services/authService';
@@ -107,6 +108,10 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
       req.account?.internal_nik?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'SEMUA STATUS' || req.status === statusFilter;
     return matchesSearch && matchesStatus;
+  }).sort((a, b) => {
+    const dateA = a.submission_data?.start_date || '';
+    const dateB = b.submission_data?.start_date || '';
+    return dateB.localeCompare(dateA);
   });
 
   const getStatusBadge = (status: string) => {
@@ -244,21 +249,21 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
                       </div>
                     </td>
                     <td className="px-8 py-5 text-right">
-                      <div className="flex justify-end items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end items-center gap-3">
                         {canDeleteAdminEntry(req) && (
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDelete(req.id);
                             }}
-                            className="p-2.5 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-100 transition-all active:scale-90"
+                            className="p-2 text-gray-300 hover:text-rose-500 transition-colors active:scale-90"
                             title="Hapus Data Admin"
                           >
                             <Trash2 size={16} />
                           </button>
                         )}
-                        <div className="p-2.5 bg-gray-50 text-gray-400 rounded-xl group-hover:text-[#006E62]">
-                          <LayoutList size={16} />
+                        <div className="p-2 text-gray-300 group-hover:text-[#006E62] transition-colors">
+                          <ArrowRight size={18} />
                         </div>
                       </div>
                     </td>
