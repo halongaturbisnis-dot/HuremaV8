@@ -47,7 +47,7 @@ const LeaveDetailModalUser: React.FC<LeaveDetailModalUserProps> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-none">
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar max-h-[70vh]">
           {/* Status Capsule */}
           <div className="flex items-center justify-between bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
              <div className="flex items-center gap-3">

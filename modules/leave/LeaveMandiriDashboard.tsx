@@ -166,42 +166,35 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
             <div 
               key={req.id} 
               onClick={() => setSelectedRequest(req)}
-              className="bg-white border-b border-gray-50 p-4 flex items-center justify-between gap-4 active:bg-gray-50 transition-colors"
+              className="bg-white border-b border-gray-100 p-5 flex flex-col gap-2 active:bg-gray-50 transition-colors"
             >
-              <div className="flex items-center gap-4 min-w-0">
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
-                  req.status === 'approved' ? 'bg-emerald-50 text-emerald-600' :
-                  req.status === 'rejected' ? 'bg-rose-50 text-rose-600' :
-                  'bg-blue-50 text-blue-600'
-                }`}>
-                  <Calendar size={18} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-black text-gray-800 truncate leading-tight">
-                    {formatDateID(req.start_date)}
-                  </p>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5 truncate">
-                    {req.description || 'Tanpa keterangan'}
-                  </p>
-                </div>
-              </div>
+              {/* Line 1: Date */}
+              <p className="text-sm font-black text-gray-800 tracking-tight leading-tight">
+                {formatDateID(req.start_date)}
+              </p>
+              
+              {/* Line 2: Description */}
+              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest line-clamp-1">
+                {req.description || 'Tanpa keterangan'}
+              </p>
 
-              <div className="flex items-center gap-3 shrink-0">
-                <div className="flex flex-col items-end">
+              {/* Line 3: Status & Actions */}
+              <div className="flex items-center justify-between mt-1">
+                <div className="flex items-center gap-3">
                   {getStatusBadge(req.status)}
                 </div>
                 
-                <div className="flex items-center gap-1 border-l border-gray-100 pl-3">
+                <div className="flex items-center gap-2">
                   {req.status === 'rejected' && (
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
                         if (onAjukan) onAjukan(req);
                       }}
-                      className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center active:scale-90 transition-all shadow-sm"
+                      className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-amber-100"
                       title="Ajukan Ulang"
                     >
-                      <RefreshCcw size={14} />
+                      <RefreshCcw size={16} />
                     </button>
                   )}
                   {req.status === 'pending' || req.status === 'rejected' ? (
@@ -210,16 +203,12 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
                         e.stopPropagation();
                         handleDelete(req.id);
                       }}
-                      className="w-8 h-8 bg-rose-50 text-rose-500 rounded-lg flex items-center justify-center active:scale-90 transition-all shadow-sm"
+                      className="w-10 h-10 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-rose-100"
                       title="Hapus"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={16} />
                     </button>
-                  ) : (
-                    <div className="w-8 h-8 bg-blue-50 text-blue-500 rounded-lg flex items-center justify-center opacity-40">
-                      <CheckCircle2 size={14} />
-                    </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
             </div>
