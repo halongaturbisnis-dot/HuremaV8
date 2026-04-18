@@ -126,7 +126,7 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
       else if (a.check_in) inData[0].value++;
 
       // Out Stats
-      if (a.status_out === 'Pulang Cepat') outData[1].value++;
+      if (a.status_out === 'Pulang Cepat' || a.status_out === 'Pulang Awal') outData[1].value++;
       else if (a.status_out === 'Terlambat Pulang') outData[2].value++;
       else if (a.check_out) outData[0].value++;
     });
@@ -136,7 +136,7 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
 
   const todayAttendance = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
-    return attendances.find(a => a.created_at?.startsWith(today));
+    return attendances.find(a => (a.check_in || a.created_at)?.startsWith(today));
   }, [attendances]);
 
   const isCheckOut = !!(todayAttendance?.check_in && !todayAttendance?.check_out);
@@ -303,7 +303,7 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
                 <div className="flex items-center gap-4">
                   <div className="text-left">
                     <p className="text-xs font-bold text-gray-800">
-                      {formatDateID(log.created_at)}
+                      {formatDateID(log.check_in || log.created_at)}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
@@ -325,11 +325,11 @@ const PresenceDashboard: React.FC<PresenceDashboardProps> = ({ onVerify, setActi
                     </p>
                     {log.status_out && (
                       <p className={`text-[10px] font-black uppercase tracking-tighter ${
-                        log.status_out === 'Pulang Cepat' ? 'text-[#f59e0b]' : 
+                        (log.status_out === 'Pulang Cepat' || log.status_out === 'Pulang Awal') ? 'text-[#f59e0b]' : 
                         log.status_out === 'Terlambat Pulang' ? 'text-[#3b82f6]' :
                         'text-[#10b981]'
                       }`}>
-                        {log.status_out === 'Pulang Cepat' ? 'PULANG AWAL' : log.status_out}
+                        {(log.status_out === 'Pulang Cepat' || log.status_out === 'Pulang Awal') ? 'PULANG AWAL' : log.status_out}
                       </p>
                     )}
                   </div>

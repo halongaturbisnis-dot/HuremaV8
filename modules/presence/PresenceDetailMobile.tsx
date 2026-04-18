@@ -280,7 +280,7 @@ const PresenceDetailMobile: React.FC<PresenceDetailMobileProps> = ({ attendance,
                 <div>
                   <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Status Pulang</p>
                   <p className={`text-sm font-bold ${
-                    attendance.status_out === 'Pulang Cepat' ? 'text-[#f59e0b]' : 
+                    (attendance.status_out === 'Pulang Cepat' || attendance.status_out === 'Pulang Awal') ? 'text-[#f59e0b]' : 
                     attendance.status_out === 'Terlambat Pulang' ? 'text-[#3b82f6]' :
                     'text-[#10b981]'
                   }`}>
@@ -350,7 +350,7 @@ const PresenceDetailMobile: React.FC<PresenceDetailMobileProps> = ({ attendance,
               <Calendar size={16} />
             </div>
             <p className="text-[7px] font-bold text-gray-400 uppercase tracking-widest">Tanggal Kerja</p>
-            <p className="text-[9px] font-bold text-gray-800">{formatDateID(attendance.created_at)}</p>
+            <p className="text-[9px] font-bold text-gray-800">{formatDateID(attendance.check_in || attendance.created_at)}</p>
           </div>
           <div className="flex flex-col items-center text-center border-x border-gray-200">
             <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500 mb-1">

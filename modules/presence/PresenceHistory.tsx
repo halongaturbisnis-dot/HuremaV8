@@ -53,7 +53,7 @@ const PresenceHistory: React.FC<PresenceHistoryProps> = ({ logs, isLoading }) =>
             <div className="space-y-4 flex-1">
               <div className="flex items-center gap-2">
                 <Calendar size={14} className="text-gray-400" />
-                <h4 className="text-sm font-bold text-gray-800">{formatDate(log.created_at!)}</h4>
+                <h4 className="text-sm font-bold text-gray-800">{formatDate((log.check_in || log.created_at)!)}</h4>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -85,7 +85,7 @@ const PresenceHistory: React.FC<PresenceHistoryProps> = ({ logs, isLoading }) =>
                   <div className="flex items-baseline gap-1">
                     <span className="text-lg font-sans font-bold text-gray-800">{formatTime(log.check_out, log.out_timezone)}</span>
                     <span className={`text-[9px] font-bold uppercase ${
-                      log.status_out === 'Pulang Cepat' ? 'text-[#f59e0b]' : 
+                      (log.status_out === 'Pulang Cepat' || log.status_out === 'Pulang Awal') ? 'text-[#f59e0b]' : 
                       log.status_out === 'Terlambat Pulang' ? 'text-[#3b82f6]' :
                       'text-[#10b981]'
                     }`}>{log.status_out}</span>
