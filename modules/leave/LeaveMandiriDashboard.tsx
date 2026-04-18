@@ -166,7 +166,7 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
             <div 
               key={req.id} 
               onClick={() => setSelectedRequest(req)}
-              className="bg-white border-b border-[#006E62]-50 p-5 flex flex-col gap-2 active:bg-gray-50 transition-colors"
+              className="bg-white border-b border-[#006E62] p-5 flex flex-col gap-2 active:bg-gray-50 transition-colors"
             >
               {/* Line 1: Date & Status */}
               <div className="flex items-center justify-between">
