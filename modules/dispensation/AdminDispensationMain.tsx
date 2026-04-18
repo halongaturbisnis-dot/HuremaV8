@@ -148,17 +148,27 @@ const AdminDispensationMain: React.FC<AdminDispensationMainProps> = ({ user }) =
                 <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tanggal</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Masalah</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filteredRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-400 italic text-xs">Tidak ada data pengajuan yang ditemukan.</td>
+                  <td colSpan={4} className="px-6 py-12 text-center text-gray-400 italic text-xs">Tidak ada data pengajuan yang ditemukan.</td>
                 </tr>
               ) : (
                 filteredRequests.map((req) => (
-                  <tr key={req.id} className={`hover:bg-gray-50/50 transition-colors group ${!req.is_read ? 'bg-blue-50/30' : ''}`}>
+                  <tr 
+                    key={req.id} 
+                    onClick={() => {
+                      setSelectedRequest(req);
+                      setShowDetail(true);
+                      if (!req.is_read) {
+                        dispensationService.markAsRead(req.id);
+                        setRequests(prev => prev.map(r => r.id === req.id ? { ...r, is_read: true } : r));
+                      }
+                    }}
+                    className={`hover:bg-gray-50 transition-all cursor-pointer group ${!req.is_read ? 'bg-blue-50/30' : ''}`}
+                  >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-100 shrink-0 shadow-sm">
@@ -216,24 +226,6 @@ const AdminDispensationMain: React.FC<AdminDispensationMainProps> = ({ user }) =
                     <td className="px-6 py-4">
                       <div className="flex justify-center">
                         {getStatusBadge(req.status)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end">
-                        <button 
-                          onClick={() => {
-                            setSelectedRequest(req);
-                            setShowDetail(true);
-                            if (!req.is_read) {
-                              dispensationService.markAsRead(req.id);
-                              setRequests(prev => prev.map(r => r.id === req.id ? { ...r, is_read: true } : r));
-                            }
-                          }}
-                          className="flex items-center gap-2 bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm active:scale-95"
-                        >
-                          <Eye size={14} />
-                          Detail & Verifikasi
-                        </button>
                       </div>
                     </td>
                   </tr>

@@ -180,7 +180,7 @@ const MyPayslip: React.FC = () => {
                     <div className="space-y-4">
                       <div className="space-y-1">
                         <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jabatan / Divisi</div>
-                        <div className="text-sm font-bold text-gray-800">{viewingItem.account?.position} / {viewingItem.account?.department}</div>
+                        <div className="text-sm font-bold text-gray-800">{viewingItem.account?.position} / {viewingItem.account?.grade || viewingItem.account?.department || '-'}</div>
                       </div>
                       <div className="space-y-1">
                         <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Lokasi Penugasan</div>

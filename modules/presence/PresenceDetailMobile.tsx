@@ -106,7 +106,7 @@ const PresenceDetailMobile: React.FC<PresenceDetailMobileProps> = ({ attendance,
               <div className="grid grid-cols-1 gap-3 pt-2">
                 <div>
                   <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Departemen</p>
-                  <p className="text-[11px] font-bold text-emerald-700">{account.department || '-'}</p>
+                  <p className="text-[11px] font-bold text-emerald-700">{account.grade || '-'}</p>
                 </div>
                 <div>
                   <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Jabatan</p>

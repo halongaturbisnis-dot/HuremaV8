@@ -48,7 +48,7 @@ const AccountListItem: React.FC<AccountListItemProps> = ({
         <div className="text-left min-w-0">
           <p className="text-[10px] font-bold text-gray-700 truncate">{account.full_name}</p>
           <p className="text-[9px] text-gray-400 font-medium truncate">
-            {account.internal_nik} • {account.location?.name || '-'} • {account.department || '-'} • {account.position || '-'}
+            {account.internal_nik} • {account.location?.name || '-'} • {account.grade || '-'} • {account.position || '-'}
           </p>
         </div>
       </div>
