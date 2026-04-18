@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ClipboardList, Search, Filter, Clock, CheckCircle2, XCircle, AlertCircle, Eye, Loader2, Calendar, User, ArrowRight } from 'lucide-react';
+import { 
+  ClipboardList, Search, Filter, Clock, CheckCircle2, XCircle, AlertCircle, Eye, Loader2, Calendar, User, ArrowRight,
+  Trash2
+} from 'lucide-react';
 import { authService } from '../../services/authService';
 import { dispensationService } from '../../services/dispensationService';
 import { googleDriveService } from '../../services/googleDriveService';
@@ -68,6 +71,37 @@ const AdminDispensationMain: React.FC<AdminDispensationMainProps> = ({ user }) =
       console.error(error);
     } finally {
       if (!isSilent) setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const result = await Swal.fire({
+        title: 'Konfirmasi Hapus',
+        text: 'Anda yakin ingin menghapus data dispensasi ini? Tindakan ini tidak dapat dibatalkan.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal'
+      });
+
+      if (result.isConfirmed) {
+        await dispensationService.delete(id);
+        setRequests(prev => prev.filter(r => r.id !== id));
+        
+        Swal.fire({
+          title: 'Terhapus!',
+          text: 'Data dispensasi telah berhasil dihapus.',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire('Gagal', 'Sistem gagal menghapus data.', 'error');
     }
   };
 
@@ -148,12 +182,13 @@ const AdminDispensationMain: React.FC<AdminDispensationMainProps> = ({ user }) =
                 <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tanggal</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Masalah</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
+                <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filteredRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-gray-400 italic text-xs">Tidak ada data pengajuan yang ditemukan.</td>
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-400 italic text-xs">Tidak ada data pengajuan yang ditemukan.</td>
                 </tr>
               ) : (
                 [...filteredRequests].sort((a, b) => b.date.localeCompare(a.date)).map((req) => (
@@ -178,16 +213,6 @@ const AdminDispensationMain: React.FC<AdminDispensationMainProps> = ({ user }) =
                               alt={req.account.full_name}
                               className="w-full h-full object-cover"
                               referrerPolicy="no-referrer"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                const parent = e.currentTarget.parentElement;
-                                if (parent) {
-                                  const placeholder = document.createElement('div');
-                                  placeholder.className = 'text-gray-400 flex items-center justify-center w-full h-full';
-                                  placeholder.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
-                                  parent.appendChild(placeholder);
-                                }
-                              }}
                             />
                           ) : (
                             <User size={20} className="text-gray-400" />
@@ -223,9 +248,23 @@ const AdminDispensationMain: React.FC<AdminDispensationMainProps> = ({ user }) =
                         ))}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 text-center">
                       <div className="flex justify-center">
                         {getStatusBadge(req.status)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end pr-2">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(req.id);
+                          }}
+                          className="p-2 text-gray-300 hover:text-rose-500 transition-colors active:scale-90"
+                          title="Hapus Pengajuan"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </td>
                   </tr>

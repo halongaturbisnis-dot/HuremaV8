@@ -282,7 +282,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 icon={Coffee} 
                 label="Libur Mandiri" 
                 indent 
-                showNew={isAdmin && pendingSubmissions['Libur Mandiri'] > 0} 
+                badge={isAdmin ? pendingSubmissions['Libur Mandiri'] : undefined} 
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 isCollapsed={isCollapsed}
@@ -292,7 +292,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 icon={Timer} 
                 label="Lembur" 
                 indent 
-                showNew={isAdmin && pendingSubmissions['Lembur'] > 0} 
+                badge={isAdmin ? pendingSubmissions['Lembur'] : undefined} 
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 isCollapsed={isCollapsed}
@@ -302,7 +302,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 icon={CalendarOff} 
                 label="Izin" 
                 indent 
-                showNew={isAdmin && pendingSubmissions['Izin'] > 0} 
+                badge={isAdmin ? pendingSubmissions['Izin'] : undefined} 
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 isCollapsed={isCollapsed}
@@ -312,7 +312,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 icon={Plane} 
                 label="Cuti Tahunan" 
                 indent 
-                showNew={isAdmin && pendingSubmissions['Cuti Tahunan'] > 0} 
+                badge={isAdmin ? pendingSubmissions['Cuti Tahunan'] : undefined} 
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 isCollapsed={isCollapsed}
@@ -323,7 +323,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   icon={Heart} 
                   label="Cuti Melahirkan" 
                   indent 
-                  showNew={isAdmin && pendingSubmissions['Cuti Melahirkan'] > 0} 
+                  badge={isAdmin ? pendingSubmissions['Cuti Melahirkan'] : undefined} 
                   activeTab={activeTab}
                   setActiveTab={setActiveTab}
                   isCollapsed={isCollapsed}

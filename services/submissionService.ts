@@ -17,7 +17,15 @@ export const submissionService = {
       .from('account_submissions')
       .select(`
         *,
-        account:accounts!account_id(full_name, internal_nik)
+        account:accounts!account_id(
+          full_name, 
+          internal_nik, 
+          photo_google_id, 
+          grade, 
+          position, 
+          location_id,
+          location:locations(name)
+        )
       `)
       .order('created_at', { ascending: false });
     
@@ -30,7 +38,15 @@ export const submissionService = {
       .from('account_submissions')
       .select(`
         *,
-        account:accounts!account_id(full_name, internal_nik)
+        account:accounts!account_id(
+          full_name, 
+          internal_nik, 
+          photo_google_id, 
+          grade, 
+          position, 
+          location_id,
+          location:locations(name)
+        )
       `)
       .eq('type', type)
       .order('created_at', { ascending: false });
@@ -44,7 +60,7 @@ export const submissionService = {
     const to = from + limit - 1;
 
     // Use !inner to force an inner join for location filtering and searching
-    const selectStr = `*, account:accounts!account_id!inner(full_name, internal_nik, photo_google_id, location_id), verifier:accounts!verifier_id(full_name, photo_google_id)`;
+    const selectStr = `*, account:accounts!account_id!inner(full_name, internal_nik, photo_google_id, grade, position, location_id, location:locations(name)), verifier:accounts!verifier_id(full_name, photo_google_id)`;
 
     let query = supabase
       .from('account_submissions')
