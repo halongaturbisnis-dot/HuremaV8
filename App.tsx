@@ -229,7 +229,7 @@ const App: React.FC = () => {
           ) : activeTab === 'submission' ? (
             <div className="p-4"><SubmissionMain /></div>
           ) : activeTab === 'leave' ? (
-            <div className="p-4"><LeaveMain /></div>
+            <div className="p-4"><LeaveMain setActiveTab={setActiveTab} /></div>
           ) : activeTab === 'annual_leave' ? (
             <div className="p-4"><AnnualLeaveMain /></div>
           ) : activeTab === 'permission' ? (
