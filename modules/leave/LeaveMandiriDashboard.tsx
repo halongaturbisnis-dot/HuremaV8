@@ -166,24 +166,23 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
             <div 
               key={req.id} 
               onClick={() => setSelectedRequest(req)}
-              className="bg-white border-b border-gray-100 p-5 flex flex-col gap-2 active:bg-gray-50 transition-colors"
+              className="bg-white border-b border-gray-200 p-5 flex flex-col gap-2 active:bg-gray-50 transition-colors"
             >
-              {/* Line 1: Date */}
-              <p className="text-sm font-black text-gray-800 tracking-tight leading-tight">
-                {formatDateID(req.start_date)}
-              </p>
+              {/* Line 1: Date & Status */}
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-black text-gray-800 tracking-tight leading-tight">
+                  {formatDateID(req.start_date)}
+                </p>
+                {getStatusBadge(req.status)}
+              </div>
               
               {/* Line 2: Description */}
               <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest line-clamp-1">
                 {req.description || 'Tanpa keterangan'}
               </p>
 
-              {/* Line 3: Status & Actions */}
-              <div className="flex items-center justify-between mt-1">
-                <div className="flex items-center gap-3">
-                  {getStatusBadge(req.status)}
-                </div>
-                
+              {/* Line 3: Actions */}
+              <div className="flex items-center justify-end mt-1">
                 <div className="flex items-center gap-2">
                   {req.status === 'rejected' && (
                     <button 
