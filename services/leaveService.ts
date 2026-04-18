@@ -334,11 +334,10 @@ export const leaveService = {
     const status = forceStatus || (policy === 'auto' ? 'approved' : 'pending');
 
     // 1. Simpan ke tabel khusus libur mandiri
-    const { file_id, ...insertData } = input;
     const { data, error } = await supabase
       .from('account_leave_requests')
       .insert({
-        ...insertData,
+        ...input,
         status
       })
       .select()

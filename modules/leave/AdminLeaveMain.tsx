@@ -285,7 +285,7 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
             end_date: selectedRequest.submission_data?.end_date || selectedRequest.submission_data?.start_date,
             description: selectedRequest.description,
             status: selectedRequest.status === 'Disetujui' ? 'approved' : selectedRequest.status === 'Ditolak' ? 'rejected' : 'pending',
-            file_id: selectedRequest.file_id || selectedRequest.submission_data?.file_id,
+            file_id: selectedRequest.file_id || (selectedRequest as any).submission_data?.file_id,
             created_at: selectedRequest.created_at,
             account: selectedRequest.account
           } as any}
