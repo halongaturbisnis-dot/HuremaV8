@@ -154,17 +154,17 @@ const LeaveMandiriForm: React.FC<LeaveMandiriFormProps> = ({
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300">
-      <div className="bg-white w-full h-[100dvh] sm:h-auto sm:max-h-[95vh] sm:max-w-lg rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-10 duration-500">
-        <div className="px-8 py-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/50 shrink-0">
+      <div className="bg-white w-full max-h-[95vh] sm:max-w-lg rounded-t-[32px] sm:rounded-[32px] shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-10 duration-500">
+        <div className="px-8 py-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-[#006E62]/10 rounded-xl flex items-center justify-center text-[#006E62]">
               <Calendar size={20} />
             </div>
             <div>
-              <h3 className="text-base font-black text-gray-800 tracking-tight">
+              <h3 className="text-sm font-black text-gray-800 tracking-tight">
                 {editData ? 'Ajukan Ulang Libur' : 'Form Libur Mandiri'}
               </h3>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-tight">
+              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-tight">
                 {isAdmin ? 'Manual Input oleh Admin' : 'Pengajuan Jadwal Mandiri'}
               </p>
             </div>
@@ -175,9 +175,9 @@ const LeaveMandiriForm: React.FC<LeaveMandiriFormProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
-          <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
             {isAdmin && (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Pilih Karyawan (*)</label>
                 <select 
                   required 
@@ -195,7 +195,7 @@ const LeaveMandiriForm: React.FC<LeaveMandiriFormProps> = ({
             )}
 
           <div className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tanggal Libur</label>
               <div className="relative">
                 <input 
@@ -207,16 +207,15 @@ const LeaveMandiriForm: React.FC<LeaveMandiriFormProps> = ({
                     const val = e.target.value;
                     setFormData(prev => ({ ...prev, start_date: val, end_date: val }));
                   }} 
-                  className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-base font-black text-gray-800 outline-none focus:ring-2 focus:ring-[#006E62] transition-all appearance-none"
+                  className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-base font-black text-gray-800 outline-none focus:ring-2 focus:ring-[#006E62] transition-all"
                 />
-                <Calendar className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
               </div>
               <p className="text-[9px] text-amber-600 font-bold uppercase flex items-center gap-1 mt-1 ml-1">
                 <AlertCircle size={10} /> Berlaku untuk 1 hari kerja
               </p>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Keterangan / Alasan</label>
               <textarea 
                 required
@@ -225,26 +224,26 @@ const LeaveMandiriForm: React.FC<LeaveMandiriFormProps> = ({
                 onChange={handleChange} 
                 rows={3} 
                 placeholder="Berikan alasan yang jelas..."
-                className="w-full px-5 py-5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-[#006E62] transition-all resize-none" 
+                className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-[#006E62] transition-all resize-none" 
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Lampiran (Opsional)</label>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gray-50 border border-gray-100 border-dashed rounded-2xl text-xs font-bold text-gray-400 hover:bg-gray-100 transition-all group"
+                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 bg-gray-50 border border-gray-100 border-dashed rounded-2xl text-[10px] font-bold text-gray-400 hover:bg-gray-100 transition-all group"
                 >
                   {selectedFile ? (
                     <>
-                      <FileUp size={16} className="text-[#006E62]" />
+                      <FileUp size={14} className="text-[#006E62]" />
                       <span className="text-gray-700 truncate max-w-[150px]">{selectedFile.name}</span>
                     </>
                   ) : (
                     <>
-                      <Upload size={16} className="group-hover:text-[#006E62] transition-colors" />
+                      <Upload size={14} className="group-hover:text-[#006E62] transition-colors" />
                       <span>Unggah Bukti</span>
                     </>
                   )}
@@ -253,9 +252,9 @@ const LeaveMandiriForm: React.FC<LeaveMandiriFormProps> = ({
                   <button
                     type="button"
                     onClick={() => setSelectedFile(null)}
-                    className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center active:scale-95 transition-all"
+                    className="w-10 h-10 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center active:scale-95 transition-all outline-none"
                   >
-                    <Trash2 size={18} />
+                    <Trash2 size={16} />
                   </button>
                 )}
               </div>
@@ -271,19 +270,19 @@ const LeaveMandiriForm: React.FC<LeaveMandiriFormProps> = ({
           </div>
         </div>
 
-        <div className="p-8 border-t border-gray-50 bg-white space-y-3 shrink-0">
+        <div className="p-6 border-t border-gray-50 bg-white space-y-2 shrink-0">
           <button 
             type="submit" 
             disabled={isSubmitting || isUploading}
-            className="w-full h-14 bg-[#006E62] text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-[#006E62]/20 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full h-12 bg-[#006E62] text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-[#006E62]/20 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isUploading ? <Loader2 className="animate-spin" size={18} /> : isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+            {isUploading ? <Loader2 className="animate-spin" size={16} /> : isSubmitting ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
             {isUploading ? 'Mengunggah...' : isSubmitting ? 'Memproses...' : editData ? 'Kirim Ulang' : 'Kirim Pengajuan'}
           </button>
           <button 
             type="button" 
             onClick={onClose}
-            className="w-full h-12 bg-gray-50 text-gray-400 rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-[0.98] transition-all"
+            className="w-full h-11 bg-gray-50 text-gray-400 rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-[0.98] transition-all"
           >
             Batal
           </button>
