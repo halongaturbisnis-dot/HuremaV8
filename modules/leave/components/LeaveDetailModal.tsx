@@ -142,24 +142,27 @@ const LeaveDetailModal: React.FC<LeaveDetailModalProps> = ({
               <div className="w-1 h-4 bg-[#006E62] rounded-full"></div>
               <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Lampiran Pendukung</h4>
             </div>
-            <div className="flex items-center gap-3">
-              <a 
-                href={googleDriveService.getFileUrl(leave.file_id)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl hover:bg-gray-100 transition-all group"
-              >
-                <div className="w-10 h-10 bg-white shadow-sm border border-gray-100 rounded-xl flex items-center justify-center text-[#006E62]">
-                  <FileUp size={20} />
-                </div>
-                <div>
-                  <p className="text-xs font-black text-gray-800 tracking-tight">Lihat Lampiran</p>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Klik untuk membuka di Google Drive</p>
-                </div>
-                <div className="ml-4 p-2 text-gray-300 group-hover:text-[#006E62] transition-colors">
-                  <Eye size={18} />
-                </div>
-              </a>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {googleDriveService.parseFileIds(leave.file_id).map((file, idx) => (
+                <a 
+                  key={idx}
+                  href={googleDriveService.getFileUrl(`${file.id}|${file.name}`)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl hover:bg-gray-100 transition-all group"
+                >
+                  <div className="w-10 h-10 bg-white shadow-sm border border-gray-100 rounded-xl flex items-center justify-center text-[#006E62] shrink-0">
+                    <FileUp size={20} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-black text-gray-800 tracking-tight truncate">{file.name || 'Lihat Lampiran'}</p>
+                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Google Drive</p>
+                  </div>
+                  <div className="p-2 text-gray-300 group-hover:text-[#006E62] transition-colors">
+                    <Eye size={16} />
+                  </div>
+                </a>
+              ))}
             </div>
           </div>
         )}

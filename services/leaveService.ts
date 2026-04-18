@@ -286,14 +286,37 @@ export const leaveService = {
    * Mendapatkan semua pengajuan libur untuk satu akun
    */
   async getByAccountId(accountId: string): Promise<LeaveRequest[]> {
-    const { data, error } = await supabase
+    const { data: leaves, error } = await supabase
       .from('account_leave_requests')
       .select('*')
       .eq('account_id', accountId)
       .order('start_date', { ascending: false });
     
     if (error) throw error;
-    return data || [];
+    if (!leaves) return [];
+
+    // Ambil lampiran dari tabel submissions karena di tabel account_leave_requests tidak ada kolom file_id
+    try {
+      const { data: subs } = await supabase
+        .from('account_submissions')
+        .select('file_id, submission_data')
+        .eq('account_id', accountId)
+        .eq('type', 'Libur Mandiri');
+
+      if (subs && subs.length > 0) {
+        return leaves.map(leaf => {
+          const matchingSub = subs.find(s => s.submission_data?.leave_request_id === leaf.id);
+          return {
+            ...leaf,
+            file_id: matchingSub?.file_id
+          };
+        });
+      }
+    } catch (subError) {
+      console.warn('Gagal memuat lampiran tambahan:', subError);
+    }
+
+    return leaves;
   },
 
   /**
@@ -333,11 +356,12 @@ export const leaveService = {
     const policy = await settingsService.getSetting('leave_approval_policy', 'manual');
     const status = forceStatus || (policy === 'auto' ? 'approved' : 'pending');
 
-    // 1. Simpan ke tabel khusus libur mandiri
+    // 1. Simpan ke tabel khusus libur mandiri (Hapus file_id dari input karena kolomnya tidak ada di tabel ini)
+    const { file_id, ...cleanInput } = input;
     const { data, error } = await supabase
       .from('account_leave_requests')
       .insert({
-        ...input,
+        ...cleanInput,
         status
       })
       .select()

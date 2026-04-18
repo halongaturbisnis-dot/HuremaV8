@@ -49,6 +49,25 @@ class GoogleDriveService {
   }
 
   /**
+   * Mengurai string file_id (bisa koma separated) menjadi array object
+   */
+  parseFileIds(fileIdString: string | null | undefined): { id: string; name: string }[] {
+    if (!fileIdString) return [];
+    
+    return fileIdString.split(',').map(part => {
+      const trimmed = part.trim();
+      if (!trimmed) return null;
+      
+      let id = trimmed;
+      let name = '';
+      if (trimmed.includes('|')) {
+        [id, name] = trimmed.split('|');
+      }
+      return { id, name };
+    }).filter((item): item is { id: string; name: string } => item !== null);
+  }
+
+  /**
    * Mendapatkan URL file dari ID File Google Drive.
    * Jika formatnya 'id|filename', akan dicek ekstensinya.
    * Jika gambar, gunakan lh3.googleusercontent. Jika bukan, gunakan Google Drive viewer.

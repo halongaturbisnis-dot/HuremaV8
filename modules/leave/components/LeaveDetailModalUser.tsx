@@ -115,23 +115,28 @@ const LeaveDetailModalUser: React.FC<LeaveDetailModalUserProps> = ({
                 <div className="w-1 h-4 bg-[#006E62] rounded-full"></div>
                 <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Lampiran Pendukung</h4>
               </div>
-              <a 
-                href={googleDriveService.getFileUrl(leave.file_id)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl active:bg-gray-100 transition-all group"
-              >
-                <div className="w-10 h-10 bg-white shadow-sm border border-gray-100 rounded-xl flex items-center justify-center text-[#006E62]">
-                  <FileUp size={20} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-black text-gray-800 tracking-tight">Lihat Lampiran</p>
-                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest truncate">Buka di Google Drive</p>
-                </div>
-                <div className="p-2 text-emerald-600">
-                  <Eye size={18} />
-                </div>
-              </a>
+              <div className="space-y-3">
+                {googleDriveService.parseFileIds(leave.file_id).map((file, idx) => (
+                  <a 
+                    key={idx}
+                    href={googleDriveService.getFileUrl(`${file.id}|${file.name}`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl active:bg-gray-100 transition-all group"
+                  >
+                    <div className="w-10 h-10 bg-white shadow-sm border border-gray-100 rounded-xl flex items-center justify-center text-[#006E62] shrink-0">
+                      <FileUp size={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-black text-gray-800 tracking-tight truncate">{file.name || 'Lihat Lampiran'}</p>
+                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest truncate">Google Drive</p>
+                    </div>
+                    <div className="p-2 text-emerald-600">
+                      <Eye size={18} />
+                    </div>
+                  </a>
+                ))}
+              </div>
             </div>
           )}
         </div>
