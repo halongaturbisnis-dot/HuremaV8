@@ -2,7 +2,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import { PendingLeaveProvider } from './context/PendingLeaveContext';
+import { PendingSubmissionsProvider } from './context/PendingSubmissionsContext';
 import App from './App';
 import { registerSW } from 'virtual:pwa-register';
 
@@ -18,8 +18,8 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <PendingLeaveProvider>
+    <PendingSubmissionsProvider>
       <App />
-    </PendingLeaveProvider>
+    </PendingSubmissionsProvider>
   </React.StrictMode>
 );

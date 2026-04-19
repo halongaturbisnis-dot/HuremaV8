@@ -11,7 +11,7 @@ import { submissionService } from '../../services/submissionService';
 import { supabase } from '../../lib/supabase';
 import { LOGO_ICON, Client_Name } from '../../assets';
 import Swal from 'sweetalert2';
-import { usePendingLeave } from '../../context/PendingLeaveContext';
+import { usePendingSubmissions } from '../../context/PendingSubmissionsContext';
 
 interface NavItemProps {
 // ... (keep original NavItemProps)
