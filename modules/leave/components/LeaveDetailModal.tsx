@@ -74,8 +74,8 @@ const LeaveDetailModal: React.FC<LeaveDetailModalProps> = ({
               <Calendar size={20} />
             </div>
             <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Waktu Pengajuan</p>
-              <p className="text-sm font-bold text-gray-700">{formatDateID(leave.created_at)}</p>
+              <p className="text-[10px] font-black text-gray-400 text-center uppercase tracking-widest">Waktu Pengajuan</p>
+              <p className="text-sm font-bold text-center text-gray-700">{formatDateID(leave.created_at)}</p>
             </div>
           </div>
           <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 flex items-center gap-4">
@@ -87,8 +87,8 @@ const LeaveDetailModal: React.FC<LeaveDetailModalProps> = ({
               {leave.status === 'approved' ? <CheckCircle2 size={20} /> : leave.status === 'rejected' ? <XCircle size={20} /> : <Clock size={20} />}
             </div>
             <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Status Saat Ini</p>
-              <p className={`text-sm font-black uppercase tracking-wide ${
+              <p className="text-[10px] font-black text-center text-gray-400 uppercase tracking-widest">Status Saat Ini</p>
+              <p className={`text-sm font-black text-center uppercase tracking-wide ${
                 leave.status === 'approved' ? 'text-emerald-600' :
                 leave.status === 'rejected' ? 'text-rose-600' :
                 'text-amber-600'
@@ -108,16 +108,16 @@ const LeaveDetailModal: React.FC<LeaveDetailModalProps> = ({
           
           <div className="bg-[#006E62]/5 border border-[#006E62]/10 p-4 rounded-2xl grid grid-cols-3 gap-6">
             <div>
-              <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Tanggal Mulai</p>
-              <p className="text-sm font-black text-[#006E62]">{formatDateID(leave.start_date)}</p>
+              <p className="text-[9px] font-bold text-center text-gray-400 uppercase mb-1">Tanggal Mulai</p>
+              <p className="text-sm font-black text-center text-[#006E62]">{formatDateID(leave.start_date)}</p>
             </div>
             <div>
-              <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Tanggal Selesai</p>
-              <p className="text-sm font-black text-[#006E62]">{formatDateID(leave.end_date)}</p>
+              <p className="text-[9px] font-bold text-center text-gray-400 uppercase mb-1">Tanggal Selesai</p>
+              <p className="text-sm font-black text-center text-[#006E62]">{formatDateID(leave.end_date)}</p>
             </div>
             <div>
-              <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Jenis Pengajuan</p>
-              <p className="text-sm font-black text-[#006E62]">Libur Mandiri</p>
+              <p className="text-[9px] font-bold text-center text-gray-400 uppercase mb-1">Jenis Pengajuan</p>
+              <p className="text-sm font-black text-center text-[#006E62]">Libur Mandiri</p>
             </div>
           </div>
         </div>
