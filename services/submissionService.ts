@@ -424,7 +424,9 @@ export const submissionService = {
     // Apply Admin Location Scope
     const { authService } = await import('./authService');
     const user = authService.getCurrentUser();
-    if (user && user.role !== 'admin') {
+    
+    // Scoping for submissions
+    if (user) {
       const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
       const limitedScopes = scopes.filter(s => s?.mode === 'limited');
       
@@ -438,7 +440,7 @@ export const submissionService = {
 
     const { data: submissionsData, error: submissionsError } = await query;
     
-    if (submissionsError) throw submissionsError;
+    if (submissionsError) throw submissionsError;                
     
     const counts: Record<string, number> = {
       'Libur Mandiri': 0,
@@ -459,7 +461,7 @@ export const submissionService = {
       .select('check_in_validity, check_out_validity, account:accounts!account_id!inner(location_id)')
       .or('check_in_validity.eq.FALSE,check_out_validity.eq.FALSE');
 
-    if (user && user.role !== 'admin') {
+    if (user) {
       const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
       const limitedScopes = scopes.filter(s => s?.mode === 'limited');
       
