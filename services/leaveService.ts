@@ -383,7 +383,8 @@ export const leaveService = {
         start_date: input.start_date,
         end_date: input.end_date,
         leave_request_id: data.id, // Simpan ID referensi untuk sinkronisasi balik
-        created_by_role: verifierId ? 'admin' : 'user'
+        created_by_role: verifierId ? 'admin' : 'user',
+        created_by_id: currentUser ? currentUser.id : null // Simpan ID pembuat
       }
     }]);
 

@@ -131,8 +131,8 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
   };
 
   const canDeleteAdminEntry = (req: Submission) => {
-    // Check if created by admin from submission_data flag
-    return req.submission_data?.created_by_role === 'admin';
+    // Check if created by admin from submission_data flag and matches the current admin ID
+    return req.submission_data?.created_by_role === 'admin' && req.submission_data?.created_by_id === user.id;
   };
 
   return (
@@ -145,13 +145,7 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 ml-auto">
-          <button 
-            onClick={() => setShowForm(true)}
-            className={`${MainButtonStyle} !w-fit !px-6 !py-3 !text-xs !shadow-none`}
-          >
-            <Plus size={18} /> TAMBAH
-          </button>
+        <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
@@ -172,6 +166,12 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
             <option value="Disetujui">Disetujui</option>
             <option value="Ditolak">Ditolak</option>
           </select>
+          <button 
+            onClick={() => setShowForm(true)}
+            className={`${MainButtonStyle} !w-fit !px-6 !py-3 !text-xs !shadow-none`}
+          >
+            <Plus size={18} /> TAMBAH
+          </button>
         </div>
       </div>
 
