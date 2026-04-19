@@ -34,7 +34,6 @@ const LeaveDetailModal: React.FC<LeaveDetailModalProps> = ({
   return (
     <DetailModulLayoutAdmin
       title="Detail Pengajuan Libur"
-      subtitle="Verifikasi Pengajuan Libur Mandiri"
       accountData={accountData}
       onClose={onClose}
       footerActions={

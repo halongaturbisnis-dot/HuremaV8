@@ -32,11 +32,15 @@ interface AdminLeaveMainProps {
 
 const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
   const [requests, setRequests] = useState<Submission[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('SEMUA STATUS');
+  const [activeQuery, setActiveQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('Pending');
   const [selectedRequest, setSelectedRequest] = useState<Submission | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const limit = 25;
 
   useEffect(() => {
     fetchRequests();
@@ -57,21 +61,41 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [page, statusFilter, activeQuery]);
 
   const fetchRequests = async (isSilent = false) => {
     try {
       if (!isSilent) setIsLoading(true);
       console.log('Fetching requests...');
-      const data = await submissionService.getAll();
-      const filtered = data.filter(s => s.type === 'Libur Mandiri');
-      console.log('Requests fetched:', filtered);
-      setRequests(filtered);
+      const { data, totalCount } = await submissionService.getByTypePaged(
+        'Libur Mandiri', 
+        page, 
+        limit, 
+        statusFilter === 'SEMUA STATUS' ? 'ALL' : statusFilter,
+        activeQuery
+      );
+      
+      console.log('Requests fetched:', data);
+      setRequests(data);
+      setTotalCount(totalCount);
     } catch (error) {
       console.error('Error fetching requests:', error);
     } finally {
       if (!isSilent) setIsLoading(false);
     }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPage(1);
+    setActiveQuery(searchTerm);
+  };
+
+  const handleStatusFilterChange = (status: string) => {
+    setStatusFilter(status);
+    setPage(1);
+    setSearchTerm('');
+    setActiveQuery('');
   };
 
   const handleVerify = async (id: string, status: 'approved' | 'rejected') => {
@@ -141,8 +165,8 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <form onSubmit={handleSearch} className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer" size={18} onClick={handleSearch} />
             <input 
               type="text"
               placeholder="Cari nama atau NIK..."
@@ -150,10 +174,10 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-12 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-[#006E62] w-full sm:w-64 transition-all"
             />
-          </div>
+          </form>
           <select 
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => handleStatusFilterChange(e.target.value)}
             className="px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-xs font-black text-gray-600 outline-none focus:ring-2 focus:ring-[#006E62] transition-all uppercase tracking-widest"
           >
             <option value="SEMUA STATUS">Semua Status</option>
@@ -193,12 +217,12 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
                     </div>
                   </td>
                 </tr>
-              ) : filteredRequests.length === 0 ? (
+              ) : requests.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-8 py-20 text-center text-gray-400 italic text-xs font-medium">Tidak ada data yang ditemukan.</td>
                 </tr>
               ) : (
-                filteredRequests.map((req) => (
+                requests.map((req) => (
                   <tr 
                     key={req.id} 
                     onClick={() => setSelectedRequest(req)}
@@ -268,6 +292,26 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
             </tbody>
           </table>
         </div>
+        {/* Pagination */}
+        {totalCount > limit && (
+          <div className="px-8 py-4 border-t border-gray-100 flex items-center justify-between">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage(p => p - 1)}
+              className="px-4 py-2 text-xs font-bold text-gray-600 hover:text-[#006E62] disabled:opacity-50"
+            >
+              Sebelumnya
+            </button>
+            <span className="text-xs font-bold text-gray-400">Halaman {page} dari {Math.ceil(totalCount / limit)}</span>
+            <button
+              disabled={page >= Math.ceil(totalCount / limit)}
+              onClick={() => setPage(p => p + 1)}
+              className="px-4 py-2 text-xs font-bold text-gray-600 hover:text-[#006E62] disabled:opacity-50"
+            >
+              Selanjutnya
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Modal Detail */}
