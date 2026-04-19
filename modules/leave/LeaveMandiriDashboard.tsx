@@ -190,7 +190,7 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
                       e.stopPropagation();
                       if (onAjukan) onAjukan(req);
                     }}
-                    className={`${listCardStyleGuide.actionButton} !bg-transparent !border-none !shadow-none text-rose-500 px-0`}
+                    className={`${listCardStyleGuide.actionButton} !bg-transparent !border-none !shadow-none text-[#006E62] px-0`}
                     title="Ajukan Ulang"
                   >
                     <RefreshCcw size={16} />

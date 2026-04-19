@@ -45,7 +45,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           <div className="flex flex-col items-center mb-8">
             <img src={LOGO_ICON} alt="Logo" className="w-16 h-16 object-contain mb-4" />
             <h1 className="text-2xl font-black text-[#006E62] tracking-tighter">HUREMA</h1>
-            <p className="text-[10px] font-bold text-black uppercase tracking-[0.2em] mt-1">{Client_Name}</p>
+            <p className="text-[10px] font-bold text-black text-center uppercase tracking-[0.2em] mt-1">{Client_Name}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
