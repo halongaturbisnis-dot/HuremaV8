@@ -56,7 +56,13 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
         console.log('Realtime update received:', payload);
         fetchRequests(true);
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Realtime: Subscribed to AdminLeaveMain');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Realtime: Error subscribing to AdminLeaveMain');
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
