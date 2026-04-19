@@ -93,8 +93,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     'Libur Mandiri': pendingCount
   };
 
-  const isMasterOpen = true; // Temporary simplification for diff to fit
+  const isMasterOpen = true; 
   const [isSubmissionOpen, setIsSubmissionOpen] = useState(false);
+  const [isPerformanceOpen, setIsPerformanceOpen] = useState(false);
+  const [isFinanceOpen, setIsFinanceOpen] = useState(false);
+  const [isPresenceOpen, setIsPresenceOpen] = useState(true);
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const user = authService.getCurrentUser();
   const isAdmin = user?.role === 'admin' || user?.is_hr_admin || user?.is_performance_admin || user?.is_finance_admin;
 
