@@ -295,7 +295,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 icon={Coffee} 
                 label="Libur Mandiri" 
                 indent 
-                badge={isAdmin ? pendingSubmissions['Libur Mandiri'] : undefined} 
+                badge={pendingSubmissions['Libur Mandiri']} 
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 isCollapsed={isCollapsed}
@@ -305,7 +305,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 icon={Timer} 
                 label="Lembur" 
                 indent 
-                badge={isAdmin ? pendingSubmissions['Lembur'] : undefined} 
+                badge={pendingSubmissions['Lembur']} 
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 isCollapsed={isCollapsed}
@@ -315,7 +315,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 icon={CalendarOff} 
                 label="Izin" 
                 indent 
-                badge={isAdmin ? pendingSubmissions['Izin'] : undefined} 
+                badge={pendingSubmissions['Izin']} 
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 isCollapsed={isCollapsed}
@@ -325,7 +325,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 icon={Plane} 
                 label="Cuti Tahunan" 
                 indent 
-                badge={isAdmin ? pendingSubmissions['Cuti Tahunan'] : undefined} 
+                badge={pendingSubmissions['Cuti Tahunan']} 
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 isCollapsed={isCollapsed}
@@ -336,7 +336,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   icon={Heart} 
                   label="Cuti Melahirkan" 
                   indent 
-                  badge={isAdmin ? pendingSubmissions['Cuti Melahirkan'] : undefined} 
+                  badge={pendingSubmissions['Cuti Melahirkan']} 
                   activeTab={activeTab}
                   setActiveTab={setActiveTab}
                   isCollapsed={isCollapsed}
@@ -347,7 +347,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 icon={EarthLock} 
                 label="Presensi Luar" 
                 indent 
-                badge={isAdmin ? pendingSubmissions['Presensi Luar'] : undefined} 
+                badge={pendingSubmissions['Presensi Luar']} 
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 isCollapsed={isCollapsed}
