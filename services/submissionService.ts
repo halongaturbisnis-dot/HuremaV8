@@ -419,7 +419,7 @@ export const submissionService = {
     let query = supabase
       .from('account_submissions')
       .select('type, account:accounts!account_id!inner(location_id)')
-      .eq('status', 'Pending');
+      .ilike('status', 'pending');
     
     // Apply Admin Location Scope
     const { authService } = await import('./authService');
