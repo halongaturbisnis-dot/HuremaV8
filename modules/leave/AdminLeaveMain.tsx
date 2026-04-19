@@ -20,6 +20,7 @@ import { authService } from '../../services/authService';
 import { googleDriveService } from '../../services/googleDriveService';
 import { supabase } from '../../lib/supabase';
 import { Submission, AuthUser } from '../../types';
+import { AdminMadeDeletion } from '../../lib/adminAuthHelper';
 import { MainButtonStyle } from '../../utils/mainButtonStyle';
 import Swal from 'sweetalert2';
 import LeaveDetailModal from './components/LeaveDetailModal';
@@ -130,27 +131,7 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
     }
   };
 
-  const canDeleteAdminEntry = (req: Submission) => {
-    // Check if created by admin from submission_data flag
-    if (!req || !req.submission_data) return false;
-    
-    // Handle potential stringified JSON
-    let data;
-    try {
-      data = typeof req.submission_data === 'string' 
-        ? JSON.parse(req.submission_data) 
-        : req.submission_data;
-    } catch (e) {
-      console.error('Error parsing submission_data:', e);
-      return false;
-    }
-      
-    return data?.created_by_role === 'admin';
-  };
-
-  return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Header */}
+      {/* Modal Form Tambah (Admin) */}
       <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <div>
@@ -264,7 +245,7 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
                     </td>
                     <td className="px-8 py-5 text-right">
                       <div className="flex justify-end items-center gap-3">
-                        {canDeleteAdminEntry(req) && (
+                        {AdminMadeDeletion(req) && (
                           <button 
                             onClick={(e) => {
                               console.log('Delete button clicked for:', req.id);
@@ -305,7 +286,7 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
           onClose={() => setSelectedRequest(null)}
           onVerify={(id, status) => handleVerify(id, status)}
           onDelete={(id) => handleDelete(id)}
-          canDelete={canDeleteAdminEntry(selectedRequest)}
+          canDelete={AdminMadeDeletion(selectedRequest)}
         />
       )}
 
