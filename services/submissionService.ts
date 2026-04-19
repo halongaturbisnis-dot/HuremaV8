@@ -430,10 +430,20 @@ export const submissionService = {
       const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
       const limitedScopes = scopes.filter(s => s?.mode === 'limited');
       
+      console.log('Diagnostic - User Scopes:', { 
+        userId: user.id,
+        hr_scope: user.hr_scope, 
+        performance_scope: user.performance_scope, 
+        limitedScopes: limitedScopes 
+      });
+      
       if (limitedScopes.length > 0) {
         const allAllowedIds = Array.from(new Set(limitedScopes.flatMap(s => s?.location_ids || [])));
         if (allAllowedIds.length > 0) {
+          console.log('Diagnostic - Applying ID filter:', allAllowedIds);
           query = query.in('account.location_id', allAllowedIds);
+        } else {
+          console.warn('Diagnostic - Scopes are limited but no location_ids found!');
         }
       }
     }
