@@ -208,7 +208,7 @@ const LeaveMandiriFormPage: React.FC<LeaveMandiriFormPageProps> = ({
                     const val = e.target.value;
                     setFormData(prev => ({ ...prev, start_date: val, end_date: val }));
                   }} 
-                  className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-base font-black text-gray-800 outline-none focus:ring-2 focus:ring-[#006E62] transition-all"
+                  className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-base text-center font-black text-gray-800 outline-none focus:ring-2 focus:ring-[#006E62] transition-all"
                 />
               </div>
               <p className="text-[10px] text-amber-600 font-bold uppercase flex items-center gap-1.5 mt-1.5 ml-1">

@@ -19,6 +19,7 @@ import { authService } from '../../services/authService';
 import { googleDriveService } from '../../services/googleDriveService';
 import { supabase } from '../../lib/supabase';
 import { Submission, AuthUser } from '../../types';
+import { MainButtonStyle } from '../../utils/mainButtonStyle';
 import Swal from 'sweetalert2';
 import LeaveDetailModal from './components/LeaveDetailModal';
 import LeaveMandiriForm from './components/LeaveMandiriForm';
@@ -144,10 +145,10 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 ml-auto">
           <button 
             onClick={() => setShowForm(true)}
-            className="flex items-center justify-center gap-2 bg-[#006E62] text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-[#006E62]/20 hover:bg-[#005a50] transition-all"
+            className={`${MainButtonStyle} !w-fit !px-6 !py-3 !text-xs !shadow-none`}
           >
             <Plus size={18} /> Tambah
           </button>
@@ -256,7 +257,7 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
                               e.stopPropagation();
                               handleDelete(req.id);
                             }}
-                            className="p-2 text-gray-300 hover:text-rose-500 transition-colors active:scale-90 opacity-0 group-hover:opacity-100"
+                            className="p-2 text-rose-500 hover:text-rose-600 transition-colors active:scale-90"
                             title="Hapus Data Admin"
                           >
                             <Trash2 size={16} />
