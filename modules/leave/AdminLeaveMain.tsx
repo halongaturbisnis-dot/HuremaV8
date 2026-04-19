@@ -149,7 +149,7 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
             onClick={() => setShowForm(true)}
             className={`${MainButtonStyle} !w-fit !px-6 !py-3 !text-xs !shadow-none`}
           >
-            <Plus size={18} /> Tambah
+            <Plus size={18} /> TAMBAH
           </button>
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -231,7 +231,7 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400">
-                          <Clock size={14} />
+                          <Calendar size={14} />
                         </div>
                         <span className="text-xs font-bold text-gray-700">
                           {req.submission_data?.start_date ? new Date(req.submission_data.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
@@ -262,8 +262,8 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
                             <Trash2 size={16} />
                           </button>
                         )}
-                        <div className="p-2 text-gray-300 group-hover:text-[#006E62] transition-colors">
-                          <ArrowRight size={18} />
+                        <div className="p-2 text-gray-300">
+                          <Trash2 size={16} className="text-rose-500" />
                         </div>
                       </div>
                     </td>
