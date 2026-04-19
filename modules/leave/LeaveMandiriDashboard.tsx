@@ -20,6 +20,7 @@ import LeaveMandiriForm from './components/LeaveMandiriForm';
 import LeaveDetailModalUser from './components/LeaveDetailModalUser';
 import { formatDateID } from '../../utils/dateFormatter';
 import { listCardStyleGuide } from '../../utils/listCardStyleGuide';
+import { MainButtonStyle } from '../../utils/mainButtonStyle';
 
 interface LeaveMandiriDashboardProps {
   user: AuthUser;
@@ -149,7 +150,7 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
           onClick={() => {
             if (onAjukan) onAjukan();
           }}
-          className="bg-[#006E62] text-white px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-[#006E62]/20 active:scale-90 transition-all shrink-0 text-xs font-black uppercase tracking-widest"
+          className={`${MainButtonStyle} !w-fit !h-10 px-5 !rounded-xl !text-xs shrink-0`}
         >
           <Plus size={18} /> Ajukan
         </button>

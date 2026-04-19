@@ -7,6 +7,7 @@ import { leaveService } from '../../../services/leaveService';
 import { googleDriveService } from '../../../services/googleDriveService';
 import { formatDateID } from '../../../utils/dateFormatter';
 import { MainButtonStyle } from '../../../utils/mainButtonStyle';
+import { CancelButtonStyle } from '../../../utils/cancelButtonStyle';
 import { validateMaxUploadSize } from '../../../utils/maxUploadSize';
 import Swal from 'sweetalert2';
 
@@ -282,7 +283,7 @@ const LeaveMandiriForm: React.FC<LeaveMandiriFormProps> = ({
           <button 
             type="button" 
             onClick={onClose}
-            className="w-full h-11 bg-gray-50 text-gray-400 rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-[0.98] transition-all"
+            className={CancelButtonStyle}
           >
             Batal
           </button>

@@ -6,6 +6,9 @@ import { accountService } from '../../services/accountService';
 import { leaveService } from '../../services/leaveService';
 import { googleDriveService } from '../../services/googleDriveService';
 import { formatDateID } from '../../utils/dateFormatter';
+import { MainButtonStyle } from '../../utils/mainButtonStyle';
+import { CancelButtonStyle } from '../../utils/cancelButtonStyle';
+import { validateMaxUploadSize } from '../../utils/maxUploadSize';
 import Swal from 'sweetalert2';
 
 interface LeaveMandiriFormPageProps {
@@ -143,8 +146,7 @@ const LeaveMandiriFormPage: React.FC<LeaveMandiriFormPageProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (file.size > 5 * 1024 * 1024) {
-        Swal.fire('File Terlalu Besar', 'Batas maksimal ukuran file adalah 5MB.', 'warning');
+      if (!validateMaxUploadSize(file)) {
         return;
       }
       setSelectedFile(file);
@@ -257,7 +259,6 @@ const LeaveMandiriFormPage: React.FC<LeaveMandiriFormPageProps> = ({
                   </button>
                 )}
               </div>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider ml-1">Max. 5MB (PDF/JPG/PNG)</p>
               <input 
                 type="file"
                 className="hidden"
@@ -273,7 +274,7 @@ const LeaveMandiriFormPage: React.FC<LeaveMandiriFormPageProps> = ({
           <button 
             type="submit" 
             disabled={isSubmitting || isUploading}
-            className="w-full h-14 bg-[#006E62] text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-[#006E62]/20 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2.5"
+            className={MainButtonStyle}
           >
             {isUploading ? <Loader2 className="animate-spin" size={20} /> : isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
             {isUploading ? 'Mengunggah...' : isSubmitting ? 'Memproses...' : editData ? 'Kirim Ulang' : 'Kirim Pengajuan'}
@@ -281,7 +282,7 @@ const LeaveMandiriFormPage: React.FC<LeaveMandiriFormPageProps> = ({
           <button 
             type="button" 
             onClick={onBack}
-            className="w-full h-12 bg-gray-50 text-gray-400 rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-[0.98] transition-all"
+            className={CancelButtonStyle}
           >
             Batal
           </button>
