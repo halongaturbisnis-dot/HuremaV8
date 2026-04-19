@@ -26,7 +26,7 @@ export const submissionService = {
           location_id,
           location:locations(name)
         )
-      `)
+      `, { count: 'exact' }) // Tambahkan opsi untuk memastikan hasil fresh
       .order('created_at', { ascending: false });
     
     if (error) throw error;

@@ -47,8 +47,7 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
-        table: 'account_submissions',
-        filter: 'type=eq.Libur Mandiri'
+        table: 'account_submissions'
       }, (payload) => {
         console.log('Realtime update received:', payload);
         fetchRequests(true);
