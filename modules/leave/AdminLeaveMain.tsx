@@ -165,7 +165,7 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
             onClick={() => setShowForm(true)}
             className={`${MainButtonStyle} !w-fit !px-6 !py-3 !text-xs !shadow-none`}
           >
-            <Plus size={18} /> TAMBAH
+             TAMBAH
           </button>
         </div>
       </div>

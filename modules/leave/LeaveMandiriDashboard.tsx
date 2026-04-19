@@ -151,7 +151,7 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
           }}
           className={`${MainButtonStyle} !w-fit !h-10 px-5 !rounded-xl !text-xs shrink-0`}
         >
-          <Plus size={18} /> Ajukan
+         Ajukan
         </button>
       </div>
 
