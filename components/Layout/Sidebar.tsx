@@ -83,9 +83,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   unreadReimbursements = 0,
   unreadCompensations = 0,
   unreadDispensations = 0,
-  pendingSubmissions = {}
+  pendingSubmissions: propsPendingSubmissions = {}
 }) => {
-  const { pendingSubmissions } = usePendingSubmissions();
+  const { pendingSubmissions: contextPendingSubmissions } = usePendingSubmissions();
+  const pendingSubmissions = { ...propsPendingSubmissions, ...contextPendingSubmissions };
   
   const isMasterOpen = true; 
   const [isSubmissionOpen, setIsSubmissionOpen] = useState(false);
