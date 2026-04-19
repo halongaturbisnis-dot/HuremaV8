@@ -85,14 +85,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   unreadDispensations = 0,
   pendingSubmissions = {}
 }) => {
-  const { pendingCount } = usePendingLeave();
+  const { pendingSubmissions } = usePendingSubmissions();
   
-  // Update logic to merge global context count for Libur Mandiri
-  const displayPendingSubmissions = {
-    ...pendingSubmissions,
-    'Libur Mandiri': pendingCount
-  };
-
   const isMasterOpen = true; 
   const [isSubmissionOpen, setIsSubmissionOpen] = useState(false);
   const [isPerformanceOpen, setIsPerformanceOpen] = useState(false);
@@ -300,7 +294,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 icon={Coffee} 
                 label="Libur Mandiri" 
                 indent 
-                badge={isAdmin ? displayPendingSubmissions['Libur Mandiri'] : undefined} 
+                badge={isAdmin ? pendingSubmissions['Libur Mandiri'] : undefined} 
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 isCollapsed={isCollapsed}
