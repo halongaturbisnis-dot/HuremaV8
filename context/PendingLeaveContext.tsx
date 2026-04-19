@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { authService } from '../services/authService';
 
 interface PendingLeaveContextType {
   pendingCount: number;
@@ -14,31 +15,42 @@ export const PendingLeaveProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [pendingCount, setPendingCount] = useState<number>(0);
 
   useEffect(() => {
-    // Initial fetch for pending count
     const fetchInitialCount = async () => {
-      const { count } = await supabase
+      const user = authService.getCurrentUser();
+      
+      let query = supabase
         .from('account_submissions')
-        .select('*', { count: 'exact', head: true })
+        .select('account:accounts!account_id(location_id)', { count: 'exact', head: true })
         .eq('type', 'Libur Mandiri')
         .eq('status', 'Pending');
+      
+      // Apply Admin Location Scope, matching logic in submissionService.ts
+      if (user && user.role !== 'admin') {
+        const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
+        const limitedScopes = scopes.filter(s => s?.mode === 'limited');
+        
+        if (limitedScopes.length > 0) {
+          const allAllowedIds = Array.from(new Set(limitedScopes.flatMap(s => s?.location_ids || [])));
+          if (allAllowedIds.length > 0) {
+            query = query.in('account.location_id', allAllowedIds);
+          }
+        }
+      }
+
+      const { count } = await query;
       setPendingCount(count || 0);
     };
 
     fetchInitialCount();
 
-    // Listen for changes
     const channel = supabase
       .channel('pending-count-channel')
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
         table: 'account_submissions' 
-      }, (payload) => {
-        // Simple logic: if record is Libur Mandiri, update count
-        // Note: This is an approximation. For absolute accuracy, consider a more complex event processor.
-        if (payload.new?.type === 'Libur Mandiri' || payload.old?.type === 'Libur Mandiri') {
-          fetchInitialCount();
-        }
+      }, () => {
+        fetchInitialCount();
       })
       .subscribe();
 
