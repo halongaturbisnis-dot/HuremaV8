@@ -139,11 +139,8 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
       {/* Header */}
       <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
-          </div>
           <div>
             <h2 className="text-xl font-black text-gray-800 tracking-tight">Manajemen Libur Mandiri</h2>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Pusat Pengajuan Libur Mandiri Karyawan</p>
           </div>
         </div>
 
