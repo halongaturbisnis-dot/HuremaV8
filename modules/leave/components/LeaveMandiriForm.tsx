@@ -6,6 +6,8 @@ import { accountService } from '../../../services/accountService';
 import { leaveService } from '../../../services/leaveService';
 import { googleDriveService } from '../../../services/googleDriveService';
 import { formatDateID } from '../../../utils/dateFormatter';
+import { MainButtonStyle } from '../../../utils/mainButtonStyle';
+import { validateMaxUploadSize } from '../../../utils/maxUploadSize';
 import Swal from 'sweetalert2';
 
 interface LeaveMandiriFormProps {
@@ -144,8 +146,7 @@ const LeaveMandiriForm: React.FC<LeaveMandiriFormProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (file.size > 5 * 1024 * 1024) {
-        Swal.fire('File Terlalu Besar', 'Batas maksimal ukuran file adalah 5MB.', 'warning');
+      if (!validateMaxUploadSize(file)) {
         return;
       }
       setSelectedFile(file);
@@ -258,7 +259,6 @@ const LeaveMandiriForm: React.FC<LeaveMandiriFormProps> = ({
                   </button>
                 )}
               </div>
-              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider ml-1">Max. 5MB (PDF/JPG/PNG)</p>
               <input 
                 type="file"
                 className="hidden"
@@ -274,7 +274,7 @@ const LeaveMandiriForm: React.FC<LeaveMandiriFormProps> = ({
           <button 
             type="submit" 
             disabled={isSubmitting || isUploading}
-            className="w-full h-12 bg-[#006E62] text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-[#006E62]/20 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            className={MainButtonStyle}
           >
             {isUploading ? <Loader2 className="animate-spin" size={16} /> : isSubmitting ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
             {isUploading ? 'Mengunggah...' : isSubmitting ? 'Memproses...' : editData ? 'Kirim Ulang' : 'Kirim Pengajuan'}
