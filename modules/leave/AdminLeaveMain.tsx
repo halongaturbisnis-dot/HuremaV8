@@ -131,6 +131,8 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
     }
   };
 
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
       {/* Modal Form Tambah (Admin) */}
       <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">

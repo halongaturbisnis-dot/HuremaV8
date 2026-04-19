@@ -88,7 +88,6 @@ const DetailModulLayoutAdmin: React.FC<DetailModulLayoutAdminProps> = ({
 
                 {/* Col 3: Career */}
                 <div className="text-center md:text-left">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Karir</p>
                   <div className="space-y-2">
                     <div>
                       <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Jabatan</p>
