@@ -178,7 +178,7 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
               </div>
 
               {/* Line 2: Description (Left) */}
-              <p className={`${listCardStyleGuide.subtitle} text-left opacity-80 normal-case font-medium`}>
+              <p className={`${listCardStyleGuide.subtitle} text-left opacity-80 normal-case font-normal`}>
                 {req.description || 'Tidak ada keterangan'}
               </p>
 
