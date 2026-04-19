@@ -254,7 +254,7 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
                               e.preventDefault();
                               handleDelete(req.id);
                             }}
-                            className="p-2 text-rose-500 hover:text-rose-600 transition-colors active:scale-90"
+                            className="p-2 text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors active:scale-90"
                             title="Hapus Data Admin"
                           >
                             <Trash2 size={16} />
