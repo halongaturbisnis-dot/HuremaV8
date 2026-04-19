@@ -131,7 +131,7 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
   };
 
   const canDeleteAdminEntry = (req: Submission) => {
-    // Check if created by admin from submission_data flag and matches the current admin ID
+    // Check if created by admin from submission_data flag
     if (!req || !req.submission_data) return false;
     
     // Handle potential stringified JSON
@@ -145,7 +145,7 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
       return false;
     }
       
-    return data?.created_by_role === 'admin' && data?.created_by_id === user.id;
+    return data?.created_by_role === 'admin';
   };
 
   return (
