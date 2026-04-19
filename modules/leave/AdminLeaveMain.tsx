@@ -47,7 +47,8 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
         schema: 'public', 
         table: 'account_submissions',
         filter: 'type=eq.Libur Mandiri'
-      }, () => {
+      }, (payload) => {
+        console.log('Realtime update received:', payload);
         fetchRequests(true);
       })
       .subscribe();
@@ -60,11 +61,13 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
   const fetchRequests = async (isSilent = false) => {
     try {
       if (!isSilent) setIsLoading(true);
+      console.log('Fetching requests...');
       const data = await submissionService.getAll();
       const filtered = data.filter(s => s.type === 'Libur Mandiri');
+      console.log('Requests fetched:', filtered);
       setRequests(filtered);
     } catch (error) {
-      console.error(error);
+      console.error('Error fetching requests:', error);
     } finally {
       if (!isSilent) setIsLoading(false);
     }
