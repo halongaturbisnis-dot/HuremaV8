@@ -69,7 +69,7 @@ const LeaveDetailModal: React.FC<LeaveDetailModalProps> = ({
       <div className="space-y-8">
         {/* Info Cards Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 flex items-center gap-4">
+          <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 flex items-center justify-center gap-4">
             <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500">
               <Calendar size={20} />
             </div>
@@ -78,8 +78,8 @@ const LeaveDetailModal: React.FC<LeaveDetailModalProps> = ({
               <p className="text-sm font-bold text-center text-gray-700">{formatDateID(leave.created_at)}</p>
             </div>
           </div>
-          <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 flex items-center gap-4">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+          <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 flex items-center justify-center gap-4">
+            <div className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center ${
               leave.status === 'approved' ? 'bg-emerald-500/10 text-emerald-500' :
               leave.status === 'rejected' ? 'bg-rose-500/10 text-rose-500' :
               'bg-amber-500/10 text-amber-500'
