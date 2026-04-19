@@ -129,8 +129,8 @@ const LeaveDetailModal: React.FC<LeaveDetailModalProps> = ({
             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Keterangan / Alasan</h4>
           </div>
           <div className="bg-gray-50 p-6 rounded-[32px] border border-gray-100">
-            <p className="text-sm text-gray-600 leading-relaxed italic">
-              "{leave.description || 'Tidak ada keterangan tambahan.'}"
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {leave.description || 'Tidak ada keterangan tambahan.'}
             </p>
           </div>
         </div>

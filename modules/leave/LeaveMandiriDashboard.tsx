@@ -143,7 +143,6 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
           </button>
           <div>
             <h2 className="text-lg font-bold text-gray-800 tracking-tight">Libur Mandiri</h2>
-            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-tight">Riwayat & Pengajuan</p>
           </div>
         </div>
         <button 
@@ -179,7 +178,7 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
               </div>
 
               {/* Line 2: Description (Left) */}
-              <p className={`${listCardStyleGuide.subtitle} text-left opacity-80 normal-case font-normal`}>
+              <p className={`${listCardStyleGuide.subtitle} text-left opacity-80 !normal-case font-normal`}>
                 {req.description || 'Tidak ada keterangan'}
               </p>
 
@@ -191,7 +190,7 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
                       e.stopPropagation();
                       if (onAjukan) onAjukan(req);
                     }}
-                    className={`${listCardStyleGuide.actionButton} bg-[#006E62]/5 text-[#006E62] border-[#006E62]/10`}
+                    className={`${listCardStyleGuide.actionButton} !bg-transparent !border-none !shadow-none text-rose-500 px-0`}
                     title="Ajukan Ulang"
                   >
                     <RefreshCcw size={16} />
@@ -203,7 +202,7 @@ const LeaveMandiriDashboard: React.FC<LeaveMandiriDashboardProps> = ({
                       e.stopPropagation();
                       handleDelete(req.id);
                     }}
-                    className={`${listCardStyleGuide.actionButton} bg-rose-50 text-rose-500 border-rose-100`}
+                    className={`${listCardStyleGuide.actionButton} !bg-transparent !border-none !shadow-none text-rose-500 px-0`}
                     title="Hapus"
                   >
                     <Trash2 size={16} />

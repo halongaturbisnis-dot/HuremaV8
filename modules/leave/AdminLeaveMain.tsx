@@ -236,7 +236,7 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
                     </td>
                     <td className="px-8 py-5">
                       <p className="text-xs text-gray-600 line-clamp-1 italic max-w-xs leading-relaxed">
-                        "{req.description || '-'}"
+                        {req.description || '-'}
                       </p>
                     </td>
                     <td className="px-8 py-5 text-center">
