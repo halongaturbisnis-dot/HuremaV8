@@ -352,6 +352,9 @@ export const leaveService = {
    * Membuat pengajuan libur baru
    */
   async create(input: LeaveRequestInput, forceStatus?: 'approved' | 'pending', verifierId?: string): Promise<LeaveRequest> {
+    // Ambil user saat ini untuk identifikasi pembuat
+    const currentUser = authService.getCurrentUser();
+
     // Ambil kebijakan dari settings
     const policy = await settingsService.getSetting('leave_approval_policy', 'manual');
     const status = forceStatus || (policy === 'auto' ? 'approved' : 'pending');
