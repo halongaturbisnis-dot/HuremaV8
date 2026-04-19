@@ -132,7 +132,20 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
 
   const canDeleteAdminEntry = (req: Submission) => {
     // Check if created by admin from submission_data flag and matches the current admin ID
-    return req.submission_data?.created_by_role === 'admin' && req.submission_data?.created_by_id === user.id;
+    if (!req || !req.submission_data) return false;
+    
+    // Handle potential stringified JSON
+    let data;
+    try {
+      data = typeof req.submission_data === 'string' 
+        ? JSON.parse(req.submission_data) 
+        : req.submission_data;
+    } catch (e) {
+      console.error('Error parsing submission_data:', e);
+      return false;
+    }
+      
+    return data?.created_by_role === 'admin' && data?.created_by_id === user.id;
   };
 
   return (
@@ -254,7 +267,9 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
                         {canDeleteAdminEntry(req) && (
                           <button 
                             onClick={(e) => {
+                              console.log('Delete button clicked for:', req.id);
                               e.stopPropagation();
+                              e.preventDefault();
                               handleDelete(req.id);
                             }}
                             className="p-2 text-rose-500 hover:text-rose-600 transition-colors active:scale-90"
@@ -263,9 +278,6 @@ const AdminLeaveMain: React.FC<AdminLeaveMainProps> = ({ user }) => {
                             <Trash2 size={16} />
                           </button>
                         )}
-                        <div className="p-2 text-gray-300">
-                          <Trash2 size={16} className="text-rose-500" />
-                        </div>
                       </div>
                     </td>
                   </tr>
