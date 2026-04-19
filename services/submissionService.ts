@@ -70,7 +70,7 @@ export const submissionService = {
     // Apply Admin Location Scope
     const { authService } = await import('./authService');
     const user = authService.getCurrentUser();
-    if (user && user.role !== 'admin') {
+    if (user) {
       const scopes = [user.hr_scope, user.performance_scope, user.finance_scope].filter(Boolean);
       const limitedScopes = scopes.filter(s => s?.mode === 'limited');
       
@@ -83,7 +83,7 @@ export const submissionService = {
     }
 
     if (status !== 'ALL') {
-      query = query.eq('status', status);
+      query = query.ilike('status', status);
     }
 
     if (search) {
